@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>日本海洋研究所 - 港マップ プロトタイプ</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(180deg, #0C1929 0%, #1E3A5F 50%, #2563EB 100%);
+      font-family: 'Noto Sans JP', 'Hiragino Sans', sans-serif;
+      overflow-x: hidden;
+    }
+
+    @keyframes wave {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: translate(-50%, -50%) scale(1); }
+      50% { transform: translate(-50%, -50%) scale(1.15); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    /* ヘッダー */
+    .header {
+      padding: 24px 32px;
+      background: rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      position: relative;
+      z-index: 30;
+    }
+
+    .header-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .logo h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: #fff;
+      font-family: 'Zen Maru Gothic', sans-serif;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+
+    .logo p {
+      font-size: 14px;
+      color: rgba(255,255,255,0.7);
+      margin-top: 4px;
+      letter-spacing: 2px;
+    }
+
+    .stats {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255,255,255,0.1);
+      padding: 8px 16px;
+      border-radius: 30px;
+    }
+
+    .stats span {
+      color: #fff;
+      font-size: 14px;
+    }
+
+    .stats-number {
+      font-size: 24px !important;
+      font-weight: 700;
+      color: #10B981 !important;
+      text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+    }
+
+    .stats-total {
+      color: rgba(255,255,255,0.5) !important;
+    }
+
+    /* フィルター */
+    .filters {
+      padding: 16px 32px;
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 20;
+    }
+
+    .filter-btn {
+      padding: 10px 20px;
+      border-radius: 25px;
+      border: none;
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(5px);
+    }
+
+    .filter-btn:hover {
+      background: rgba(255,255,255,0.25);
+    }
+
+    .filter-btn.active {
+      background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+
+    /* メインコンテンツ */
+    .main {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+      padding: 24px 32px;
+      max-width: 1400px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 10;
+    }
+
+    .main.has-panel {
+      grid-template-columns: 1fr 400px;
+    }
+
+    @media (max-width: 900px) {
+      .main.has-panel {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* 地図エリア */
+    .map-area {
+      position: relative;
+      background: linear-gradient(180deg, rgba(30, 58, 95, 0.8) 0%, rgba(37, 99, 235, 0.6) 100%);
+      border-radius: 24px;
+      border: 1px solid rgba(255,255,255,0.2);
+      overflow: hidden;
+      aspect-ratio: 4/3;
+      min-height: 500px;
+    }
+
+    /* 日本地図 */
+    .japan-map {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* マーカー */
+    .marker {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 3px solid #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+    }
+
+    .marker:hover {
+      transform: translate(-50%, -50%) scale(1.2);
+      z-index: 15;
+    }
+
+    .marker.selected {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #3B82F6, #1D4ED8) !important;
+      border: 4px solid #fff;
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.6), 0 4px 12px rgba(0,0,0,0.3);
+      z-index: 20;
+      animation: pulse 2s infinite;
+    }
+
+    .marker.status-done { background: #10B981; }
+    .marker.status-progress { background: #F59E0B; }
+    .marker.status-planned { background: #6B7280; }
+
+    /* 凡例 - 位置調整 */
+    .legend {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(0,0,0,0.7);
+      padding: 16px 20px;
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      z-index: 25;
+    }
+
+    .legend-title {
+      color: #fff;
+      font-size: 13px;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .legend-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid #fff;
+      flex-shrink: 0;
+    }
+
+    .legend-label {
+      color: rgba(255,255,255,0.9);
+      font-size: 13px;
+    }
+
+    /* ガイド */
+    .guide {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      color: rgba(255,255,255,0.6);
+      pointer-events: none;
+      animation: float 4s ease-in-out infinite;
+    }
+
+    .guide-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .guide-text {
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    /* 港情報パネル */
+    .harbor-panel {
+      background: #fff;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      animation: fadeIn 0.4s ease-out;
+      position: relative;
+      z-index: 30;
+    }
+
+    .panel-header {
+      height: 160px;
+      background: linear-gradient(135deg, #1E40AF, #3B82F6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 80px;
+      position: relative;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(0,0,0,0.3);
+      color: #fff;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .close-btn:hover {
+      background: rgba(0,0,0,0.5);
+    }
+
+    .status-badge {
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      padding: 6px 12px;
+      color: #fff;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .status-badge.done { background: #10B981; }
+    .status-badge.progress { background: #F59E0B; }
+
+    .panel-body {
+      padding: 24px;
+      background: #fff;
+    }
+
+    .panel-region {
+      font-size: 12px;
+      color: #3B82F6;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .panel-name {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1E293B;
+      margin: 0 0 12px 0;
+      font-family: 'Zen Maru Gothic', sans-serif;
+    }
+
+    .panel-desc {
+      font-size: 15px;
+      color: #64748B;
+      line-height: 1.7;
+      margin: 0 0 20px 0;
+    }
+
+    .facilities-label {
+      font-size: 13px;
+      color: #94A3B8;
+      margin-bottom: 10px;
+      font-weight: 500;
+    }
+
+    .facilities {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .facility-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 10px;
+      background: rgba(59, 130, 246, 0.1);
+      border-radius: 20px;
+      font-size: 13px;
+      color: #1E40AF;
+      font-weight: 500;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .btn {
+      padding: 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-outline {
+      border: 2px solid #3B82F6;
+      background: #fff;
+      color: #3B82F6;
+    }
+
+    .btn-outline:hover {
+      background: rgba(59, 130, 246, 0.1);
+    }
+
+    .btn-primary {
+      border: none;
+      background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+      color: #fff;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    }
+
+    /* 波アニメーション - z-indexを下げる */
+    .waves {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 100px;
+      overflow: hidden;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .wave {
+      position: absolute;
+      bottom: 0;
+      width: 200%;
+      height: 100%;
+      animation: wave 8s linear infinite;
+    }
+
+    .wave:nth-child(2) {
+      height: 80%;
+      animation: wave 6s linear infinite reverse;
+      animation-delay: -2s;
+    }
+
+    /* ウェルカムオーバーレイ */
+    .welcome {
+      position: fixed;
+      inset: 0;
+      background: rgba(12, 25, 41, 0.95);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      z-index: 100;
+      animation: fadeIn 0.5s ease-out;
+      transition: opacity 0.5s ease-out;
+    }
+
+    .welcome.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .welcome-icon {
+      font-size: 80px;
+      margin-bottom: 24px;
+      animation: float 4s ease-in-out infinite;
+    }
+
+    .welcome h2 {
+      font-size: 32px;
+      color: #fff;
+      font-family: 'Zen Maru Gothic', sans-serif;
+      margin-bottom: 12px;
+    }
+
+    .welcome p {
+      color: rgba(255,255,255,0.6);
+      font-size: 16px;
+    }
+
+    .loader {
+      margin-top: 32px;
+      width: 200px;
+      height: 4px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .loader-bar {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, #3B82F6, transparent);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+    }
+
+    /* マーカーツールチップ */
+    .marker-tooltip {
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%) translateY(-8px);
+      background: rgba(0,0,0,0.85);
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+      font-weight: 500;
+    }
+
+    .marker:hover .marker-tooltip {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <!-- ヘッダー -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <h1>🚢 日本海洋研究所</h1>
+        <p>海童のロマンを求めて ─ 全国の港を巡る</p>
+      </div>
+      <div class="stats">
+        <span>調査港数:</span>
+        <span class="stats-number" id="doneCount">6</span>
+        <span class="stats-total">/ <span id="totalCount">8</span> 港</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- フィルター -->
+  <div class="filters" id="filters">
+    <button class="filter-btn active" data-filter="all">🗾 すべて</button>
+    <button class="filter-btn" data-filter="給油">⛽ 給油</button>
+    <button class="filter-btn" data-filter="シャワー">🚿 シャワー</button>
+    <button class="filter-btn" data-filter="トイレ">🚻 トイレ</button>
+    <button class="filter-btn" data-filter="駐車場">🅿️ 駐車場</button>
+    <button class="filter-btn" data-filter="コンビニ">🏪 コンビニ</button>
+  </div>
+
+  <!-- メインコンテンツ -->
+  <div class="main" id="mainContent">
+    <!-- 地図エリア -->
+    <div class="map-area" id="mapArea">
+      <!-- 日本地図SVG -->
+      <svg class="japan-map" viewBox="0 0 800 700" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <linearGradient id="landGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="rgba(255,255,255,0.25)"/>
+            <stop offset="100%" stop-color="rgba(255,255,255,0.15)"/>
+          </linearGradient>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        </defs>
+        
+        <!-- 海の背景グリッド -->
+        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+          <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+        </pattern>
+        <rect width="100%" height="100%" fill="url(#grid)"/>
+
+        <!-- 北海道 -->
+        <path d="M620,50 Q680,45 700,70 Q720,95 710,130 Q700,160 670,175 
+                 Q640,190 610,180 Q580,175 560,155 Q545,140 550,115 
+                 Q555,90 580,70 Q600,55 620,50 Z" 
+              fill="url(#landGrad)" stroke="rgba(255,255,255,0.4)" stroke-width="2" filter="url(#glow)"/>
+        
+        <!-- 本州 -->
+        <path d="M540,180 Q560,175 575,190 Q590,205 585,230 Q580,260 565,290 
+                 Q555,320 560,350 Q565,380 555,410 Q545,440 520,460 
+                 Q495,480 465,485 Q435,490 410,475 Q385,460 370,435 
+                 Q355,410 345,380 Q335,350 340,320 Q345,290 360,265 
+                 Q375,240 400,225 Q425,210 455,205 Q485,200 510,190 Q530,182 540,180 Z" 
+              fill="url(#landGrad)" stroke="rgba(255,255,255,0.4)" stroke-width="2" filter="url(#glow)"/>
+        
+        <!-- 四国 -->
+        <path d="M320,420 Q350,410 375,420 Q400,430 405,455 
+                 Q410,480 390,495 Q370,510 340,505 Q310,500 295,480 
+                 Q280,460 290,440 Q300,425 320,420 Z" 
+              fill="url(#landGrad)" stroke="rgba(255,255,255,0.4)" stroke-width="2" filter="url(#glow)"/>
+        
+        <!-- 九州 -->
+        <path d="M200,420 Q230,405 260,415 Q285,425 295,450 
+                 Q305,480 295,510 Q285,540 255,555 Q225,570 195,560 
+                 Q165,550 150,520 Q135,490 145,460 Q155,435 175,420 Q190,410 200,420 Z" 
+              fill="url(#landGrad)" stroke="rgba(255,255,255,0.4)" stroke-width="2" filter="url(#glow)"/>
+        
+        <!-- 沖縄 -->
+        <path d="M80,620 Q100,610 120,620 Q140,630 135,650 
+                 Q130,670 110,675 Q90,680 75,665 Q60,650 70,635 Q75,622 80,620 Z" 
+              fill="url(#landGrad)" stroke="rgba(255,255,255,0.4)" stroke-width="2" filter="url(#glow)"/>
+
+        <!-- 地名ラベル -->
+        <text x="650" y="120" fill="rgba(255,255,255,0.5)" font-size="14" font-weight="500">北海道</text>
+        <text x="480" y="340" fill="rgba(255,255,255,0.5)" font-size="14" font-weight="500">本州</text>
+        <text x="340" y="465" fill="rgba(255,255,255,0.5)" font-size="12" font-weight="500">四国</text>
+        <text x="200" y="500" fill="rgba(255,255,255,0.5)" font-size="12" font-weight="500">九州</text>
+        <text x="85" y="655" fill="rgba(255,255,255,0.5)" font-size="11" font-weight="500">沖縄</text>
+      </svg>
+
+      <!-- マーカーコンテナ -->
+      <div id="markersContainer"></div>
+
+      <!-- 凡例 -->
+      <div class="legend">
+        <div class="legend-title">ステータス</div>
+        <div class="legend-item">
+          <span class="legend-dot" style="background: #10B981;"></span>
+          <span class="legend-label">調査済み</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot" style="background: #F59E0B;"></span>
+          <span class="legend-label">調査中</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot" style="background: #6B7280;"></span>
+          <span class="legend-label">調査予定</span>
+        </div>
+      </div>
+
+      <!-- ガイド -->
+      <div class="guide" id="guide">
+        <div class="guide-icon">⚓</div>
+        <div class="guide-text">マーカーをクリックして<br>港の情報を見る</div>
+      </div>
+    </div>
+
+    <!-- 港情報パネル -->
+    <div class="harbor-panel" id="harborPanel" style="display: none;"></div>
+  </div>
+
+  <!-- 波アニメーション -->
+  <div class="waves">
+    <svg class="wave" viewBox="0 0 1440 120" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="waveGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="rgba(59, 130, 246, 0.3)"/>
+          <stop offset="100%" stop-color="rgba(59, 130, 246, 0.1)"/>
+        </linearGradient>
+      </defs>
+      <path fill="url(#waveGrad)" d="M0,60 C150,120 350,0 500,60 C650,120 850,0 1000,60 C1150,120 1350,0 1440,60 L1440,120 L0,120 Z"/>
+    </svg>
+    <svg class="wave" viewBox="0 0 1440 120" preserveAspectRatio="none">
+      <path fill="rgba(37, 99, 235, 0.2)" d="M0,80 C200,40 400,100 600,60 C800,20 1000,90 1200,50 C1350,20 1400,70 1440,60 L1440,120 L0,120 Z"/>
+    </svg>
+  </div>
+
+  <!-- ウェルカムオーバーレイ -->
+  <div class="welcome" id="welcome">
+    <div class="welcome-icon">⛵</div>
+    <h2>海童のロマンを求めて</h2>
+    <p>全国の港を巡る旅へようこそ</p>
+    <div class="loader">
+      <div class="loader-bar"></div>
+    </div>
+  </div>
+
+  <script>
+    // 港データ - 日本地図SVG座標に合わせて調整
+    const harbors = [
+      {
+        id: 1,
+        name: '小樽港マリーナ',
+        region: '北海道',
+        x: 78, y: 14,  // 北海道西側
+        facilities: ['給油', 'トイレ', 'シャワー', '駐車場'],
+        description: '北海道クルージングの拠点。日本海を望む絶景のマリーナ。',
+        photo: '🏔️',
+        status: 'done'
+      },
+      {
+        id: 2,
+        name: '新湊マリーナ',
+        region: '富山県',
+        x: 58, y: 40,  // 本州中部日本海側
+        facilities: ['給油', 'トイレ', '駐車場', 'コンビニ'],
+        description: '立山連峰を背景に、富山湾の穏やかな海を楽しめる。',
+        photo: '⛰️',
+        status: 'done'
+      },
+      {
+        id: 3,
+        name: '伊東サンライズマリーナ',
+        region: '静岡県',
+        x: 68, y: 52,  // 伊豆半島
+        facilities: ['給油', 'トイレ', 'シャワー', '駐車場', 'タクシー'],
+        description: '相模湾に面した温泉リゾート。航海後の温泉が格別。',
+        photo: '♨️',
+        status: 'done'
+      },
+      {
+        id: 4,
+        name: '新居浜マリーナ',
+        region: '愛媛県',
+        x: 42, y: 62,  // 四国北側
+        facilities: ['給油', 'トイレ', 'シャワー'],
+        description: '瀬戸内海の穏やかな海域。しまなみ海道クルージングの拠点に。',
+        photo: '🌊',
+        status: 'done'
+      },
+      {
+        id: 5,
+        name: '福岡市ヨットハーバー',
+        region: '福岡県',
+        x: 26, y: 60,  // 九州北部
+        facilities: ['給油', 'トイレ', 'シャワー', '駐車場', 'コンビニ', 'タクシー'],
+        description: '博多湾に位置する九州最大級のヨットハーバー。グルメも充実。',
+        photo: '🍜',
+        status: 'done'
+      },
+      {
+        id: 6,
+        name: '宜野湾マリーナ',
+        region: '沖縄県',
+        x: 12, y: 90,  // 沖縄
+        facilities: ['給油', 'トイレ', 'シャワー', '駐車場', 'コンビニ'],
+        description: 'エメラルドグリーンの海。沖縄本島クルージングのホームポート。',
+        photo: '🏝️',
+        status: 'done'
+      },
+      {
+        id: 7,
+        name: '函館港',
+        region: '北海道',
+        x: 82, y: 20,  // 北海道南端
+        facilities: ['トイレ', '駐車場'],
+        description: '函館山の夜景を海から眺める贅沢。',
+        photo: '🌃',
+        status: 'progress'
+      },
+      {
+        id: 8,
+        name: '神戸港',
+        region: '兵庫県',
+        x: 48, y: 56,  // 関西
+        facilities: ['給油', 'トイレ', 'シャワー', '駐車場', 'タクシー'],
+        description: '六甲山と港町の風景。関西クルージングの要所。',
+        photo: '🌉',
+        status: 'planned'
+      }
+    ];
+
+    const facilityIcons = {
+      '給油': '⛽',
+      'トイレ': '🚻',
+      'シャワー': '🚿',
+      '駐車場': '🅿️',
+      'コンビニ': '🏪',
+      'タクシー': '🚕'
+    };
+
+    const statusLabels = {
+      done: '調査済み',
+      progress: '調査中',
+      planned: '調査予定'
+    };
+
+    let selectedHarbor = null;
+    let currentFilter = 'all';
+
+    // 初期化
+    document.addEventListener('DOMContentLoaded', () => {
+      // ウェルカム画面を2.5秒後に非表示
+      setTimeout(() => {
+        document.getElementById('welcome').classList.add('hidden');
+      }, 2500);
+
+      renderMarkers();
+      setupFilters();
+    });
+
+    // マーカーを描画
+    function renderMarkers() {
+      const container = document.getElementById('markersContainer');
+      container.innerHTML = '';
+
+      const filtered = harbors.filter(h => {
+        if (currentFilter === 'all') return true;
+        return h.facilities.includes(currentFilter);
+      });
+
+      filtered.forEach(harbor => {
+        const marker = document.createElement('button');
+        marker.className = `marker status-${harbor.status}${selectedHarbor?.id === harbor.id ? ' selected' : ''}`;
+        marker.style.left = `${harbor.x}%`;
+        marker.style.top = `${harbor.y}%`;
+        marker.innerHTML = selectedHarbor?.id === harbor.id ? '⚓' : '';
+        marker.innerHTML += `<span class="marker-tooltip">${harbor.name}</span>`;
+        marker.onclick = () => selectHarbor(harbor);
+        container.appendChild(marker);
+      });
+
+      // ガイド表示切り替え
+      document.getElementById('guide').style.display = selectedHarbor ? 'none' : 'block';
+    }
+
+    // 港を選択
+    function selectHarbor(harbor) {
+      selectedHarbor = harbor;
+      document.getElementById('mainContent').classList.add('has-panel');
+      renderMarkers();
+      renderPanel();
+    }
+
+    // パネルを閉じる
+    function closePanel() {
+      selectedHarbor = null;
+      document.getElementById('mainContent').classList.remove('has-panel');
+      document.getElementById('harborPanel').style.display = 'none';
+      renderMarkers();
+    }
+
+    // パネルを描画
+    function renderPanel() {
+      const panel = document.getElementById('harborPanel');
+      const h = selectedHarbor;
+      
+      panel.style.display = 'block';
+      panel.innerHTML = `
+        <div class="panel-header">
+          ${h.photo}
+          <button class="close-btn" onclick="closePanel()">✕</button>
+          <span class="status-badge ${h.status}">${statusLabels[h.status]}</span>
+        </div>
+        <div class="panel-body">
+          <div class="panel-region">${h.region}</div>
+          <h2 class="panel-name">${h.name}</h2>
+          <p class="panel-desc">${h.description}</p>
+          <div class="facilities-label">利用可能な設備</div>
+          <div class="facilities">
+            ${h.facilities.map(f => `
+              <span class="facility-badge">${facilityIcons[f] || '📍'} ${f}</span>
+            `).join('')}
+          </div>
+          <div class="actions">
+            <button class="btn btn-outline">📍 地図で開く</button>
+            <button class="btn btn-primary">📖 詳細を見る</button>
+          </div>
+        </div>
+      `;
+    }
+
+    // フィルター設定
+    function setupFilters() {
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.onclick = () => {
+          document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentFilter = btn.dataset.filter;
+          renderMarkers();
+        };
+      });
+    }
+  </script>
+</body>
+</html>
