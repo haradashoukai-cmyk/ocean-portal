@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>日本海洋研究所 - 海のポータル</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Noto Sans JP', 'Hiragino Sans', sans-serif;
+      background: #f5f7fa;
+      overflow: hidden;
+    }
+
+    /* ヘッダー */
+    .header {
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #0c4a6e, #0e7490);
+      color: #fff;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+      position: relative;
+      z-index: 1000;
+    }
+
+    .header-inner {
+      max-width: 1600px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-icon {
+      font-size: 28px;
+    }
+
+    .logo-text h1 {
+      font-size: 20px;
+      font-weight: 700;
+      font-family: 'Zen Maru Gothic', sans-serif;
+    }
+
+    .logo-text p {
+      font-size: 12px;
+      opacity: 0.85;
+    }
+
+    .stats {
+      display: flex;
+      gap: 16px;
+      font-size: 13px;
+    }
+
+    .stat-pill {
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(10px);
+      padding: 6px 14px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .stat-pill strong {
+      font-size: 16px;
+      color: #4ADE80;
+      font-weight: 700;
+    }
+
+    /* メインレイアウト */
+    .main {
+      position: relative;
+      height: calc(100vh - 60px);
+    }
+
+    /* 地図 */
+    #map {
+      width: 100%;
+      height: 100%;
+      background: #a8d4f0;
+    }
+
+    /* フィルターパネル */
+    .filter-panel {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+      padding: 16px;
+      z-index: 500;
+      width: 240px;
+    }
+
+    .filter-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .filter-group {
+      margin-bottom: 12px;
+    }
+
+    .filter-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .filter-label {
+      font-size: 11px;
+      color: #94a3b8;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .filter-toggle {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-bottom: 6px;
+    }
+
+    .filter-toggle:hover {
+      background: #f1f5f9;
+    }
+
+    .filter-toggle.active {
+      background: #f0f9ff;
+    }
+
+    .toggle-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .toggle-dot.port {
+      background: #0e7490;
+    }
+
+    .toggle-dot.activity {
+      background: #f59e0b;
+    }
+
+    .toggle-label {
+      font-size: 13px;
+      color: #1e293b;
+      font-weight: 500;
+      flex: 1;
+    }
+
+    .toggle-count {
+      font-size: 11px;
+      color: #64748b;
+      background: #f1f5f9;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .toggle-check {
+      width: 18px;
+      height: 18px;
+      border: 2px solid #cbd5e1;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .filter-toggle.active .toggle-check {
+      background: #0e7490;
+      border-color: #0e7490;
+    }
+
+    /* 凡例 */
+    .legend {
+      position: absolute;
+      bottom: 30px;
+      left: 16px;
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+      padding: 14px;
+      z-index: 500;
+      width: 240px;
+    }
+
+    .legend-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 10px;
+    }
+
+    .legend-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #475569;
+      margin-bottom: 6px;
+    }
+
+    .legend-row:last-child {
+      margin-bottom: 0;
+    }
+
+    /* 検索バー */
+    .search-bar {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: #fff;
+      border-radius: 30px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 280px;
+      z-index: 500;
+    }
+
+    .search-bar input {
+      border: none;
+      outline: none;
+      font-size: 14px;
+      flex: 1;
+      font-family: inherit;
+    }
+
+    /* 詳細パネル（ボトムシート風） */
+    .detail-panel {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 420px;
+      max-width: 100%;
+      max-height: calc(100vh - 80px);
+      background: #fff;
+      border-radius: 20px 20px 0 0;
+      box-shadow: -4px -4px 30px rgba(0,0,0,0.15);
+      transform: translateX(100%);
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 600;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    .detail-panel.active {
+      transform: translateX(0);
+    }
+
+    .detail-photo {
+      height: 220px;
+      background: linear-gradient(135deg, #0c4a6e, #0e7490);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 80px;
+    }
+
+    .detail-photo.port {
+      background: linear-gradient(135deg, #0c4a6e, #0e7490);
+    }
+
+    .detail-photo.activity {
+      background: linear-gradient(135deg, #f59e0b, #ea580c);
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(0,0,0,0.4);
+      color: #fff;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(10px);
+    }
+
+    .detail-type-badge {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      padding: 6px 14px;
+      background: rgba(255,255,255,0.95);
+      color: #0c4a6e;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      backdrop-filter: blur(10px);
+    }
+
+    .detail-type-badge.activity {
+      color: #ea580c;
+    }
+
+    .detail-body {
+      padding: 24px;
+    }
+
+    .detail-meta {
+      display: flex;
+      gap: 12px;
+      font-size: 12px;
+      color: #64748b;
+      margin-bottom: 8px;
+    }
+
+    .detail-meta span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .detail-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 12px;
+      font-family: 'Zen Maru Gothic', sans-serif;
+    }
+
+    .detail-text {
+      color: #475569;
+      font-size: 14px;
+      line-height: 1.8;
+      margin-bottom: 20px;
+    }
+
+    .detail-section {
+      margin-bottom: 20px;
+    }
+
+    .detail-section-label {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 500;
+    }
+
+    .facilities {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .facility-tag {
+      padding: 6px 12px;
+      background: rgba(14, 116, 144, 0.1);
+      color: #0e7490;
+      border-radius: 16px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .author {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      background: #f8fafc;
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+
+    .author-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #f59e0b, #ef4444);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .author-info {
+      font-size: 13px;
+    }
+
+    .author-name {
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .author-date {
+      color: #64748b;
+      font-size: 11px;
+    }
+
+    .reactions {
+      display: flex;
+      gap: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #e2e8f0;
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    .reaction-btn {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .btn {
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+
+    .btn-outline {
+      background: #fff;
+      color: #0e7490;
+      border: 2px solid #0e7490;
+    }
+
+    .btn-outline:hover {
+      background: rgba(14, 116, 144, 0.05);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #0e7490, #0c4a6e);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(14, 116, 144, 0.3);
+    }
+
+    /* マーカーのカスタムCSS */
+    .marker-port {
+      background: #0e7490;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 3px solid #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    .marker-activity {
+      background: #f59e0b;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 3px solid #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    /* Leafletポップアップカスタマイズ */
+    .leaflet-popup-content-wrapper {
+      border-radius: 14px;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .leaflet-popup-content {
+      margin: 0;
+      width: 240px !important;
+    }
+
+    .popup-photo {
+      height: 120px;
+      background: linear-gradient(135deg, #0c4a6e, #0e7490);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 50px;
+      color: rgba(255,255,255,0.4);
+    }
+
+    .popup-photo.activity {
+      background: linear-gradient(135deg, #f59e0b, #ea580c);
+    }
+
+    .popup-body {
+      padding: 14px;
+    }
+
+    .popup-type {
+      font-size: 11px;
+      color: #0e7490;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .popup-type.activity {
+      color: #ea580c;
+    }
+
+    .popup-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 6px;
+    }
+
+    .popup-text {
+      font-size: 12px;
+      color: #64748b;
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+
+    .popup-link {
+      display: inline-block;
+      color: #0e7490;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .popup-link:hover {
+      text-decoration: underline;
+    }
+
+    /* レスポンシブ */
+    @media (max-width: 768px) {
+      .filter-panel {
+        width: 200px;
+      }
+
+      .legend {
+        display: none;
+      }
+
+      .search-bar {
+        width: calc(100% - 240px);
+        max-width: 200px;
+      }
+
+      .detail-panel {
+        width: 100%;
+        max-height: 70vh;
+      }
+    }
+
+    /* 免責事項 */
+    .disclaimer {
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      background: rgba(255,255,255,0.9);
+      backdrop-filter: blur(10px);
+      padding: 6px 12px;
+      border-radius: 16px;
+      font-size: 10px;
+      color: #94a3b8;
+      z-index: 500;
+    }
+  </style>
+</head>
+<body>
+  <!-- ヘッダー -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon">⚓</span>
+        <div class="logo-text">
+          <h1>日本海洋研究所 海のポータル</h1>
+          <p>港情報と航海記録 - 全国の海を巡る</p>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat-pill">⛵ <strong>8</strong> 港</div>
+        <div class="stat-pill">📔 <strong>5</strong> 航海記録</div>
+        <div class="stat-pill">👥 <strong>23</strong> メンバー</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- メイン -->
+  <div class="main">
+    <!-- 地図 -->
+    <div id="map"></div>
+
+    <!-- 検索バー -->
+    <div class="search-bar">
+      🔍 <input type="text" placeholder="港名・地域で検索..." />
+    </div>
+
+    <!-- フィルター -->
+    <div class="filter-panel">
+      <div class="filter-title">📍 表示するピン</div>
+      
+      <div class="filter-toggle active" data-type="port" onclick="toggleFilter('port')">
+        <span class="toggle-dot port"></span>
+        <span class="toggle-label">港情報</span>
+        <span class="toggle-count">8</span>
+        <span class="toggle-check">✓</span>
+      </div>
+
+      <div class="filter-toggle active" data-type="activity" onclick="toggleFilter('activity')">
+        <span class="toggle-dot activity"></span>
+        <span class="toggle-label">航海記録</span>
+        <span class="toggle-count">5</span>
+        <span class="toggle-check">✓</span>
+      </div>
+    </div>
+
+    <!-- 凡例 -->
+    <div class="legend">
+      <div class="legend-title">🗾 ピンの種類</div>
+      <div class="legend-row">
+        <span class="toggle-dot port"></span>
+        <span><strong>港情報</strong> - 設備や利用情報</span>
+      </div>
+      <div class="legend-row">
+        <span class="toggle-dot activity"></span>
+        <span><strong>航海記録</strong> - メンバーの体験</span>
+      </div>
+    </div>
+
+    <!-- 詳細パネル -->
+    <div class="detail-panel" id="detailPanel"></div>
+
+    <!-- 免責事項 -->
+    <div class="disclaimer">
+      ※ 本サイトの情報は参考情報です
+    </div>
+  </div>
+
+  <script>
+    // 港情報データ
+    const ports = [
+      {
+        id: 'p1', type: 'port',
+        name: '小樽港マリーナ',
+        region: '北海道',
+        lat: 43.1907, lng: 141.0056,
+        emoji: '🏔️',
+        facilities: ['給油', 'トイレ', 'シャワー', '駐車場'],
+        description: '北海道クルージングの拠点。日本海を望む絶景のマリーナ。',
+        status: '調査済み'
+      },
+      {
+        id: 'p2', type: 'port',
+        name: '函館港',
+        region: '北海道',
+        lat: 41.7686, lng: 140.7288,
+        emoji: '🌃',
+        facilities: ['トイレ', '駐車場'],
+        description: '函館山の夜景を海から眺める贅沢。',
+        status: '調査中'
+      },
+      {
+        id: 'p3', type: 'port',
+        name: '新湊マリーナ',
+        region: '富山県',
+        lat: 36.7833, lng: 137.0833,
+        emoji: '⛰️',
+        facilities: ['給油', 'トイレ', '駐車場', 'コンビニ'],
+        description: '立山連峰を背景に、富山湾の穏やかな海を楽しめる。',
+        status: '調査済み'
+      },
+      {
+        id: 'p4', type: 'port',
+        name: '伊東サンライズマリーナ',
+        region: '静岡県',
+        lat: 34.9667, lng: 139.1000,
+        emoji: '♨️',
+        facilities: ['給油', 'トイレ', 'シャワー', '駐車場', 'タクシー'],
+        description: '相模湾に面した温泉リゾート。航海後の温泉が格別。',
+        status: '調査済み'
+      },
+      {
+        id: 'p5', type: 'port',
+        name: '神戸港',
+        region: '兵庫県',
+        lat: 34.6850, lng: 135.1956,
+        emoji: '🌉',
+        facilities: ['給油', 'トイレ', 'シャワー', '駐車場', 'タクシー'],
+        description: '六甲山と港町の風景。関西クルージングの要所。',
+        status: '調査予定'
+      },
+      {
+        id: 'p6', type: 'port',
+        name: '新居浜マリーナ',
+        region: '愛媛県',
+        lat: 33.9600, lng: 133.2833,
+        emoji: '🌊',
+        facilities: ['給油', 'トイレ', 'シャワー'],
+        description: '瀬戸内海の穏やかな海域。しまなみ海道クルージングの拠点に。',
+        status: '調査済み'
+      },
+      {
+        id: 'p7', type: 'port',
+        name: '福岡市ヨットハーバー',
+        region: '福岡県',
+        lat: 33.6000, lng: 130.3500,
+        emoji: '🍜',
+        facilities: ['給油', 'トイレ', 'シャワー', '駐車場', 'コンビニ', 'タクシー'],
+        description: '博多湾に位置する九州最大級のヨットハーバー。グルメも充実。',
+        status: '調査済み'
+      },
+      {
+        id: 'p8', type: 'port',
+        name: '宜野湾マリーナ',
+        region: '沖縄県',
+        lat: 26.2817, lng: 127.7600,
+        emoji: '🏝️',
+        facilities: ['給油', 'トイレ', 'シャワー', '駐車場', 'コンビニ'],
+        description: 'エメラルドグリーンの海。沖縄本島クルージングのホームポート。',
+        status: '調査済み'
+      }
+    ];
+
+    // 航海記録データ
+    const activities = [
+      {
+        id: 'a1', type: 'activity',
+        name: 'イルカの群れに遭遇！',
+        location: '三浦半島沖',
+        lat: 35.1500, lng: 139.6500,
+        emoji: '🐬',
+        description: '三浦半島沖でハナゴンドウの群れと並走。家族みんな大興奮の朝でした。',
+        author: '山田 太郎',
+        date: '2026年4月20日',
+        likes: 47, comments: 8
+      },
+      {
+        id: 'a2', type: 'activity',
+        name: '伊豆大島・三原山',
+        location: '伊豆大島',
+        lat: 34.7500, lng: 139.3500,
+        emoji: '🌋',
+        description: '元町港に入港後、レンタカーで島を一周。三原山の火口は圧巻のスケール。',
+        author: '山田 太郎',
+        date: '2026年4月21日',
+        likes: 56, comments: 11
+      },
+      {
+        id: 'a3', type: 'activity',
+        name: '玄界灘の夕焼け',
+        location: '玄界灘',
+        lat: 33.9000, lng: 130.0000,
+        emoji: '🌇',
+        description: '九州沖の玄界灘で見た夕焼けは生涯忘れない。海と空が一体になる瞬間。',
+        author: '佐藤 花子',
+        date: '2026年4月10日',
+        likes: 89, comments: 15
+      },
+      {
+        id: 'a4', type: 'activity',
+        name: '瀬戸内のしまなみ海道',
+        location: '瀬戸内海',
+        lat: 34.2500, lng: 133.0500,
+        emoji: '🌉',
+        description: 'しまなみ海道を海から眺める。橋の下を通過する瞬間が最高の景色。',
+        author: '鈴木 健',
+        date: '2026年3月28日',
+        likes: 34, comments: 6
+      },
+      {
+        id: 'a5', type: 'activity',
+        name: '沖縄でクジラ目撃',
+        location: '慶良間諸島沖',
+        lat: 26.2000, lng: 127.3500,
+        emoji: '🐋',
+        description: '慶良間諸島沖でザトウクジラの親子を目撃。冬の沖縄ならではの感動体験。',
+        author: '田中 美咲',
+        date: '2026年2月15日',
+        likes: 124, comments: 28
+      }
+    ];
+
+    // 地図初期化（日本全体が見える）
+    const map = L.map('map', {
+      zoomControl: true,
+      attributionControl: true
+    }).setView([36.5, 137.0], 5);
+
+    // OpenStreetMap タイル
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    // マーカー管理
+    const markers = { port: [], activity: [] };
+    const visibility = { port: true, activity: true };
+
+    // マーカー作成関数
+    function createMarker(item) {
+      const className = item.type === 'port' ? 'marker-port' : 'marker-activity';
+      const icon = L.divIcon({
+        className: '',
+        html: `<div class="${className}">${item.emoji}</div>`,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16]
+      });
+
+      const marker = L.marker([item.lat, item.lng], { icon });
+      
+      // ポップアップ
+      const popupClass = item.type === 'activity' ? 'activity' : '';
+      const typeLabel = item.type === 'port' ? '港情報' : '航海記録';
+      const subtitle = item.type === 'port' ? item.region : item.location;
+      
+      marker.bindPopup(`
+        <div class="popup-photo ${popupClass}">${item.emoji}</div>
+        <div class="popup-body">
+          <div class="popup-type ${popupClass}">${typeLabel} · ${subtitle}</div>
+          <div class="popup-title">${item.name}</div>
+          <div class="popup-text">${item.description.substring(0, 50)}...</div>
+          <a class="popup-link" onclick="showDetail('${item.id}')">詳細を見る →</a>
+        </div>
+      `, {
+        maxWidth: 240,
+        className: 'custom-popup'
+      });
+
+      markers[item.type].push(marker);
+      marker.addTo(map);
+      return marker;
+    }
+
+    // 全マーカーを描画
+    ports.forEach(p => createMarker(p));
+    activities.forEach(a => createMarker(a));
+
+    // フィルター切り替え
+    function toggleFilter(type) {
+      visibility[type] = !visibility[type];
+      const toggle = document.querySelector(`.filter-toggle[data-type="${type}"]`);
+      toggle.classList.toggle('active');
+
+      markers[type].forEach(m => {
+        if (visibility[type]) {
+          m.addTo(map);
+        } else {
+          map.removeLayer(m);
+        }
+      });
+    }
+
+    // 詳細パネル表示
+    function showDetail(itemId) {
+      const item = [...ports, ...activities].find(i => i.id === itemId);
+      if (!item) return;
+
+      const panel = document.getElementById('detailPanel');
+      
+      // 地図を該当ピンに移動
+      map.flyTo([item.lat, item.lng], 11, { duration: 1 });
+      map.closePopup();
+
+      let html = '';
+      if (item.type === 'port') {
+        html = `
+          <div class="detail-photo port">
+            ${item.emoji}
+            <button class="close-btn" onclick="closeDetail()">✕</button>
+            <span class="detail-type-badge">⚓ 港情報</span>
+          </div>
+          <div class="detail-body">
+            <div class="detail-meta">
+              <span>📍 ${item.region}</span>
+              <span>🔍 ${item.status}</span>
+            </div>
+            <h2 class="detail-title">${item.name}</h2>
+            <p class="detail-text">${item.description}</p>
+            
+            <div class="detail-section">
+              <div class="detail-section-label">利用可能な設備</div>
+              <div class="facilities">
+                ${item.facilities.map(f => `<span class="facility-tag">${f}</span>`).join('')}
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <div class="detail-section-label">位置情報</div>
+              <div style="font-size: 13px; color: #475569;">
+                緯度経度: ${item.lat.toFixed(4)}, ${item.lng.toFixed(4)}
+              </div>
+            </div>
+
+            <div class="actions">
+              <button class="btn btn-outline" onclick="window.open('https://www.google.com/maps?q=${item.lat},${item.lng}', '_blank')">📍 Google Map</button>
+              <button class="btn btn-primary">📖 詳細ページ</button>
+            </div>
+          </div>
+        `;
+      } else {
+        html = `
+          <div class="detail-photo activity">
+            ${item.emoji}
+            <button class="close-btn" onclick="closeDetail()">✕</button>
+            <span class="detail-type-badge activity">📔 航海記録</span>
+          </div>
+          <div class="detail-body">
+            <div class="detail-meta">
+              <span>📍 ${item.location}</span>
+              <span>📅 ${item.date}</span>
+            </div>
+            <h2 class="detail-title">${item.name}</h2>
+
+            <div class="author">
+              <div class="author-avatar">⛵</div>
+              <div class="author-info">
+                <div class="author-name">${item.author}</div>
+                <div class="author-date">${item.date}</div>
+              </div>
+            </div>
+
+            <p class="detail-text">${item.description}</p>
+
+            <div class="reactions">
+              <span class="reaction-btn">❤️ ${item.likes}</span>
+              <span class="reaction-btn">💬 ${item.comments}</span>
+              <span class="reaction-btn">🔖 保存</span>
+              <span class="reaction-btn">📤 共有</span>
+            </div>
+
+            <div class="actions">
+              <button class="btn btn-outline" onclick="window.open('https://www.google.com/maps?q=${item.lat},${item.lng}', '_blank')">📍 Google Map</button>
+              <button class="btn btn-primary">📖 全文を読む</button>
+            </div>
+          </div>
+        `;
+      }
+      
+      panel.innerHTML = html;
+      panel.classList.add('active');
+    }
+
+    function closeDetail() {
+      document.getElementById('detailPanel').classList.remove('active');
+      map.setView([36.5, 137.0], 5);
+    }
+  </script>
+</body>
+</html>

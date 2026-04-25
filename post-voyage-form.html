@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>航海記録を投稿 | 日本海洋研究所</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/exifr/dist/full.umd.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Noto Sans JP', 'Hiragino Sans', sans-serif;
+      background: #f5f7fa;
+      color: #1e293b;
+      min-height: 100vh;
+    }
+
+    /* ヘッダー */
+    .header {
+      padding: 14px 24px;
+      background: linear-gradient(135deg, #0c4a6e, #0e7490);
+      color: #fff;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    }
+
+    .header-inner {
+      max-width: 800px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header-back {
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      opacity: 0.9;
+    }
+
+    .header-back:hover {
+      opacity: 1;
+    }
+
+    .header-title {
+      font-size: 16px;
+      font-weight: 700;
+      font-family: 'Zen Maru Gothic', sans-serif;
+    }
+
+    /* メインコンテンツ */
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+
+    .page-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: #0c4a6e;
+      margin-bottom: 8px;
+      font-family: 'Zen Maru Gothic', sans-serif;
+    }
+
+    .page-subtitle {
+      color: #64748b;
+      font-size: 14px;
+      margin-bottom: 32px;
+    }
+
+    /* カード */
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-step {
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, #0e7490, #0c4a6e);
+      color: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    /* 写真アップロード */
+    .photo-upload {
+      border: 2px dashed #cbd5e1;
+      border-radius: 12px;
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #f8fafc;
+      position: relative;
+    }
+
+    .photo-upload:hover {
+      border-color: #0e7490;
+      background: #f0f9ff;
+    }
+
+    .photo-upload.has-image {
+      padding: 0;
+      border-style: solid;
+      border-color: #0e7490;
+      overflow: hidden;
+    }
+
+    .upload-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+
+    .upload-text {
+      color: #64748b;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .upload-hint {
+      color: #94a3b8;
+      font-size: 12px;
+    }
+
+    .upload-input {
+      display: none;
+    }
+
+    .photo-preview {
+      width: 100%;
+      max-height: 400px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .photo-overlay-info {
+      padding: 16px;
+      background: linear-gradient(180deg, transparent, rgba(0,0,0,0.7));
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      color: #fff;
+      font-size: 12px;
+    }
+
+    .photo-replace-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      font-family: inherit;
+    }
+
+    /* GPS情報表示 */
+    .gps-info {
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .gps-info.success {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .gps-info.warning {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .gps-info.empty {
+      background: #f1f5f9;
+      color: #64748b;
+    }
+
+    .gps-info-icon {
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .gps-info-content {
+      flex: 1;
+    }
+
+    .gps-info-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .gps-info-detail {
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    /* ミニマップ */
+    .mini-map {
+      margin-top: 12px;
+      height: 200px;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+      display: none;
+    }
+
+    .mini-map.visible {
+      display: block;
+    }
+
+    /* フォーム */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 8px;
+    }
+
+    .form-label .required {
+      color: #ef4444;
+      margin-left: 4px;
+    }
+
+    .form-input,
+    .form-textarea,
+    .form-select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: inherit;
+      transition: border-color 0.2s;
+      background: #fff;
+      color: #1e293b;
+    }
+
+    .form-input:focus,
+    .form-textarea:focus,
+    .form-select:focus {
+      outline: none;
+      border-color: #0e7490;
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 120px;
+      line-height: 1.6;
+    }
+
+    .form-hint {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 6px;
+    }
+
+    /* タグ入力 */
+    .tag-input-wrap {
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      background: #fff;
+    }
+
+    .tag-input-wrap:focus-within {
+      border-color: #0e7490;
+    }
+
+    .tag-pill {
+      background: rgba(14, 116, 144, 0.1);
+      color: #0e7490;
+      padding: 4px 10px;
+      border-radius: 16px;
+      font-size: 12px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tag-remove {
+      cursor: pointer;
+      opacity: 0.6;
+    }
+
+    .tag-remove:hover {
+      opacity: 1;
+    }
+
+    .tag-input {
+      border: none;
+      outline: none;
+      flex: 1;
+      min-width: 120px;
+      font-size: 13px;
+      padding: 4px;
+      font-family: inherit;
+    }
+
+    .tag-suggestions {
+      margin-top: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .tag-suggest {
+      background: #f1f5f9;
+      color: #475569;
+      padding: 4px 10px;
+      border-radius: 16px;
+      font-size: 11px;
+      cursor: pointer;
+      transition: background 0.2s;
+      border: none;
+      font-family: inherit;
+    }
+
+    .tag-suggest:hover {
+      background: #0e7490;
+      color: #fff;
+    }
+
+    /* 日時入力 */
+    .datetime-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    /* 公開設定 */
+    .visibility-options {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .visibility-option {
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 14px 10px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .visibility-option:hover {
+      border-color: #94a3b8;
+    }
+
+    .visibility-option.active {
+      border-color: #0e7490;
+      background: #f0f9ff;
+    }
+
+    .visibility-icon {
+      font-size: 24px;
+      margin-bottom: 4px;
+    }
+
+    .visibility-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .visibility-desc {
+      font-size: 10px;
+      color: #94a3b8;
+      margin-top: 2px;
+    }
+
+    /* 免責事項 */
+    .disclaimer-box {
+      background: #fef3c7;
+      border: 1px solid #fcd34d;
+      padding: 14px;
+      border-radius: 10px;
+      font-size: 12px;
+      color: #78350f;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .disclaimer-box strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    /* 投稿ボタン */
+    .submit-section {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .btn {
+      padding: 14px 28px;
+      border-radius: 10px;
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+
+    .btn-secondary {
+      background: #fff;
+      color: #64748b;
+      border: 1.5px solid #e2e8f0;
+      flex: 1;
+    }
+
+    .btn-secondary:hover {
+      background: #f8fafc;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #0e7490, #0c4a6e);
+      color: #fff;
+      flex: 2;
+      box-shadow: 0 4px 12px rgba(14, 116, 144, 0.3);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(14, 116, 144, 0.4);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* 成功表示 */
+    .success-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .success-overlay.visible {
+      display: flex;
+    }
+
+    .success-card {
+      background: #fff;
+      padding: 32px;
+      border-radius: 16px;
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+    }
+
+    .success-icon {
+      font-size: 60px;
+      margin-bottom: 16px;
+    }
+
+    .success-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #0c4a6e;
+      margin-bottom: 8px;
+      font-family: 'Zen Maru Gothic', sans-serif;
+    }
+
+    .success-text {
+      color: #64748b;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+
+    @media (max-width: 600px) {
+      .visibility-options {
+        grid-template-columns: 1fr;
+      }
+      .datetime-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- ヘッダー -->
+  <header class="header">
+    <div class="header-inner">
+      <a href="#" class="header-back">← 戻る</a>
+      <span class="header-title">📔 航海記録を投稿</span>
+      <span style="width: 50px;"></span>
+    </div>
+  </header>
+
+  <!-- メイン -->
+  <div class="container">
+    <h1 class="page-title">あなたの航海を記録しよう</h1>
+    <p class="page-subtitle">写真をアップロードすると、撮影場所が自動で地図に登録されます</p>
+
+    <!-- 写真アップロード -->
+    <div class="card">
+      <div class="card-title">
+        <span class="card-step">1</span>
+        写真をアップロード
+      </div>
+
+      <label for="photoInput" class="photo-upload" id="uploadArea">
+        <div id="uploadPlaceholder">
+          <div class="upload-icon">📷</div>
+          <div class="upload-text">クリックして写真を選択</div>
+          <div class="upload-hint">またはドラッグ＆ドロップ（JPEG / PNG）</div>
+        </div>
+        <img id="photoPreview" class="photo-preview" style="display: none;" />
+        <button type="button" id="replaceBtn" class="photo-replace-btn" style="display: none;" onclick="event.preventDefault(); document.getElementById('photoInput').click();">写真を変更</button>
+      </label>
+      <input type="file" id="photoInput" class="upload-input" accept="image/*" />
+
+      <!-- GPS情報 -->
+      <div id="gpsInfo" class="gps-info empty">
+        <span class="gps-info-icon">📍</span>
+        <div class="gps-info-content">
+          <div class="gps-info-title">写真の位置情報</div>
+          <div class="gps-info-detail">写真を選択すると、GPS情報を自動で読み取ります</div>
+        </div>
+      </div>
+
+      <!-- ミニマップ -->
+      <div id="miniMap" class="mini-map"></div>
+    </div>
+
+    <!-- 基本情報 -->
+    <div class="card">
+      <div class="card-title">
+        <span class="card-step">2</span>
+        基本情報
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">タイトル<span class="required">*</span></label>
+        <input type="text" class="form-input" placeholder="例：イルカの群れに遭遇！" id="titleInput" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">コメント / 体験談<span class="required">*</span></label>
+        <textarea class="form-textarea" placeholder="その時の様子、感想、エピソードを書いてみましょう。&#10;例：三浦半島沖を航行中、20頭ほどのハナゴンドウの群れと遭遇。船と並走するように泳いでくれて、家族みんな大興奮でした。" id="commentInput"></textarea>
+        <div class="form-hint">200〜500文字程度を推奨</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">日時</label>
+        <div class="datetime-row">
+          <input type="date" class="form-input" id="dateInput" />
+          <input type="time" class="form-input" id="timeInput" />
+        </div>
+        <div class="form-hint">写真のEXIF情報から自動取得します</div>
+      </div>
+    </div>
+
+    <!-- タグ -->
+    <div class="card">
+      <div class="card-title">
+        <span class="card-step">3</span>
+        タグを追加
+      </div>
+
+      <div class="tag-input-wrap" id="tagInputWrap">
+        <input type="text" class="tag-input" placeholder="タグを入力してEnter" id="tagInput" />
+      </div>
+
+      <div class="form-hint" style="margin-top: 8px;">よく使われるタグ：</div>
+      <div class="tag-suggestions">
+        <button class="tag-suggest" onclick="addTag('クルージング')">クルージング</button>
+        <button class="tag-suggest" onclick="addTag('釣り')">釣り</button>
+        <button class="tag-suggest" onclick="addTag('海の生き物')">海の生き物</button>
+        <button class="tag-suggest" onclick="addTag('夕焼け')">夕焼け</button>
+        <button class="tag-suggest" onclick="addTag('港')">港</button>
+        <button class="tag-suggest" onclick="addTag('景色')">景色</button>
+        <button class="tag-suggest" onclick="addTag('グルメ')">グルメ</button>
+        <button class="tag-suggest" onclick="addTag('天候良好')">天候良好</button>
+      </div>
+    </div>
+
+    <!-- 公開設定 -->
+    <div class="card">
+      <div class="card-title">
+        <span class="card-step">4</span>
+        公開設定
+      </div>
+
+      <div class="visibility-options">
+        <div class="visibility-option active" data-visibility="public" onclick="selectVisibility('public', this)">
+          <div class="visibility-icon">🌐</div>
+          <div class="visibility-label">全体公開</div>
+          <div class="visibility-desc">誰でも閲覧可能</div>
+        </div>
+        <div class="visibility-option" data-visibility="members" onclick="selectVisibility('members', this)">
+          <div class="visibility-icon">👥</div>
+          <div class="visibility-label">メンバーのみ</div>
+          <div class="visibility-desc">登録会員のみ</div>
+        </div>
+        <div class="visibility-option" data-visibility="private" onclick="selectVisibility('private', this)">
+          <div class="visibility-icon">🔒</div>
+          <div class="visibility-label">非公開</div>
+          <div class="visibility-desc">自分のみ</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 免責事項 -->
+    <div class="disclaimer-box">
+      <strong>📌 投稿に関する注意</strong>
+      投稿された情報は、他のメンバーの安全な航海・レジャーの参考とさせていただきます。誤った情報や危険を招く情報の投稿はお控えください。投稿内容に関する責任は投稿者に帰属します。
+    </div>
+
+    <!-- 投稿ボタン -->
+    <div class="submit-section">
+      <button class="btn btn-secondary" onclick="saveDraft()">下書き保存</button>
+      <button class="btn btn-primary" onclick="submitPost()" id="submitBtn">投稿する 🚀</button>
+    </div>
+  </div>
+
+  <!-- 成功表示 -->
+  <div class="success-overlay" id="successOverlay">
+    <div class="success-card">
+      <div class="success-icon">🎉</div>
+      <div class="success-title">投稿しました！</div>
+      <div class="success-text">あなたの航海記録が地図に登録されました。<br>他のメンバーと共有されます。</div>
+      <button class="btn btn-primary" onclick="closeSuccess()">マップで確認 →</button>
+    </div>
+  </div>
+
+  <script>
+    let currentLat = null;
+    let currentLng = null;
+    let miniMap = null;
+    let tags = [];
+
+    // 写真アップロード処理
+    const photoInput = document.getElementById('photoInput');
+    const photoPreview = document.getElementById('photoPreview');
+    const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+    const uploadArea = document.getElementById('uploadArea');
+    const replaceBtn = document.getElementById('replaceBtn');
+    const gpsInfo = document.getElementById('gpsInfo');
+    const miniMapEl = document.getElementById('miniMap');
+
+    photoInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      // プレビュー表示
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        photoPreview.src = e.target.result;
+        photoPreview.style.display = 'block';
+        uploadPlaceholder.style.display = 'none';
+        replaceBtn.style.display = 'block';
+        uploadArea.classList.add('has-image');
+      };
+      reader.readAsDataURL(file);
+
+      // EXIF情報を読み取る
+      try {
+        const exif = await exifr.parse(file, { gps: true });
+        console.log('EXIF data:', exif);
+
+        if (exif && exif.latitude && exif.longitude) {
+          currentLat = exif.latitude;
+          currentLng = exif.longitude;
+          
+          gpsInfo.className = 'gps-info success';
+          gpsInfo.innerHTML = `
+            <span class="gps-info-icon">✅</span>
+            <div class="gps-info-content">
+              <div class="gps-info-title">位置情報を取得しました</div>
+              <div class="gps-info-detail">
+                緯度: ${currentLat.toFixed(6)} / 経度: ${currentLng.toFixed(6)}<br>
+                ${exif.GPSAltitude ? `標高: ${exif.GPSAltitude.toFixed(1)}m / ` : ''}
+                この場所が地図に登録されます
+              </div>
+            </div>
+          `;
+
+          // ミニマップ表示
+          showMiniMap(currentLat, currentLng);
+
+          // 撮影日時も自動入力
+          if (exif.DateTimeOriginal) {
+            const date = new Date(exif.DateTimeOriginal);
+            document.getElementById('dateInput').value = date.toISOString().split('T')[0];
+            document.getElementById('timeInput').value = date.toTimeString().slice(0, 5);
+          }
+        } else {
+          gpsInfo.className = 'gps-info warning';
+          gpsInfo.innerHTML = `
+            <span class="gps-info-icon">⚠️</span>
+            <div class="gps-info-content">
+              <div class="gps-info-title">写真にGPS情報がありません</div>
+              <div class="gps-info-detail">
+                スマホの位置情報がOFFで撮影された写真の可能性があります。<br>
+                後ほど地図上で位置を選択することもできます。
+              </div>
+            </div>
+          `;
+          miniMapEl.classList.remove('visible');
+        }
+      } catch (err) {
+        console.error('EXIF読み取りエラー:', err);
+        gpsInfo.className = 'gps-info warning';
+        gpsInfo.innerHTML = `
+          <span class="gps-info-icon">⚠️</span>
+          <div class="gps-info-content">
+            <div class="gps-info-title">位置情報を読み取れませんでした</div>
+            <div class="gps-info-detail">手動で位置を指定してください</div>
+          </div>
+        `;
+      }
+    });
+
+    // ミニマップ表示
+    function showMiniMap(lat, lng) {
+      miniMapEl.classList.add('visible');
+      
+      if (miniMap) {
+        miniMap.setView([lat, lng], 13);
+        miniMap.eachLayer(l => {
+          if (l instanceof L.Marker) miniMap.removeLayer(l);
+        });
+      } else {
+        setTimeout(() => {
+          miniMap = L.map('miniMap').setView([lat, lng], 13);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+          }).addTo(miniMap);
+          
+          L.marker([lat, lng]).addTo(miniMap)
+            .bindPopup('この場所に登録されます')
+            .openPopup();
+
+          // サイズ調整
+          setTimeout(() => miniMap.invalidateSize(), 100);
+        }, 100);
+        return;
+      }
+
+      L.marker([lat, lng]).addTo(miniMap)
+        .bindPopup('この場所に登録されます')
+        .openPopup();
+    }
+
+    // タグ管理
+    const tagInput = document.getElementById('tagInput');
+    const tagInputWrap = document.getElementById('tagInputWrap');
+
+    tagInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && tagInput.value.trim()) {
+        e.preventDefault();
+        addTag(tagInput.value.trim());
+        tagInput.value = '';
+      }
+    });
+
+    function addTag(tag) {
+      if (tags.includes(tag)) return;
+      tags.push(tag);
+      renderTags();
+    }
+
+    function removeTag(tag) {
+      tags = tags.filter(t => t !== tag);
+      renderTags();
+    }
+
+    function renderTags() {
+      // 既存のタグピルを削除
+      tagInputWrap.querySelectorAll('.tag-pill').forEach(el => el.remove());
+      
+      // 入力欄の前にタグを挿入
+      tags.forEach(tag => {
+        const pill = document.createElement('span');
+        pill.className = 'tag-pill';
+        pill.innerHTML = `${tag} <span class="tag-remove" onclick="removeTag('${tag}')">✕</span>`;
+        tagInputWrap.insertBefore(pill, tagInput);
+      });
+    }
+
+    // 公開設定
+    function selectVisibility(value, el) {
+      document.querySelectorAll('.visibility-option').forEach(o => o.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    // 投稿
+    function submitPost() {
+      const title = document.getElementById('titleInput').value.trim();
+      const comment = document.getElementById('commentInput').value.trim();
+
+      if (!title) {
+        alert('タイトルを入力してください');
+        return;
+      }
+      if (!comment) {
+        alert('コメントを入力してください');
+        return;
+      }
+
+      // 成功表示
+      document.getElementById('successOverlay').classList.add('visible');
+    }
+
+    function closeSuccess() {
+      document.getElementById('successOverlay').classList.remove('visible');
+    }
+
+    function saveDraft() {
+      alert('下書きを保存しました（デモ機能）');
+    }
+
+    // ドラッグ＆ドロップ
+    uploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadArea.style.borderColor = '#0e7490';
+      uploadArea.style.background = '#f0f9ff';
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+      if (!uploadArea.classList.contains('has-image')) {
+        uploadArea.style.borderColor = '';
+        uploadArea.style.background = '';
+      }
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) {
+        photoInput.files = e.dataTransfer.files;
+        photoInput.dispatchEvent(new Event('change'));
+      }
+    });
+  </script>
+</body>
+</html>
