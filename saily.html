@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="googlebot" content="noindex, nofollow">
   <title>saily | 日本海洋研究所</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -17,95 +19,45 @@
       height: 100%;
       overflow: hidden;
     }
-    .header {
-      background: linear-gradient(135deg, #0c4a6e, #0e7490);
-      color: #fff;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-      flex-shrink: 0;
-    }
-    .header-top {
-      padding: 10px 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
+    .header { background: linear-gradient(135deg, #0c4a6e, #0e7490); color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.15); flex-shrink: 0; }
+    .header-top { padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; }
     .header-title { display: flex; align-items: center; gap: 8px; }
     .header-title h1 { font-size: 15px; font-weight: 700; font-family: 'Zen Maru Gothic', sans-serif; }
     .header-title p { font-size: 10px; opacity: 0.85; }
     .post-count { background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: 14px; font-size: 11px; }
     .post-count strong { color: #4ADE80; font-weight: 700; font-size: 13px; }
     .tabs { display: flex; background: rgba(0,0,0,0.15); }
-    .tab {
-      flex: 1; padding: 12px; text-align: center; cursor: pointer;
-      font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.7);
-      transition: all 0.2s; border-bottom: 3px solid transparent; user-select: none;
-    }
-    .tab.active {
-      color: #fff; font-weight: 700; background: rgba(255,255,255,0.1);
-      border-bottom-color: #4ADE80;
-    }
+    .tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.7); transition: all 0.2s; border-bottom: 3px solid transparent; user-select: none; }
+    .tab.active { color: #fff; font-weight: 700; background: rgba(255,255,255,0.1); border-bottom-color: #4ADE80; }
     .main { height: calc(100vh - 95px); position: relative; overflow: hidden; }
     .view { position: absolute; inset: 0; display: none; }
     .view.active { display: block; }
     #map { width: 100%; height: 100%; background: #a8d4f0; }
-    .loading-overlay {
-      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      background: #fff; padding: 16px 28px; border-radius: 14px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 500;
-      display: flex; align-items: center; gap: 10px; font-size: 13px; color: #475569;
-    }
-    .loader {
-      width: 18px; height: 18px; border: 3px solid #e2e8f0;
-      border-top: 3px solid #0e7490; border-radius: 50%; animation: spin 0.6s linear infinite;
-    }
+    .loading-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; padding: 16px 28px; border-radius: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 500; display: flex; align-items: center; gap: 10px; font-size: 13px; color: #475569; }
+    .loader { width: 18px; height: 18px; border: 3px solid #e2e8f0; border-top: 3px solid #0e7490; border-radius: 50%; animation: spin 0.6s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .timeline-toggle {
-      position: absolute; bottom: 16px; right: 16px; z-index: 500;
-      background: #fff; border-radius: 50px; padding: 10px 16px;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.15); cursor: pointer;
-      display: flex; align-items: center; gap: 6px;
-      font-size: 13px; font-weight: 600; color: #0e7490; border: none; font-family: inherit;
-    }
-    .timeline-panel {
-      position: absolute; top: 0; right: 0; width: 340px; height: 100%;
-      background: #fff; box-shadow: -2px 0 14px rgba(0,0,0,0.1);
-      z-index: 600; display: flex; flex-direction: column;
-      transform: translateX(100%); transition: transform 0.3s;
-    }
+    .timeline-toggle { position: absolute; bottom: 16px; right: 16px; z-index: 500; background: #fff; border-radius: 50px; padding: 10px 16px; box-shadow: 0 4px 14px rgba(0,0,0,0.15); cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: #0e7490; border: none; font-family: inherit; }
+    .timeline-panel { position: absolute; top: 0; right: 0; width: 340px; height: 100%; background: #fff; box-shadow: -2px 0 14px rgba(0,0,0,0.1); z-index: 600; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.3s; }
     .timeline-panel.open { transform: translateX(0); }
-    .timeline-header {
-      padding: 14px 16px; border-bottom: 1px solid #e2e8f0;
-      display: flex; justify-content: space-between; align-items: center;
-    }
+    .timeline-header { padding: 14px 16px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
     .timeline-title { font-size: 14px; font-weight: 700; color: #1e293b; }
     .timeline-close { background: none; border: none; cursor: pointer; font-size: 20px; color: #94a3b8; }
     .timeline-list { flex: 1; overflow-y: auto; padding: 8px; }
-    .post-item {
-      padding: 10px; border-radius: 10px; cursor: pointer;
-      transition: background 0.2s; margin-bottom: 4px; display: flex; gap: 10px;
-    }
+    .post-item { padding: 10px; border-radius: 10px; transition: background 0.2s; margin-bottom: 4px; position: relative; }
     .post-item:hover, .post-item.active { background: #f0f9ff; }
-    .post-thumb {
-      width: 56px; height: 56px; border-radius: 8px; object-fit: cover;
-      flex-shrink: 0; background: #e2e8f0;
-    }
+    .post-item-content { display: flex; gap: 10px; cursor: pointer; }
+    .post-thumb { width: 56px; height: 56px; border-radius: 8px; object-fit: cover; flex-shrink: 0; background: #e2e8f0; }
     .post-content { flex: 1; min-width: 0; }
     .post-meta { display: flex; gap: 6px; font-size: 10px; color: #94a3b8; margin-bottom: 2px; }
     .post-author { color: #0e7490; font-weight: 600; }
-    .post-title {
-      font-size: 12px; font-weight: 600; color: #1e293b;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px;
-    }
-    .post-comment {
-      font-size: 11px; color: #64748b;
-      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-    }
+    .post-title { font-size: 12px; font-weight: 600; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
+    .post-comment { font-size: 11px; color: #64748b; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .post-actions { display: flex; gap: 4px; margin-top: 6px; padding-top: 6px; border-top: 1px solid #e2e8f0; }
+    .post-action-btn { background: none; border: none; cursor: pointer; font-size: 11px; color: #64748b; padding: 4px 8px; border-radius: 6px; font-family: inherit; display: flex; align-items: center; gap: 3px; }
+    .post-action-btn:hover { background: #e2e8f0; color: #0e7490; }
     .empty-state { padding: 40px 20px; text-align: center; color: #94a3b8; font-size: 13px; line-height: 1.6; }
     .empty-state-emoji { font-size: 40px; margin-bottom: 8px; }
-    .marker-photo {
-      width: 40px; height: 40px; border-radius: 50%; border: 3px solid #fff;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3); object-fit: cover;
-    }
+    .marker-photo { width: 40px; height: 40px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.3); object-fit: cover; }
     .leaflet-popup-content-wrapper { border-radius: 12px; padding: 0; overflow: hidden; }
     .leaflet-popup-content { margin: 0; width: 240px !important; }
     .popup-photo { width: 100%; height: 140px; object-fit: cover; display: block; }
@@ -113,154 +65,82 @@
     .popup-meta { font-size: 11px; color: #64748b; margin-bottom: 4px; }
     .popup-author { color: #0e7490; font-weight: 600; }
     .popup-title { font-size: 14px; font-weight: 700; color: #1e293b; margin-bottom: 6px; }
-    .popup-comment { font-size: 12px; color: #475569; line-height: 1.5; }
+    .popup-comment { font-size: 12px; color: #475569; line-height: 1.5; margin-bottom: 8px; }
+    .popup-actions { display: flex; gap: 4px; padding-top: 8px; border-top: 1px solid #e2e8f0; }
+    .popup-action-btn { background: #f1f5f9; border: none; cursor: pointer; font-size: 11px; color: #475569; padding: 6px 10px; border-radius: 6px; font-family: inherit; display: flex; align-items: center; gap: 3px; flex: 1; justify-content: center; }
+    .popup-action-btn:hover { background: #e2e8f0; color: #0e7490; }
     .post-view { height: 100%; overflow-y: auto; padding: 16px; }
     .post-container { max-width: 600px; margin: 0 auto; }
-    .card {
-      background: #fff; border-radius: 14px; padding: 16px; margin-bottom: 12px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-    }
-    .card-title {
-      font-size: 13px; font-weight: 700; color: #1e293b; margin-bottom: 12px;
-      display: flex; align-items: center; gap: 8px;
-    }
-    .card-step {
-      width: 22px; height: 22px;
-      background: linear-gradient(135deg, #0e7490, #0c4a6e);
-      color: #fff; border-radius: 50%; display: flex;
-      align-items: center; justify-content: center; font-size: 11px; font-weight: 700;
-    }
+    .card { background: #fff; border-radius: 14px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+    .card-title { font-size: 13px; font-weight: 700; color: #1e293b; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .card-step { width: 22px; height: 22px; background: linear-gradient(135deg, #0e7490, #0c4a6e); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
     .author-area { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-    .author-chip {
-      padding: 7px 12px; border: 1.5px solid #e2e8f0; border-radius: 20px;
-      background: #fff; cursor: pointer; font-size: 12px; transition: all 0.2s;
-      font-family: inherit; display: flex; align-items: center; gap: 4px;
-    }
+    .author-chip { padding: 7px 12px; border: 1.5px solid #e2e8f0; border-radius: 20px; background: #fff; cursor: pointer; font-size: 12px; transition: all 0.2s; font-family: inherit; display: flex; align-items: center; gap: 4px; }
     .author-chip:hover { background: #f8fafc; }
-    .author-chip.active {
-      border-color: #0e7490; background: #f0f9ff; color: #0e7490; font-weight: 600;
-    }
+    .author-chip.active { border-color: #0e7490; background: #f0f9ff; color: #0e7490; font-weight: 600; }
     .author-chip-remove { opacity: 0.5; cursor: pointer; font-size: 14px; line-height: 1; }
     .author-chip-remove:hover { opacity: 1; }
-    .author-add {
-      padding: 7px 12px; border: 1.5px dashed #cbd5e1; border-radius: 20px;
-      background: #fff; cursor: pointer; font-size: 12px; color: #64748b; font-family: inherit;
-    }
+    .author-add { padding: 7px 12px; border: 1.5px dashed #cbd5e1; border-radius: 20px; background: #fff; cursor: pointer; font-size: 12px; color: #64748b; font-family: inherit; }
     .author-input { display: none; gap: 6px; }
     .author-input.show { display: flex; }
-    .author-input input {
-      flex: 1; padding: 7px 12px; border: 1.5px solid #0e7490; border-radius: 20px;
-      font-size: 12px; font-family: inherit; outline: none;
-    }
-    .author-input button {
-      padding: 6px 12px; background: #0e7490; color: #fff;
-      border: none; border-radius: 20px; cursor: pointer; font-size: 12px; font-family: inherit;
-    }
-    .photo-upload {
-      border: 2px dashed #cbd5e1; border-radius: 12px; padding: 28px 16px;
-      text-align: center; cursor: pointer; transition: all 0.2s;
-      background: #f8fafc; position: relative; display: block;
-    }
+    .author-input input { flex: 1; padding: 7px 12px; border: 1.5px solid #0e7490; border-radius: 20px; font-size: 12px; font-family: inherit; outline: none; }
+    .author-input button { padding: 6px 12px; background: #0e7490; color: #fff; border: none; border-radius: 20px; cursor: pointer; font-size: 12px; font-family: inherit; }
+    .photo-upload { border: 2px dashed #cbd5e1; border-radius: 12px; padding: 28px 16px; text-align: center; cursor: pointer; transition: all 0.2s; background: #f8fafc; position: relative; display: block; }
     .photo-upload:hover { border-color: #0e7490; background: #f0f9ff; }
-    .photo-upload.has-image {
-      padding: 0; border-style: solid; border-color: #0e7490; overflow: hidden;
-    }
+    .photo-upload.has-image { padding: 0; border-style: solid; border-color: #0e7490; overflow: hidden; }
     .upload-icon { font-size: 36px; margin-bottom: 6px; opacity: 0.5; }
     .upload-text { color: #64748b; font-size: 13px; margin-bottom: 2px; }
     .upload-hint { color: #94a3b8; font-size: 10px; }
     .upload-input { display: none; }
     .photo-preview { width: 100%; max-height: 280px; object-fit: cover; display: block; }
-    .photo-replace-btn {
-      position: absolute; top: 10px; right: 10px;
-      background: rgba(0,0,0,0.6); color: #fff; border: none;
-      padding: 6px 12px; border-radius: 16px; font-size: 11px; cursor: pointer;
-      backdrop-filter: blur(10px); font-family: inherit;
-    }
-    .photo-info {
-      position: absolute; bottom: 10px; left: 10px;
-      background: rgba(0,0,0,0.6); color: #fff; padding: 4px 10px;
-      border-radius: 12px; font-size: 10px; backdrop-filter: blur(10px);
-    }
-    .gps-info {
-      margin-top: 12px; padding: 10px; border-radius: 10px;
-      font-size: 12px; display: flex; align-items: flex-start; gap: 8px;
-    }
+    .photo-replace-btn { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); color: #fff; border: none; padding: 6px 12px; border-radius: 16px; font-size: 11px; cursor: pointer; backdrop-filter: blur(10px); font-family: inherit; }
+    .photo-info { position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.6); color: #fff; padding: 4px 10px; border-radius: 12px; font-size: 10px; backdrop-filter: blur(10px); }
+    .gps-info { margin-top: 12px; padding: 10px; border-radius: 10px; font-size: 12px; display: flex; align-items: flex-start; gap: 8px; }
     .gps-info.success { background: #d1fae5; color: #065f46; }
     .gps-info.warning { background: #fef3c7; color: #92400e; }
     .gps-info.empty { background: #f1f5f9; color: #64748b; }
     .gps-info-icon { font-size: 16px; flex-shrink: 0; }
     .gps-info-title { font-weight: 600; margin-bottom: 2px; font-size: 12px; }
     .gps-info-detail { font-size: 10px; opacity: 0.9; }
-    .mini-map {
-      margin-top: 10px; height: 160px; border-radius: 10px;
-      overflow: hidden; border: 1px solid #e2e8f0; display: none;
-    }
+    .mini-map { margin-top: 10px; height: 160px; border-radius: 10px; overflow: hidden; border: 1px solid #e2e8f0; display: none; }
     .mini-map.visible { display: block; }
     .form-group { margin-bottom: 12px; }
     .form-group:last-child { margin-bottom: 0; }
-    .form-label {
-      display: block; font-size: 12px; font-weight: 600;
-      color: #1e293b; margin-bottom: 4px;
-    }
+    .form-label { display: block; font-size: 12px; font-weight: 600; color: #1e293b; margin-bottom: 4px; }
     .form-label .required { color: #ef4444; margin-left: 3px; }
-    .form-input, .form-textarea {
-      width: 100%; padding: 10px 12px; border: 1.5px solid #e2e8f0;
-      border-radius: 8px; font-size: 14px; font-family: inherit;
-      background: #fff; color: #1e293b;
-    }
+    .form-input, .form-textarea { width: 100%; padding: 10px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-family: inherit; background: #fff; color: #1e293b; }
     .form-input:focus, .form-textarea:focus { outline: none; border-color: #0e7490; }
     .form-textarea { resize: vertical; min-height: 90px; line-height: 1.6; }
-    .submit-section {
-      position: sticky; bottom: 0;
-      background: linear-gradient(180deg, transparent, #f5f7fa 30%);
-      padding: 16px 0 0; margin-top: 12px;
-    }
-    .btn {
-      width: 100%; padding: 14px 24px; border-radius: 10px; border: none;
-      font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit;
-      background: linear-gradient(135deg, #0e7490, #0c4a6e); color: #fff;
-      box-shadow: 0 4px 12px rgba(14, 116, 144, 0.3);
-    }
+    .submit-section { position: sticky; bottom: 0; background: linear-gradient(180deg, transparent, #f5f7fa 30%); padding: 16px 0 0; margin-top: 12px; }
+    .btn { width: 100%; padding: 14px 24px; border-radius: 10px; border: none; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; background: linear-gradient(135deg, #0e7490, #0c4a6e); color: #fff; box-shadow: 0 4px 12px rgba(14, 116, 144, 0.3); }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .loading-spinner {
-      display: inline-block; width: 14px; height: 14px;
-      border: 2px solid #fff; border-top: 2px solid transparent;
-      border-radius: 50%; animation: spin 0.6s linear infinite;
-      margin-right: 6px; vertical-align: middle;
-    }
-    .error-msg {
-      background: #fee2e2; color: #991b1b; padding: 10px 12px;
-      border-radius: 10px; font-size: 12px; margin: 12px 0; display: none;
-    }
+    .loading-spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #fff; border-top: 2px solid transparent; border-radius: 50%; animation: spin 0.6s linear infinite; margin-right: 6px; vertical-align: middle; }
+    .error-msg { background: #fee2e2; color: #991b1b; padding: 10px 12px; border-radius: 10px; font-size: 12px; margin: 12px 0; display: none; }
     .error-msg.show { display: block; }
-    .success-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.5);
-      display: none; align-items: center; justify-content: center;
-      z-index: 2000; padding: 20px;
-    }
+    .success-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 20px; }
     .success-overlay.visible { display: flex; }
-    .success-card {
-      background: #fff; padding: 24px 20px; border-radius: 14px;
-      max-width: 320px; width: 100%; text-align: center;
-    }
+    .success-card { background: #fff; padding: 24px 20px; border-radius: 14px; max-width: 320px; width: 100%; text-align: center; }
     .success-icon { font-size: 48px; margin-bottom: 8px; }
-    .success-title {
-      font-size: 18px; font-weight: 700; color: #0c4a6e;
-      margin-bottom: 6px; font-family: 'Zen Maru Gothic', sans-serif;
-    }
+    .success-title { font-size: 18px; font-weight: 700; color: #0c4a6e; margin-bottom: 6px; font-family: 'Zen Maru Gothic', sans-serif; }
     .success-text { color: #64748b; font-size: 12px; margin-bottom: 14px; }
     .success-btns { display: flex; gap: 8px; }
-    .btn-secondary {
-      flex: 1; padding: 10px; background: #fff; color: #64748b;
-      border: 1.5px solid #e2e8f0; border-radius: 8px;
-      font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
-    }
-    .btn-mini-primary {
-      flex: 1; padding: 10px;
-      background: linear-gradient(135deg, #0e7490, #0c4a6e);
-      color: #fff; border: none; border-radius: 8px;
-      font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
-    }
+    .btn-secondary { flex: 1; padding: 10px; background: #fff; color: #64748b; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .btn-mini-primary { flex: 1; padding: 10px; background: linear-gradient(135deg, #0e7490, #0c4a6e); color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
+    
+    /* 編集モーダル */
+    .edit-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 16px; }
+    .edit-modal.visible { display: flex; }
+    .edit-modal-card { background: #fff; border-radius: 14px; max-width: 480px; width: 100%; max-height: 90vh; overflow-y: auto; }
+    .edit-modal-header { padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: #fff; z-index: 1; }
+    .edit-modal-title { font-size: 16px; font-weight: 700; color: #1e293b; font-family: 'Zen Maru Gothic', sans-serif; }
+    .edit-modal-close { background: none; border: none; cursor: pointer; font-size: 22px; color: #94a3b8; }
+    .edit-modal-body { padding: 20px; }
+    .edit-modal-photo { width: 100%; height: 180px; object-fit: cover; border-radius: 10px; margin-bottom: 16px; background: #e2e8f0; }
+    .edit-modal-footer { padding: 16px 20px; border-top: 1px solid #e2e8f0; display: flex; gap: 8px; position: sticky; bottom: 0; background: #fff; }
+    .btn-danger { padding: 10px 16px; background: #fee2e2; color: #dc2626; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .btn-danger:hover { background: #fecaca; }
+    .edit-info-text { font-size: 11px; color: #94a3b8; margin-bottom: 12px; padding: 8px 10px; background: #f8fafc; border-radius: 8px; }
+    
     @media (max-width: 768px) {
       .timeline-panel { width: 100%; }
     }
@@ -272,7 +152,7 @@
       <div class="header-title">
         <span style="font-size:20px;">⚓</span>
         <div>
-          <h1>釜山回航 2026</h1>
+          <h1>saily</h1>
           <p>日本海洋研究所</p>
         </div>
       </div>
@@ -305,10 +185,7 @@
       <div class="post-view">
         <div class="post-container">
           <div class="card">
-            <div class="card-title">
-              <span class="card-step">1</span>
-              お名前
-            </div>
+            <div class="card-title"><span class="card-step">1</span>お名前</div>
             <div class="author-area" id="authorArea">
               <button class="author-add" onclick="showAuthorInput()">+ 新しい名前</button>
             </div>
@@ -319,10 +196,7 @@
           </div>
 
           <div class="card">
-            <div class="card-title">
-              <span class="card-step">2</span>
-              写真
-            </div>
+            <div class="card-title"><span class="card-step">2</span>写真</div>
             <label for="photoInput" class="photo-upload" id="uploadArea">
               <div id="uploadPlaceholder">
                 <div class="upload-icon">📷</div>
@@ -345,10 +219,7 @@
           </div>
 
           <div class="card">
-            <div class="card-title">
-              <span class="card-step">3</span>
-              内容
-            </div>
+            <div class="card-title"><span class="card-step">3</span>内容</div>
             <div class="form-group">
               <label class="form-label">タイトル<span class="required">*</span></label>
               <input type="text" class="form-input" placeholder="例: 釜山港に到着!" id="titleInput" maxlength="60" />
@@ -381,6 +252,40 @@
     </div>
   </div>
 
+  <div class="edit-modal" id="editModal">
+    <div class="edit-modal-card">
+      <div class="edit-modal-header">
+        <div class="edit-modal-title">✏️ 投稿を編集</div>
+        <button class="edit-modal-close" onclick="closeEditModal()">✕</button>
+      </div>
+      <div class="edit-modal-body">
+        <img id="editPhoto" class="edit-modal-photo" />
+        <div class="edit-info-text">
+          📌 写真と位置情報は変更できません<br>
+          編集できるのは投稿者・タイトル・コメントです
+        </div>
+        <div class="form-group">
+          <label class="form-label">投稿者</label>
+          <div class="author-area" id="editAuthorArea"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">タイトル<span class="required">*</span></label>
+          <input type="text" class="form-input" id="editTitleInput" maxlength="60" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">コメント</label>
+          <textarea class="form-textarea" id="editCommentInput" maxlength="500"></textarea>
+        </div>
+        <div id="editErrorMsg" class="error-msg"></div>
+      </div>
+      <div class="edit-modal-footer">
+        <button class="btn-danger" onclick="deleteCurrentPost()">🗑️ 削除</button>
+        <button class="btn-secondary" onclick="closeEditModal()" style="flex:1;">キャンセル</button>
+        <button class="btn-mini-primary" onclick="saveEdit()" style="flex:1;" id="saveEditBtn">保存</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // ============================================
     // ⚠️ Apps ScriptのURLを設定後に書き換えます
@@ -401,13 +306,14 @@
     let posts = [];
     let markers = {};
     let map;
+    let editingPost = null;
+    let editingAuthor = '';
 
     function switchView(view) {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       document.querySelector(`.tab[data-view="${view}"]`).classList.add('active');
       document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
       document.getElementById(view + 'View').classList.add('active');
-      
       if (view === 'map') {
         setTimeout(() => map?.invalidateSize(), 100);
         loadPosts();
@@ -429,7 +335,6 @@
       const authors = loadAuthors();
       const area = document.getElementById('authorArea');
       area.querySelectorAll('.author-chip').forEach(el => el.remove());
-      
       const addBtn = area.querySelector('.author-add');
       authors.forEach(name => {
         const chip = document.createElement('button');
@@ -481,7 +386,6 @@
       if (e.key === 'Enter') addNewAuthor();
     });
 
-    // ===== 写真処理（圧縮機能付き）=====
     const photoInput = document.getElementById('photoInput');
     const photoPreview = document.getElementById('photoPreview');
     const uploadPlaceholder = document.getElementById('uploadPlaceholder');
@@ -491,34 +395,28 @@
     const gpsInfo = document.getElementById('gpsInfo');
     const miniMapEl = document.getElementById('miniMap');
 
-    // 写真を圧縮する関数
     function compressImage(file, maxWidth = 1600, quality = 0.85) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = (e) => {
           const img = new Image();
           img.onload = () => {
-            // リサイズ計算
             let width = img.width;
             let height = img.height;
             if (width > maxWidth) {
               height = (maxWidth / width) * height;
               width = maxWidth;
             }
-            
-            // canvasで圧縮
             const canvas = document.createElement('canvas');
             canvas.width = width;
             canvas.height = height;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
-            
-            // base64に変換
             const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
             resolve({
               base64: compressedBase64.split(',')[1],
               dataUrl: compressedBase64,
-              size: Math.round(compressedBase64.length * 0.75 / 1024) // KB
+              size: Math.round(compressedBase64.length * 0.75 / 1024)
             });
           };
           img.onerror = reject;
@@ -533,33 +431,19 @@
       const file = e.target.files[0];
       if (!file) return;
       currentPhotoName = file.name;
-      
       const originalSize = Math.round(file.size / 1024);
 
-      // EXIF読み取り（圧縮前にやる）
       try {
         const exif = await exifr.parse(file, { gps: true });
         if (exif && exif.latitude && exif.longitude) {
           currentLat = exif.latitude;
           currentLng = exif.longitude;
           gpsInfo.className = 'gps-info success';
-          gpsInfo.innerHTML = `
-            <span class="gps-info-icon">✅</span>
-            <div>
-              <div class="gps-info-title">位置情報を取得しました</div>
-              <div class="gps-info-detail">${currentLat.toFixed(4)}, ${currentLng.toFixed(4)}</div>
-            </div>
-          `;
+          gpsInfo.innerHTML = `<span class="gps-info-icon">✅</span><div><div class="gps-info-title">位置情報を取得しました</div><div class="gps-info-detail">${currentLat.toFixed(4)}, ${currentLng.toFixed(4)}</div></div>`;
           showMiniMap(currentLat, currentLng);
         } else {
           gpsInfo.className = 'gps-info warning';
-          gpsInfo.innerHTML = `
-            <span class="gps-info-icon">⚠️</span>
-            <div>
-              <div class="gps-info-title">位置情報がありません</div>
-              <div class="gps-info-detail">スマホの位置情報をONにして撮影してください</div>
-            </div>
-          `;
+          gpsInfo.innerHTML = `<span class="gps-info-icon">⚠️</span><div><div class="gps-info-title">位置情報がありません</div><div class="gps-info-detail">スマホの位置情報をONにして撮影してください</div></div>`;
           miniMapEl.classList.remove('visible');
           currentLat = null;
           currentLng = null;
@@ -568,22 +452,16 @@
         console.error('EXIF読み取りエラー:', err);
       }
 
-      // 圧縮
       try {
         const compressed = await compressImage(file);
         currentPhotoBase64 = compressed.base64;
-        
         photoPreview.src = compressed.dataUrl;
         photoPreview.style.display = 'block';
         uploadPlaceholder.style.display = 'none';
         replaceBtn.style.display = 'block';
         uploadArea.classList.add('has-image');
-        
-        // サイズ情報表示
         photoInfoEl.style.display = 'block';
         photoInfoEl.textContent = `${originalSize}KB → ${compressed.size}KB`;
-        
-        console.log(`圧縮完了: ${originalSize}KB → ${compressed.size}KB`);
       } catch (err) {
         console.error('圧縮エラー:', err);
         showError('写真の処理に失敗しました');
@@ -599,9 +477,7 @@
       } else {
         setTimeout(() => {
           miniMap = L.map('miniMap').setView([lat, lng], 13);
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap'
-          }).addTo(miniMap);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(miniMap);
           L.marker([lat, lng]).addTo(miniMap);
           setTimeout(() => miniMap.invalidateSize(), 100);
         }, 100);
@@ -618,7 +494,6 @@
     async function submitPost() {
       const title = document.getElementById('titleInput').value.trim();
       const comment = document.getElementById('commentInput').value.trim();
-
       if (!selectedAuthor) { showError('お名前を選んでください'); return; }
       if (!currentPhotoBase64) { showError('写真を選んでください'); return; }
       if (!currentLat || !currentLng) { showError('写真に位置情報がありません'); return; }
@@ -630,6 +505,7 @@
 
       try {
         const data = {
+          action: 'create',
           author: selectedAuthor,
           title: title,
           comment: comment,
@@ -639,18 +515,12 @@
           photoName: currentPhotoName,
           timestamp: new Date().toISOString()
         };
-
-        console.log('送信開始 - データサイズ:', Math.round(JSON.stringify(data).length / 1024), 'KB');
-
-        // GET方式での送信(CORS回避のため)
         await fetch(GAS_URL, {
           method: 'POST',
           mode: 'no-cors',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify(data)
         });
-
-        console.log('送信完了');
         document.getElementById('successOverlay').classList.add('visible');
       } catch (err) {
         console.error('送信エラー:', err);
@@ -688,13 +558,124 @@
       setTimeout(loadPosts, 1500);
     }
 
+    // ===== 編集機能 =====
+    function openEditModal(postId) {
+      const post = posts.find(p => p.id === postId);
+      if (!post) return;
+      editingPost = post;
+      editingAuthor = post.author;
+      document.getElementById('editPhoto').src = post.photoUrl;
+      document.getElementById('editTitleInput').value = post.title || '';
+      document.getElementById('editCommentInput').value = post.comment || '';
+      renderEditAuthors();
+      document.getElementById('editModal').classList.add('visible');
+    }
+
+    function renderEditAuthors() {
+      const authors = loadAuthors();
+      if (!authors.includes(editingAuthor) && editingAuthor) {
+        authors.unshift(editingAuthor);
+      }
+      const area = document.getElementById('editAuthorArea');
+      area.innerHTML = '';
+      authors.forEach(name => {
+        const chip = document.createElement('button');
+        chip.className = 'author-chip' + (editingAuthor === name ? ' active' : '');
+        chip.textContent = name;
+        chip.onclick = () => {
+          editingAuthor = name;
+          renderEditAuthors();
+        };
+        area.appendChild(chip);
+      });
+    }
+
+    function closeEditModal() {
+      document.getElementById('editModal').classList.remove('visible');
+      editingPost = null;
+      editingAuthor = '';
+    }
+
+    async function saveEdit() {
+      const title = document.getElementById('editTitleInput').value.trim();
+      const comment = document.getElementById('editCommentInput').value.trim();
+      if (!title) { showEditError('タイトルを入力してください'); return; }
+      if (!editingAuthor) { showEditError('投稿者を選んでください'); return; }
+
+      const btn = document.getElementById('saveEditBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loading-spinner"></span>保存中...';
+
+      try {
+        const data = {
+          action: 'edit',
+          id: editingPost.id,
+          author: editingAuthor,
+          title: title,
+          comment: comment
+        };
+        await fetch(GAS_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(data)
+        });
+        const idx = posts.findIndex(p => p.id === editingPost.id);
+        if (idx !== -1) {
+          posts[idx].author = editingAuthor;
+          posts[idx].title = title;
+          posts[idx].comment = comment;
+          renderPosts();
+        }
+        closeEditModal();
+        setTimeout(loadPosts, 2000);
+      } catch (err) {
+        console.error('編集エラー:', err);
+        showEditError('保存に失敗しました');
+        btn.disabled = false;
+        btn.innerHTML = '保存';
+      }
+    }
+
+    function showEditError(msg) {
+      const el = document.getElementById('editErrorMsg');
+      el.textContent = msg;
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 5000);
+    }
+
+    async function deleteCurrentPost() {
+      if (!editingPost) return;
+      if (!confirm(`「${editingPost.title}」を削除しますか？\n\n※ 写真も一緒に削除されます\n※ この操作は取り消せません`)) return;
+
+      const btn = document.getElementById('saveEditBtn');
+      btn.disabled = true;
+
+      try {
+        const data = {
+          action: 'delete',
+          id: editingPost.id
+        };
+        await fetch(GAS_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(data)
+        });
+        posts = posts.filter(p => p.id !== editingPost.id);
+        renderPosts();
+        closeEditModal();
+        setTimeout(loadPosts, 2000);
+      } catch (err) {
+        console.error('削除エラー:', err);
+        alert('削除に失敗しました');
+        btn.disabled = false;
+      }
+    }
+
     function initMap() {
       map = L.map('map').setView([34.5, 134.0], 6);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 18,
-        attribution: '© OpenStreetMap'
-      }).addTo(map);
-
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© OpenStreetMap' }).addTo(map);
       REFERENCE_POINTS.forEach(p => {
         const icon = L.divIcon({
           className: '',
@@ -708,32 +689,25 @@
 
     async function loadPosts() {
       if (GAS_URL === 'YOUR_GAS_URL_HERE') {
-        document.getElementById('timelineList').innerHTML = `
-          <div class="empty-state">
-            <div class="empty-state-emoji">⚙️</div>
-            セットアップが必要です
-          </div>
-        `;
+        document.getElementById('timelineList').innerHTML = `<div class="empty-state"><div class="empty-state-emoji">⚙️</div>セットアップが必要です</div>`;
         return;
       }
-
       document.getElementById('loadingOverlay').style.display = 'flex';
       try {
         const response = await fetch(GAS_URL + '?action=get');
         const data = await response.json();
-        // テストデータと例.com URLは表示しない
-        posts = (data.posts || []).filter(p => p.author !== 'テスト' && !p.photoUrl.includes('example.com'));
+        posts = (data.posts || []).filter(p => p.author !== 'テスト' && !(p.photoUrl || '').includes('example.com'));
         renderPosts();
       } catch (err) {
         console.error('読み込みエラー:', err);
-        document.getElementById('timelineList').innerHTML = `
-          <div class="empty-state">
-            <div class="empty-state-emoji">⚠️</div>
-            読み込みに失敗しました
-          </div>
-        `;
+        document.getElementById('timelineList').innerHTML = `<div class="empty-state"><div class="empty-state-emoji">⚠️</div>読み込みに失敗しました</div>`;
       }
       document.getElementById('loadingOverlay').style.display = 'none';
+    }
+
+    function escapeHtml(s) {
+      if (!s) return '';
+      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     }
 
     function renderPosts() {
@@ -742,27 +716,27 @@
       document.getElementById('postCount').textContent = posts.length;
 
       if (posts.length === 0) {
-        document.getElementById('timelineList').innerHTML = `
-          <div class="empty-state">
-            <div class="empty-state-emoji">📭</div>
-            まだ投稿がありません<br>
-            <small>「📷 投稿」タブから投稿してみましょう</small>
-          </div>
-        `;
+        document.getElementById('timelineList').innerHTML = `<div class="empty-state"><div class="empty-state-emoji">📭</div>まだ投稿がありません<br><small>「📷 投稿」タブから投稿してみましょう</small></div>`;
         return;
       }
 
       const list = document.getElementById('timelineList');
       list.innerHTML = posts.map(p => `
-        <div class="post-item" data-id="${p.id}" onclick="focusPost('${p.id}')">
-          <img class="post-thumb" src="${p.photoUrl}" onerror="this.style.background='#e2e8f0'" />
-          <div class="post-content">
-            <div class="post-meta">
-              <span class="post-author">${p.author}</span>
-              <span>${formatDate(p.timestamp)}</span>
+        <div class="post-item" data-id="${p.id}">
+          <div class="post-item-content" onclick="focusPost('${p.id}')">
+            <img class="post-thumb" src="${p.photoUrl}" onerror="this.style.background='#e2e8f0'" />
+            <div class="post-content">
+              <div class="post-meta">
+                <span class="post-author">${escapeHtml(p.author)}</span>
+                <span>${formatDate(p.timestamp)}</span>
+              </div>
+              <div class="post-title">${escapeHtml(p.title)}</div>
+              <div class="post-comment">${escapeHtml(p.comment || '')}</div>
             </div>
-            <div class="post-title">${p.title}</div>
-            <div class="post-comment">${p.comment || ''}</div>
+          </div>
+          <div class="post-actions">
+            <button class="post-action-btn" onclick="openEditModal('${p.id}')">✏️ 編集</button>
+            <button class="post-action-btn" onclick="focusPost('${p.id}')">🗺️ 地図で見る</button>
           </div>
         </div>
       `).join('');
@@ -780,10 +754,13 @@
             <img class="popup-photo" src="${p.photoUrl}" />
             <div class="popup-body">
               <div class="popup-meta">
-                <span class="popup-author">${p.author}</span> · ${formatDate(p.timestamp)}
+                <span class="popup-author">${escapeHtml(p.author)}</span> · ${formatDate(p.timestamp)}
               </div>
-              <div class="popup-title">${p.title}</div>
-              <div class="popup-comment">${p.comment || ''}</div>
+              <div class="popup-title">${escapeHtml(p.title)}</div>
+              <div class="popup-comment">${escapeHtml(p.comment || '')}</div>
+              <div class="popup-actions">
+                <button class="popup-action-btn" onclick="openEditModal('${p.id}')">✏️ 編集</button>
+              </div>
             </div>
           `, { maxWidth: 240 });
         markers[p.id] = marker;
@@ -820,12 +797,10 @@
 
     initMap();
     renderAuthors();
-    
     const lastAuthor = localStorage.getItem('busan_last_author');
     if (lastAuthor && loadAuthors().includes(lastAuthor)) {
       selectAuthor(lastAuthor);
     }
-    
     loadPosts();
     setInterval(() => {
       if (document.getElementById('mapView').classList.contains('active')) {
