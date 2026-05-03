@@ -12,13 +12,7 @@
   <script src="https://cdn.jsdelivr.net/npm/exifr/dist/full.umd.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body {
-      font-family: 'Noto Sans JP', 'Hiragino Sans', sans-serif;
-      background: #f5f7fa;
-      color: #1e293b;
-      height: 100%;
-      overflow: hidden;
-    }
+    html, body { font-family: 'Noto Sans JP', 'Hiragino Sans', sans-serif; background: #f5f7fa; color: #1e293b; height: 100%; overflow: hidden; }
     .header { background: linear-gradient(135deg, #0c4a6e, #0e7490); color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.15); flex-shrink: 0; }
     .header-top { padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; }
     .header-title { display: flex; align-items: center; gap: 8px; }
@@ -102,8 +96,55 @@
     .gps-info-icon { font-size: 16px; flex-shrink: 0; }
     .gps-info-title { font-weight: 600; margin-bottom: 2px; font-size: 12px; }
     .gps-info-detail { font-size: 10px; opacity: 0.9; }
-    .mini-map { margin-top: 10px; height: 160px; border-radius: 10px; overflow: hidden; border: 1px solid #e2e8f0; display: none; }
+    .mini-map { margin-top: 10px; height: 240px; border-radius: 10px; overflow: hidden; border: 1px solid #e2e8f0; display: none; }
     .mini-map.visible { display: block; }
+    
+    /* 位置設定UI */
+    .location-tools { margin-top: 12px; display: none; }
+    .location-tools.visible { display: block; }
+    .location-tool-row { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+    .loc-btn {
+      padding: 8px 12px; background: #fff; border: 1.5px solid #0e7490;
+      color: #0e7490; border-radius: 8px; font-size: 12px; font-weight: 600;
+      cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 4px;
+    }
+    .loc-btn:hover { background: #f0f9ff; }
+    .loc-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .search-row { display: flex; gap: 6px; margin-bottom: 8px; }
+    .search-input {
+      flex: 1; padding: 8px 12px; border: 1.5px solid #e2e8f0;
+      border-radius: 8px; font-size: 13px; font-family: inherit; outline: none;
+    }
+    .search-input:focus { border-color: #0e7490; }
+    .search-btn {
+      padding: 8px 14px; background: #0e7490; color: #fff;
+      border: none; border-radius: 8px; cursor: pointer; font-size: 12px; font-family: inherit;
+    }
+    .search-results {
+      max-height: 160px; overflow-y: auto; border: 1px solid #e2e8f0;
+      border-radius: 8px; margin-bottom: 8px; display: none;
+    }
+    .search-results.visible { display: block; }
+    .search-result-item {
+      padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9; font-size: 12px;
+    }
+    .search-result-item:last-child { border-bottom: none; }
+    .search-result-item:hover { background: #f0f9ff; }
+    .search-result-name { font-weight: 600; color: #1e293b; }
+    .search-result-addr { font-size: 10px; color: #94a3b8; margin-top: 2px; }
+    .map-instruction {
+      background: #f0f9ff; color: #0c4a6e; padding: 8px 12px;
+      border-radius: 8px; font-size: 11px; margin-bottom: 8px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .location-confirm {
+      margin-top: 10px; padding: 10px; background: #f8fafc;
+      border-radius: 8px; font-size: 12px; display: none;
+    }
+    .location-confirm.visible { display: block; }
+    .location-coord { color: #475569; margin-bottom: 6px; }
+    .location-coord strong { color: #0e7490; }
+    
     .form-group { margin-bottom: 12px; }
     .form-group:last-child { margin-bottom: 0; }
     .form-label { display: block; font-size: 12px; font-weight: 600; color: #1e293b; margin-bottom: 4px; }
@@ -127,7 +168,6 @@
     .btn-secondary { flex: 1; padding: 10px; background: #fff; color: #64748b; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
     .btn-mini-primary { flex: 1; padding: 10px; background: linear-gradient(135deg, #0e7490, #0c4a6e); color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
     
-    /* 編集モーダル */
     .edit-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 16px; }
     .edit-modal.visible { display: flex; }
     .edit-modal-card { background: #fff; border-radius: 14px; max-width: 480px; width: 100%; max-height: 90vh; overflow-y: auto; }
@@ -152,7 +192,7 @@
       <div class="header-title">
         <span style="font-size:20px;">⚓</span>
         <div>
-          <h1>saily</h1>
+          <h1>釜山回航 2026</h1>
           <p>日本海洋研究所</p>
         </div>
       </div>
@@ -207,7 +247,8 @@
               <button type="button" id="replaceBtn" class="photo-replace-btn" style="display: none;" onclick="event.preventDefault(); document.getElementById('photoInput').click();">変更</button>
               <div id="photoInfo" class="photo-info" style="display: none;"></div>
             </label>
-            <input type="file" id="photoInput" class="upload-input" />
+            <input type="file" id="photoInput" class="upload-input" accept="image/*" />
+            
             <div id="gpsInfo" class="gps-info empty">
               <span class="gps-info-icon">📍</span>
               <div>
@@ -215,7 +256,34 @@
                 <div class="gps-info-detail">写真を選ぶと自動で読み取ります</div>
               </div>
             </div>
+            
+            <!-- 手動位置指定UI -->
+            <div class="location-tools" id="locationTools">
+              <div class="location-tool-row">
+                <button type="button" class="loc-btn" onclick="useCurrentLocation()">
+                  📍 現在地を使う
+                </button>
+              </div>
+              <div class="search-row">
+                <input type="text" class="search-input" id="searchInput" placeholder="🔍 場所名・住所で検索（例: 釜山港）" />
+                <button type="button" class="search-btn" onclick="searchLocation()">検索</button>
+              </div>
+              <div class="search-results" id="searchResults"></div>
+              <div class="map-instruction" id="mapInstruction" style="display:none;">
+                💡 地図をタップで位置指定 / ピンをドラッグで微調整できます
+              </div>
+            </div>
+            
             <div id="miniMap" class="mini-map"></div>
+            
+            <div class="location-confirm" id="locationConfirm">
+              <div class="location-coord">
+                📍 設定された位置: <strong><span id="confirmLat">-</span>, <span id="confirmLng">-</span></strong>
+              </div>
+              <div style="font-size: 11px; color: #94a3b8;">
+                ピンをドラッグして微調整できます
+              </div>
+            </div>
           </div>
 
           <div class="card">
@@ -287,10 +355,7 @@
   </div>
 
   <script>
-    // ============================================
-    // ⚠️ Apps ScriptのURLを設定後に書き換えます
-    // ============================================
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbxBc_DVbAVhUM4Kh_SV31ah_wl_7YweeNSkpvU2BJ8Rsl-4LtugiVVxF8badfpGa3BE5Q/exec';
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbyvZyiHmpyTVOjnDxOtU6jru864_kDjcx-rV-HKeM9UZqGgsxuuE194dpG22kyXhq2V2g/exec';
 
     const REFERENCE_POINTS = [
       { name: '東京湾', lat: 35.5, lng: 139.8, isStart: true },
@@ -302,6 +367,7 @@
     let currentPhotoBase64 = null;
     let currentPhotoName = '';
     let miniMap = null;
+    let miniMapMarker = null;
     let selectedAuthor = '';
     let posts = [];
     let markers = {};
@@ -394,6 +460,9 @@
     const photoInfoEl = document.getElementById('photoInfo');
     const gpsInfo = document.getElementById('gpsInfo');
     const miniMapEl = document.getElementById('miniMap');
+    const locationTools = document.getElementById('locationTools');
+    const locationConfirm = document.getElementById('locationConfirm');
+    const mapInstruction = document.getElementById('mapInstruction');
 
     function compressImage(file, maxWidth = 1600, quality = 0.85) {
       return new Promise((resolve, reject) => {
@@ -436,17 +505,25 @@
       try {
         const exif = await exifr.parse(file, { gps: true });
         if (exif && exif.latitude && exif.longitude) {
+          // 写真にGPSあり
           currentLat = exif.latitude;
           currentLng = exif.longitude;
           gpsInfo.className = 'gps-info success';
           gpsInfo.innerHTML = `<span class="gps-info-icon">✅</span><div><div class="gps-info-title">位置情報を取得しました</div><div class="gps-info-detail">${currentLat.toFixed(4)}, ${currentLng.toFixed(4)}</div></div>`;
-          showMiniMap(currentLat, currentLng);
+          locationTools.classList.remove('visible');
+          showMiniMap(currentLat, currentLng, true);
+          updateLocationConfirm();
         } else {
+          // GPSなし → 手動指定UIを表示
           gpsInfo.className = 'gps-info warning';
-          gpsInfo.innerHTML = `<span class="gps-info-icon">⚠️</span><div><div class="gps-info-title">位置情報がありません</div><div class="gps-info-detail">スマホの位置情報をONにして撮影してください</div></div>`;
-          miniMapEl.classList.remove('visible');
+          gpsInfo.innerHTML = `<span class="gps-info-icon">⚠️</span><div><div class="gps-info-title">位置情報がありません</div><div class="gps-info-detail">下の方法で位置を指定してください</div></div>`;
+          locationTools.classList.add('visible');
+          mapInstruction.style.display = 'flex';
+          // 地図を釜山周辺で初期表示
+          showMiniMap(35.0951, 129.0756, false);
           currentLat = null;
           currentLng = null;
+          updateLocationConfirm();
         }
       } catch (err) {
         console.error('EXIF読み取りエラー:', err);
@@ -468,21 +545,143 @@
       }
     });
 
-    function showMiniMap(lat, lng) {
+    function showMiniMap(lat, lng, hasMarker = true) {
       miniMapEl.classList.add('visible');
-      if (miniMap) {
-        miniMap.setView([lat, lng], 13);
-        miniMap.eachLayer(l => { if (l instanceof L.Marker) miniMap.removeLayer(l); });
-        L.marker([lat, lng]).addTo(miniMap);
+      
+      const initOrUpdate = () => {
+        if (miniMap) {
+          miniMap.setView([lat, lng], hasMarker ? 13 : 11);
+          if (miniMapMarker) {
+            miniMap.removeLayer(miniMapMarker);
+            miniMapMarker = null;
+          }
+        } else {
+          miniMap = L.map('miniMap').setView([lat, lng], hasMarker ? 13 : 11);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+          }).addTo(miniMap);
+          
+          // 地図クリックでピン配置
+          miniMap.on('click', (e) => {
+            placePinOnMiniMap(e.latlng.lat, e.latlng.lng);
+          });
+        }
+        
+        if (hasMarker) {
+          placePinOnMiniMap(lat, lng);
+        }
+        
+        setTimeout(() => miniMap.invalidateSize(), 100);
+      };
+      
+      if (!miniMap) {
+        setTimeout(initOrUpdate, 100);
       } else {
-        setTimeout(() => {
-          miniMap = L.map('miniMap').setView([lat, lng], 13);
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(miniMap);
-          L.marker([lat, lng]).addTo(miniMap);
-          setTimeout(() => miniMap.invalidateSize(), 100);
-        }, 100);
+        initOrUpdate();
       }
     }
+
+    function placePinOnMiniMap(lat, lng) {
+      currentLat = lat;
+      currentLng = lng;
+      
+      if (miniMapMarker) {
+        miniMap.removeLayer(miniMapMarker);
+      }
+      
+      // ドラッグ可能なマーカー
+      miniMapMarker = L.marker([lat, lng], { draggable: true }).addTo(miniMap);
+      
+      miniMapMarker.on('dragend', (e) => {
+        const pos = e.target.getLatLng();
+        currentLat = pos.lat;
+        currentLng = pos.lng;
+        updateLocationConfirm();
+      });
+      
+      updateLocationConfirm();
+    }
+
+    function updateLocationConfirm() {
+      if (currentLat !== null && currentLng !== null) {
+        locationConfirm.classList.add('visible');
+        document.getElementById('confirmLat').textContent = currentLat.toFixed(6);
+        document.getElementById('confirmLng').textContent = currentLng.toFixed(6);
+      } else {
+        locationConfirm.classList.remove('visible');
+      }
+    }
+
+    // ===== 現在地を使う =====
+    function useCurrentLocation() {
+      if (!navigator.geolocation) {
+        showError('お使いのブラウザは位置情報に対応していません');
+        return;
+      }
+      
+      const btn = event.target;
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<span class="loading-spinner" style="border-color:#0e7490;border-top-color:transparent;"></span>取得中...';
+      btn.disabled = true;
+      
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          showMiniMap(pos.coords.latitude, pos.coords.longitude, true);
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+        },
+        (err) => {
+          showError('現在地を取得できませんでした: ' + err.message);
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    }
+
+    // ===== 場所検索（Nominatim API）=====
+    async function searchLocation() {
+      const query = document.getElementById('searchInput').value.trim();
+      if (!query) return;
+      
+      const resultsEl = document.getElementById('searchResults');
+      resultsEl.innerHTML = '<div style="padding:12px;text-align:center;font-size:12px;color:#94a3b8;">検索中...</div>';
+      resultsEl.classList.add('visible');
+      
+      try {
+        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5&accept-language=ja`;
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.length === 0) {
+          resultsEl.innerHTML = '<div style="padding:12px;text-align:center;font-size:12px;color:#94a3b8;">見つかりませんでした</div>';
+          return;
+        }
+        
+        resultsEl.innerHTML = data.map(item => `
+          <div class="search-result-item" onclick="selectSearchResult(${item.lat}, ${item.lon}, '${escapeQuote(item.display_name)}')">
+            <div class="search-result-name">${escapeHtml(item.display_name.split(',')[0])}</div>
+            <div class="search-result-addr">${escapeHtml(item.display_name)}</div>
+          </div>
+        `).join('');
+      } catch (err) {
+        resultsEl.innerHTML = '<div style="padding:12px;text-align:center;font-size:12px;color:#dc2626;">検索に失敗しました</div>';
+      }
+    }
+
+    function escapeQuote(s) {
+      return String(s).replace(/'/g, "\\'");
+    }
+
+    function selectSearchResult(lat, lng, name) {
+      showMiniMap(parseFloat(lat), parseFloat(lng), true);
+      document.getElementById('searchResults').classList.remove('visible');
+      document.getElementById('searchInput').value = '';
+    }
+
+    document.getElementById('searchInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') searchLocation();
+    });
 
     function showError(msg) {
       const el = document.getElementById('errorMsg');
@@ -496,7 +695,7 @@
       const comment = document.getElementById('commentInput').value.trim();
       if (!selectedAuthor) { showError('お名前を選んでください'); return; }
       if (!currentPhotoBase64) { showError('写真を選んでください'); return; }
-      if (!currentLat || !currentLng) { showError('写真に位置情報がありません'); return; }
+      if (!currentLat || !currentLng) { showError('位置を指定してください'); return; }
       if (!title) { showError('タイトルを入力してください'); return; }
 
       const btn = document.getElementById('submitBtn');
@@ -546,7 +745,15 @@
       currentLng = null;
       gpsInfo.className = 'gps-info empty';
       gpsInfo.innerHTML = `<span class="gps-info-icon">📍</span><div><div class="gps-info-title">写真の位置情報</div><div class="gps-info-detail">写真を選ぶと自動で読み取ります</div></div>`;
+      locationTools.classList.remove('visible');
+      locationConfirm.classList.remove('visible');
+      mapInstruction.style.display = 'none';
       miniMapEl.classList.remove('visible');
+      if (miniMap) {
+        miniMap.remove();
+        miniMap = null;
+        miniMapMarker = null;
+      }
       const btn = document.getElementById('submitBtn');
       btn.disabled = false;
       btn.innerHTML = '投稿する 🚀';
