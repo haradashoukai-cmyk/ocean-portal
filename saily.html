@@ -16,7 +16,7 @@
     .header { background: linear-gradient(135deg, #0c4a6e, #0e7490); color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.15); flex-shrink: 0; }
     .header-top { padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; }
     .header-title { display: flex; align-items: center; gap: 8px; }
-    .header-title h1 { font-size: 15px; font-weight: 700; font-family: 'Zen Maru Gothic', sans-serif; }
+    .header-title h1 { font-size: 17px; font-weight: 700; font-family: 'Zen Maru Gothic', sans-serif; letter-spacing: 0.5px; }
     .header-title p { font-size: 10px; opacity: 0.85; }
     .post-count { background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: 14px; font-size: 11px; }
     .post-count strong { color: #4ADE80; font-weight: 700; font-size: 13px; }
@@ -63,7 +63,9 @@
     .popup-actions { display: flex; gap: 4px; padding-top: 8px; border-top: 1px solid #e2e8f0; }
     .popup-action-btn { background: #f1f5f9; border: none; cursor: pointer; font-size: 11px; color: #475569; padding: 6px 10px; border-radius: 6px; font-family: inherit; display: flex; align-items: center; gap: 3px; flex: 1; justify-content: center; }
     .popup-action-btn:hover { background: #e2e8f0; color: #0e7490; }
-    .post-view { height: 100%; overflow-y: auto; padding: 16px; }
+    
+    /* 投稿ビュー - スクロール可能に */
+    .post-view { height: 100%; overflow-y: auto; padding: 16px 16px 100px 16px; -webkit-overflow-scrolling: touch; }
     .post-container { max-width: 600px; margin: 0 auto; }
     .card { background: #fff; border-radius: 14px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
     .card-title { font-size: 13px; font-weight: 700; color: #1e293b; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
@@ -79,16 +81,29 @@
     .author-input.show { display: flex; }
     .author-input input { flex: 1; padding: 7px 12px; border: 1.5px solid #0e7490; border-radius: 20px; font-size: 12px; font-family: inherit; outline: none; }
     .author-input button { padding: 6px 12px; background: #0e7490; color: #fff; border: none; border-radius: 20px; cursor: pointer; font-size: 12px; font-family: inherit; }
-    .photo-upload { border: 2px dashed #cbd5e1; border-radius: 12px; padding: 28px 16px; text-align: center; cursor: pointer; transition: all 0.2s; background: #f8fafc; position: relative; display: block; }
-    .photo-upload:hover { border-color: #0e7490; background: #f0f9ff; }
-    .photo-upload.has-image { padding: 0; border-style: solid; border-color: #0e7490; overflow: hidden; }
-    .upload-icon { font-size: 36px; margin-bottom: 6px; opacity: 0.5; }
-    .upload-text { color: #64748b; font-size: 13px; margin-bottom: 2px; }
-    .upload-hint { color: #94a3b8; font-size: 10px; }
-    .upload-input { display: none; }
+    
+    /* 写真選択ボタン: タップ撮影とギャラリー選択 */
+    .photo-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+    .photo-btn {
+      padding: 14px 12px; border: 2px dashed #cbd5e1; border-radius: 12px;
+      background: #f8fafc; cursor: pointer; transition: all 0.2s;
+      font-family: inherit; display: flex; flex-direction: column;
+      align-items: center; gap: 4px; color: #64748b;
+    }
+    .photo-btn:hover { border-color: #0e7490; background: #f0f9ff; color: #0e7490; }
+    .photo-btn-icon { font-size: 28px; }
+    .photo-btn-text { font-size: 12px; font-weight: 600; }
+    .photo-btn-hint { font-size: 9px; opacity: 0.7; }
+    
+    .photo-preview-wrap {
+      position: relative; border-radius: 12px; overflow: hidden;
+      border: 2px solid #0e7490; display: none;
+    }
+    .photo-preview-wrap.visible { display: block; }
     .photo-preview { width: 100%; max-height: 280px; object-fit: cover; display: block; }
     .photo-replace-btn { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); color: #fff; border: none; padding: 6px 12px; border-radius: 16px; font-size: 11px; cursor: pointer; backdrop-filter: blur(10px); font-family: inherit; }
     .photo-info { position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.6); color: #fff; padding: 4px 10px; border-radius: 12px; font-size: 10px; backdrop-filter: blur(10px); }
+    .upload-input { display: none; }
     .gps-info { margin-top: 12px; padding: 10px; border-radius: 10px; font-size: 12px; display: flex; align-items: flex-start; gap: 8px; }
     .gps-info.success { background: #d1fae5; color: #065f46; }
     .gps-info.warning { background: #fef3c7; color: #92400e; }
@@ -99,48 +114,25 @@
     .mini-map { margin-top: 10px; height: 240px; border-radius: 10px; overflow: hidden; border: 1px solid #e2e8f0; display: none; }
     .mini-map.visible { display: block; }
     
-    /* 位置設定UI */
     .location-tools { margin-top: 12px; display: none; }
     .location-tools.visible { display: block; }
     .location-tool-row { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
-    .loc-btn {
-      padding: 8px 12px; background: #fff; border: 1.5px solid #0e7490;
-      color: #0e7490; border-radius: 8px; font-size: 12px; font-weight: 600;
-      cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 4px;
-    }
+    .loc-btn { padding: 8px 12px; background: #fff; border: 1.5px solid #0e7490; color: #0e7490; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 4px; }
     .loc-btn:hover { background: #f0f9ff; }
     .loc-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .search-row { display: flex; gap: 6px; margin-bottom: 8px; }
-    .search-input {
-      flex: 1; padding: 8px 12px; border: 1.5px solid #e2e8f0;
-      border-radius: 8px; font-size: 13px; font-family: inherit; outline: none;
-    }
+    .search-input { flex: 1; padding: 8px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; }
     .search-input:focus { border-color: #0e7490; }
-    .search-btn {
-      padding: 8px 14px; background: #0e7490; color: #fff;
-      border: none; border-radius: 8px; cursor: pointer; font-size: 12px; font-family: inherit;
-    }
-    .search-results {
-      max-height: 160px; overflow-y: auto; border: 1px solid #e2e8f0;
-      border-radius: 8px; margin-bottom: 8px; display: none;
-    }
+    .search-btn { padding: 8px 14px; background: #0e7490; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 12px; font-family: inherit; }
+    .search-results { max-height: 160px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 8px; display: none; }
     .search-results.visible { display: block; }
-    .search-result-item {
-      padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9; font-size: 12px;
-    }
+    .search-result-item { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9; font-size: 12px; }
     .search-result-item:last-child { border-bottom: none; }
     .search-result-item:hover { background: #f0f9ff; }
     .search-result-name { font-weight: 600; color: #1e293b; }
     .search-result-addr { font-size: 10px; color: #94a3b8; margin-top: 2px; }
-    .map-instruction {
-      background: #f0f9ff; color: #0c4a6e; padding: 8px 12px;
-      border-radius: 8px; font-size: 11px; margin-bottom: 8px;
-      display: flex; align-items: center; gap: 6px;
-    }
-    .location-confirm {
-      margin-top: 10px; padding: 10px; background: #f8fafc;
-      border-radius: 8px; font-size: 12px; display: none;
-    }
+    .map-instruction { background: #f0f9ff; color: #0c4a6e; padding: 8px 12px; border-radius: 8px; font-size: 11px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+    .location-confirm { margin-top: 10px; padding: 10px; background: #f8fafc; border-radius: 8px; font-size: 12px; display: none; }
     .location-confirm.visible { display: block; }
     .location-coord { color: #475569; margin-bottom: 6px; }
     .location-coord strong { color: #0e7490; }
@@ -152,7 +144,16 @@
     .form-input, .form-textarea { width: 100%; padding: 10px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-family: inherit; background: #fff; color: #1e293b; }
     .form-input:focus, .form-textarea:focus { outline: none; border-color: #0e7490; }
     .form-textarea { resize: vertical; min-height: 90px; line-height: 1.6; }
-    .submit-section { position: sticky; bottom: 0; background: linear-gradient(180deg, transparent, #f5f7fa 30%); padding: 16px 0 0; margin-top: 12px; }
+    
+    /* 投稿ボタンを画面下に固定 */
+    .submit-section {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      padding: 12px 16px;
+      background: #fff;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+      z-index: 100;
+    }
+    .submit-section-inner { max-width: 600px; margin: 0 auto; }
     .btn { width: 100%; padding: 14px 24px; border-radius: 10px; border: none; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; background: linear-gradient(135deg, #0e7490, #0c4a6e); color: #fff; box-shadow: 0 4px 12px rgba(14, 116, 144, 0.3); }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .loading-spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #fff; border-top: 2px solid transparent; border-radius: 50%; animation: spin 0.6s linear infinite; margin-right: 6px; vertical-align: middle; }
@@ -190,9 +191,9 @@
   <header class="header">
     <div class="header-top">
       <div class="header-title">
-        <span style="font-size:20px;">⚓</span>
+        <span style="font-size:22px;">⛵</span>
         <div>
-          <h1>釜山回航 2026</h1>
+          <h1>saily</h1>
           <p>日本海洋研究所</p>
         </div>
       </div>
@@ -237,16 +238,31 @@
 
           <div class="card">
             <div class="card-title"><span class="card-step">2</span>写真</div>
-            <label for="photoInput" class="photo-upload" id="uploadArea">
-              <div id="uploadPlaceholder">
-                <div class="upload-icon">📷</div>
-                <div class="upload-text">タップして写真を選ぶ</div>
-                <div class="upload-hint">位置情報付きの写真を選んでください</div>
-              </div>
-              <img id="photoPreview" class="photo-preview" style="display: none;" />
-              <button type="button" id="replaceBtn" class="photo-replace-btn" style="display: none;" onclick="event.preventDefault(); document.getElementById('photoInput').click();">変更</button>
-              <div id="photoInfo" class="photo-info" style="display: none;"></div>
-            </label>
+            
+            <!-- 写真選択ボタン:カメラ撮影 / ギャラリー選択 -->
+            <div class="photo-buttons" id="photoButtons">
+              <button type="button" class="photo-btn" onclick="document.getElementById('cameraInput').click();">
+                <span class="photo-btn-icon">📸</span>
+                <span class="photo-btn-text">カメラで撮影</span>
+                <span class="photo-btn-hint">位置情報が残ります</span>
+              </button>
+              <button type="button" class="photo-btn" onclick="document.getElementById('photoInput').click();">
+                <span class="photo-btn-icon">🖼️</span>
+                <span class="photo-btn-text">写真を選ぶ</span>
+                <span class="photo-btn-hint">既存の写真から</span>
+              </button>
+            </div>
+            
+            <!-- 写真プレビュー -->
+            <div class="photo-preview-wrap" id="photoPreviewWrap">
+              <img id="photoPreview" class="photo-preview" />
+              <button type="button" id="replaceBtn" class="photo-replace-btn" onclick="replacePhoto()">変更</button>
+              <div id="photoInfo" class="photo-info"></div>
+            </div>
+            
+            <!-- カメラ起動用 (capture属性付き) -->
+            <input type="file" id="cameraInput" class="upload-input" accept="image/*" capture="environment" />
+            <!-- 通常の写真選択用 -->
             <input type="file" id="photoInput" class="upload-input" accept="image/*" />
             
             <div id="gpsInfo" class="gps-info empty">
@@ -257,7 +273,6 @@
               </div>
             </div>
             
-            <!-- 手動位置指定UI -->
             <div class="location-tools" id="locationTools">
               <div class="location-tool-row">
                 <button type="button" class="loc-btn" onclick="useCurrentLocation()">
@@ -299,10 +314,13 @@
           </div>
 
           <div id="errorMsg" class="error-msg"></div>
-
-          <div class="submit-section">
-            <button class="btn" onclick="submitPost()" id="submitBtn">投稿する 🚀</button>
-          </div>
+        </div>
+      </div>
+      
+      <!-- 画面下に固定された投稿ボタン -->
+      <div class="submit-section">
+        <div class="submit-section-inner">
+          <button class="btn" onclick="submitPost()" id="submitBtn">投稿する 🚀</button>
         </div>
       </div>
     </div>
@@ -387,14 +405,14 @@
     }
 
     function loadAuthors() {
-      const stored = localStorage.getItem('busan_authors');
+      const stored = localStorage.getItem('saily_authors') || localStorage.getItem('busan_authors');
       const authors = stored ? JSON.parse(stored) : [];
       if (authors.length === 0) return ['原田', '大場', '山田'];
       return authors;
     }
 
     function saveAuthors(authors) {
-      localStorage.setItem('busan_authors', JSON.stringify(authors));
+      localStorage.setItem('saily_authors', JSON.stringify(authors));
     }
 
     function renderAuthors() {
@@ -416,7 +434,7 @@
 
     function selectAuthor(name) {
       selectedAuthor = name;
-      localStorage.setItem('busan_last_author', name);
+      localStorage.setItem('saily_last_author', name);
       renderAuthors();
     }
 
@@ -453,16 +471,24 @@
     });
 
     const photoInput = document.getElementById('photoInput');
+    const cameraInput = document.getElementById('cameraInput');
     const photoPreview = document.getElementById('photoPreview');
-    const uploadPlaceholder = document.getElementById('uploadPlaceholder');
-    const uploadArea = document.getElementById('uploadArea');
-    const replaceBtn = document.getElementById('replaceBtn');
+    const photoPreviewWrap = document.getElementById('photoPreviewWrap');
+    const photoButtons = document.getElementById('photoButtons');
     const photoInfoEl = document.getElementById('photoInfo');
     const gpsInfo = document.getElementById('gpsInfo');
     const miniMapEl = document.getElementById('miniMap');
     const locationTools = document.getElementById('locationTools');
     const locationConfirm = document.getElementById('locationConfirm');
     const mapInstruction = document.getElementById('mapInstruction');
+
+    function replacePhoto() {
+      if (confirm('カメラで撮り直しますか?\n（キャンセルすると、既存の写真から選び直しになります）')) {
+        cameraInput.click();
+      } else {
+        photoInput.click();
+      }
+    }
 
     function compressImage(file, maxWidth = 1600, quality = 0.85) {
       return new Promise((resolve, reject) => {
@@ -496,8 +522,7 @@
       });
     }
 
-    photoInput.addEventListener('change', async (e) => {
-      const file = e.target.files[0];
+    async function handlePhotoFile(file) {
       if (!file) return;
       currentPhotoName = file.name;
       const originalSize = Math.round(file.size / 1024);
@@ -505,7 +530,6 @@
       try {
         const exif = await exifr.parse(file, { gps: true });
         if (exif && exif.latitude && exif.longitude) {
-          // 写真にGPSあり
           currentLat = exif.latitude;
           currentLng = exif.longitude;
           gpsInfo.className = 'gps-info success';
@@ -514,12 +538,10 @@
           showMiniMap(currentLat, currentLng, true);
           updateLocationConfirm();
         } else {
-          // GPSなし → 手動指定UIを表示
           gpsInfo.className = 'gps-info warning';
           gpsInfo.innerHTML = `<span class="gps-info-icon">⚠️</span><div><div class="gps-info-title">位置情報がありません</div><div class="gps-info-detail">下の方法で位置を指定してください</div></div>`;
           locationTools.classList.add('visible');
           mapInstruction.style.display = 'flex';
-          // 地図を釜山周辺で初期表示
           showMiniMap(35.0951, 129.0756, false);
           currentLat = null;
           currentLng = null;
@@ -533,17 +555,17 @@
         const compressed = await compressImage(file);
         currentPhotoBase64 = compressed.base64;
         photoPreview.src = compressed.dataUrl;
-        photoPreview.style.display = 'block';
-        uploadPlaceholder.style.display = 'none';
-        replaceBtn.style.display = 'block';
-        uploadArea.classList.add('has-image');
-        photoInfoEl.style.display = 'block';
+        photoPreviewWrap.classList.add('visible');
+        photoButtons.style.display = 'none';
         photoInfoEl.textContent = `${originalSize}KB → ${compressed.size}KB`;
       } catch (err) {
         console.error('圧縮エラー:', err);
         showError('写真の処理に失敗しました');
       }
-    });
+    }
+
+    photoInput.addEventListener('change', (e) => handlePhotoFile(e.target.files[0]));
+    cameraInput.addEventListener('change', (e) => handlePhotoFile(e.target.files[0]));
 
     function showMiniMap(lat, lng, hasMarker = true) {
       miniMapEl.classList.add('visible');
@@ -561,7 +583,6 @@
             attribution: '© OpenStreetMap'
           }).addTo(miniMap);
           
-          // 地図クリックでピン配置
           miniMap.on('click', (e) => {
             placePinOnMiniMap(e.latlng.lat, e.latlng.lng);
           });
@@ -589,7 +610,6 @@
         miniMap.removeLayer(miniMapMarker);
       }
       
-      // ドラッグ可能なマーカー
       miniMapMarker = L.marker([lat, lng], { draggable: true }).addTo(miniMap);
       
       miniMapMarker.on('dragend', (e) => {
@@ -612,7 +632,6 @@
       }
     }
 
-    // ===== 現在地を使う =====
     function useCurrentLocation() {
       if (!navigator.geolocation) {
         showError('お使いのブラウザは位置情報に対応していません');
@@ -639,7 +658,6 @@
       );
     }
 
-    // ===== 場所検索（Nominatim API）=====
     async function searchLocation() {
       const query = document.getElementById('searchInput').value.trim();
       if (!query) return;
@@ -733,12 +751,10 @@
       document.getElementById('successOverlay').classList.remove('visible');
       document.getElementById('titleInput').value = '';
       document.getElementById('commentInput').value = '';
-      photoPreview.style.display = 'none';
-      uploadPlaceholder.style.display = 'block';
-      replaceBtn.style.display = 'none';
-      photoInfoEl.style.display = 'none';
-      uploadArea.classList.remove('has-image');
+      photoPreviewWrap.classList.remove('visible');
+      photoButtons.style.display = 'grid';
       photoInput.value = '';
+      cameraInput.value = '';
       currentPhotoBase64 = null;
       currentPhotoName = '';
       currentLat = null;
@@ -765,7 +781,6 @@
       setTimeout(loadPosts, 1500);
     }
 
-    // ===== 編集機能 =====
     function openEditModal(postId) {
       const post = posts.find(p => p.id === postId);
       if (!post) return;
@@ -1004,7 +1019,7 @@
 
     initMap();
     renderAuthors();
-    const lastAuthor = localStorage.getItem('busan_last_author');
+    const lastAuthor = localStorage.getItem('saily_last_author') || localStorage.getItem('busan_last_author');
     if (lastAuthor && loadAuthors().includes(lastAuthor)) {
       selectAuthor(lastAuthor);
     }
