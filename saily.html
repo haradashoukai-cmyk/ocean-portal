@@ -8,7 +8,9 @@
   <title>saily | 日本海洋研究所</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/exifr/dist/full.umd.js"></script>
   <style>
     :root {
@@ -71,7 +73,10 @@
     .port-dot { width: 14px; height: 14px; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 3px 10px rgba(13, 45, 68, 0.32); }
     .empty-state { padding: 40px 20px; text-align: center; color: var(--muted); font-size: 13px; line-height: 1.6; }
     .empty-state-emoji { font-size: 34px; margin-bottom: 8px; }
-    .marker-photo { width: 42px; height: 42px; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 3px 12px rgba(13, 45, 68, 0.35); object-fit: cover; }
+    .marker-photo { width: 40px; height: 40px; display: block; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 3px 12px rgba(13, 45, 68, 0.35); object-fit: cover; background: #e2e8f0; }
+    .post-cluster { width: 42px; height: 42px; display: grid; place-items: center; background: var(--blue); color: #fff; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 4px 14px rgba(13, 45, 68, 0.32); font-size: 13px; font-weight: 700; }
+    .post-cluster.medium { background: var(--navy); }
+    .post-cluster.large { background: #0b1f2f; }
     .leaflet-popup-content-wrapper { border-radius: 8px; padding: 0; overflow: hidden; box-shadow: var(--shadow); }
     .leaflet-popup-content { margin: 0; width: 240px !important; }
     .popup-photo { width: 100%; height: 140px; object-fit: cover; display: block; }
@@ -284,7 +289,7 @@
       { id: 'port_busan', author: '港情報', title: '釜山港', comment: '航海の到着地点', lat: 35.0951, lng: 129.0756, timestamp: '2026-05-04 00:00:00', color: '#dc2626' }
     ];
     let currentLat = null, currentLng = null, currentPhotoBase64 = null, currentPhotoName = '', currentPhotoTimestamp = '';
-    let miniMap = null, miniMapMarker = null, selectedAuthor = '', posts = [], markers = {}, portMarkers = {}, map, editingPost = null, editingAuthor = '', editingType = 'post';
+    let miniMap = null, miniMapMarker = null, selectedAuthor = '', posts = [], markers = {}, portMarkers = {}, postClusterLayer = null, map, editingPost = null, editingAuthor = '', editingType = 'post';
 
     function switchView(view) {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -576,6 +581,22 @@
     function initMap() {
       map = L.map('map').setView([34.5, 134.0], 6);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© OpenStreetMap' }).addTo(map);
+      postClusterLayer = L.markerClusterGroup({
+        showCoverageOnHover: false,
+        spiderfyOnMaxZoom: true,
+        maxClusterRadius: 42,
+        iconCreateFunction: cluster => {
+          const count = cluster.getChildCount();
+          const size = count >= 10 ? 'large' : count >= 4 ? 'medium' : '';
+          return L.divIcon({
+            className: '',
+            html: `<div class="post-cluster ${size}">${count}</div>`,
+            iconSize: [42, 42],
+            iconAnchor: [21, 21]
+          });
+        }
+      });
+      map.addLayer(postClusterLayer);
       renderPortMarkers();
     }
     async function loadPosts() {
@@ -594,14 +615,16 @@
     function escapeHtml(s) { if (!s) return ''; return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
     function escapeQuote(s) { return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
     function renderPosts() {
-      Object.values(markers).forEach(m => map.removeLayer(m)); markers = {};
+      if (postClusterLayer) postClusterLayer.clearLayers();
+      markers = {};
       document.getElementById('postCount').textContent = posts.length;
       renderPortMarkers();
       if (!posts.length) { document.getElementById('timelineList').innerHTML = '<div class="empty-state"><div class="empty-state-emoji">0</div>まだ投稿がありません<br><small>「投稿」タブから投稿してみましょう</small></div>'; return; }
       document.getElementById('timelineList').innerHTML = posts.map(p => `<div class="post-item" data-id="${p.id}"><div class="post-item-content" onclick="focusPost('${p.id}')"><img class="post-thumb" src="${p.photoUrl}" onerror="this.style.background='#e2e8f0'"><div class="post-content"><div class="post-meta"><span class="post-author">${escapeHtml(p.author)}</span><span>${formatDate(p.timestamp)}</span></div><div class="post-title">${escapeHtml(p.title)}</div><div class="post-comment">${escapeHtml(p.comment || '')}</div></div></div><div class="post-actions"><button class="post-action-btn" onclick="openEditModal('${p.id}')">編集</button><button class="post-action-btn" onclick="focusPost('${p.id}')">地図で見る</button></div></div>`).join('');
       posts.forEach(p => {
-        const icon = L.divIcon({ className: '', html: `<img class="marker-photo" src="${p.photoUrl}">`, iconSize: [42, 42], iconAnchor: [21, 21] });
-        markers[p.id] = L.marker([p.lat, p.lng], { icon }).addTo(map).bindPopup(buildPopupContent(p), { maxWidth: 240 });
+        const icon = L.divIcon({ className: '', html: `<img class="marker-photo" src="${p.photoUrl}">`, iconSize: [40, 40], iconAnchor: [20, 20] });
+        markers[p.id] = L.marker([p.lat, p.lng], { icon }).bindPopup(buildPopupContent(p), { maxWidth: 240 });
+        postClusterLayer.addLayer(markers[p.id]);
       });
       const bounds = L.latLngBounds(posts.map(p => [p.lat, p.lng])); loadPortPoints().forEach(p => bounds.extend([p.lat, p.lng])); map.fitBounds(bounds, { padding: [40, 40] });
     }
@@ -613,7 +636,19 @@
         portMarkers[p.id] = L.marker([p.lat, p.lng], { icon }).addTo(map).bindPopup(buildPopupContent(p, 'port'), { maxWidth: 240 });
       });
     }
-    function focusPost(id) { const post = posts.find(p => p.id === id); if (!post) return; document.querySelectorAll('.post-item').forEach(el => el.classList.remove('active')); document.querySelector(`.post-item[data-id="${id}"]`)?.classList.add('active'); map.flyTo([post.lat, post.lng], 12, { duration: 1 }); markers[id]?.openPopup(); }
+    function focusPost(id) {
+      const post = posts.find(p => p.id === id);
+      if (!post) return;
+      document.querySelectorAll('.post-item').forEach(el => el.classList.remove('active'));
+      document.querySelector(`.post-item[data-id="${id}"]`)?.classList.add('active');
+      const marker = markers[id];
+      if (postClusterLayer && marker) {
+        postClusterLayer.zoomToShowLayer(marker, () => marker.openPopup());
+      } else {
+        map.flyTo([post.lat, post.lng], 12, { duration: 1 });
+        marker?.openPopup();
+      }
+    }
     function toggleTimeline() { document.getElementById('timelinePanel').classList.toggle('open'); }
     function formatDate(timestamp) { const d = new Date(String(timestamp).replace(' ', 'T')); return `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
 
