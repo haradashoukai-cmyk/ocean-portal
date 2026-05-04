@@ -68,12 +68,14 @@
     .post-actions { display: flex; gap: 4px; margin-top: 7px; padding-top: 7px; border-top: 1px solid #e7edf4; }
     .post-action-btn, .popup-action-btn { background: #f4f8fb; border: 1px solid #e1ebf3; color: var(--blue); padding: 5px 9px; border-radius: 6px; font-size: 11px; font-weight: 700; }
     .post-action-btn:hover, .popup-action-btn:hover { background: #e8f5f7; color: var(--navy); }
+    .port-dot { width: 14px; height: 14px; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 3px 10px rgba(13, 45, 68, 0.32); }
     .empty-state { padding: 40px 20px; text-align: center; color: var(--muted); font-size: 13px; line-height: 1.6; }
     .empty-state-emoji { font-size: 34px; margin-bottom: 8px; }
     .marker-photo { width: 42px; height: 42px; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 3px 12px rgba(13, 45, 68, 0.35); object-fit: cover; }
     .leaflet-popup-content-wrapper { border-radius: 8px; padding: 0; overflow: hidden; box-shadow: var(--shadow); }
     .leaflet-popup-content { margin: 0; width: 240px !important; }
     .popup-photo { width: 100%; height: 140px; object-fit: cover; display: block; }
+    .popup-photo.port { height: 92px; display: grid; place-items: center; background: linear-gradient(135deg, #e7f8f0, #e8f5f7); color: var(--navy); font-family: 'Zen Maru Gothic', sans-serif; font-size: 20px; font-weight: 700; }
     .popup-body { padding: 12px 14px; }
     .popup-meta { margin-bottom: 4px; color: var(--muted); font-size: 11px; }
     .popup-author { color: var(--blue); font-weight: 700; }
@@ -277,12 +279,12 @@
 
   <script>
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbxBc_DVbAVhUM4Kh_SV31ah_wl_7YweeNSkpvU2BJ8Rsl-4LtugiVVxF8badfpGa3BE5Q/exec';
-    const REFERENCE_POINTS = [
-      { name: '東京湾', lat: 35.5, lng: 139.8, isStart: true },
-      { name: '釜山港', lat: 35.0951, lng: 129.0756, isEnd: true }
+    const DEFAULT_PORT_POINTS = [
+      { id: 'port_tokyo_bay', author: '港情報', title: '東京湾', comment: '航海の出発地点', lat: 35.5, lng: 139.8, timestamp: '2026-05-04 00:00:00', color: '#20a36b' },
+      { id: 'port_busan', author: '港情報', title: '釜山港', comment: '航海の到着地点', lat: 35.0951, lng: 129.0756, timestamp: '2026-05-04 00:00:00', color: '#dc2626' }
     ];
     let currentLat = null, currentLng = null, currentPhotoBase64 = null, currentPhotoName = '', currentPhotoTimestamp = '';
-    let miniMap = null, miniMapMarker = null, selectedAuthor = '', posts = [], markers = {}, map, editingPost = null, editingAuthor = '';
+    let miniMap = null, miniMapMarker = null, selectedAuthor = '', posts = [], markers = {}, portMarkers = {}, map, editingPost = null, editingAuthor = '', editingType = 'post';
 
     function switchView(view) {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -505,12 +507,27 @@
     }
     function closeAndShowMap() { closeSuccessAndReset(); switchView('map'); setTimeout(loadPosts, 1500); }
 
-    function openEditModal(postId) {
-      const post = posts.find(p => p.id === postId); if (!post) return;
-      editingPost = post; editingAuthor = post.author;
-      document.getElementById('editPhoto').src = post.photoUrl;
-      document.getElementById('editTitleInput').value = post.title || '';
-      document.getElementById('editCommentInput').value = post.comment || '';
+    function loadPortPoints() {
+      try {
+        const saved = JSON.parse(localStorage.getItem('saily_port_points') || 'null');
+        if (Array.isArray(saved)) return saved;
+      } catch (_) {}
+      return DEFAULT_PORT_POINTS.map(p => ({ ...p }));
+    }
+    function savePortPoints(points) { localStorage.setItem('saily_port_points', JSON.stringify(points)); }
+    function buildPopupContent(item, type = 'post') {
+      const media = type === 'port'
+        ? `<div class="popup-photo port">${escapeHtml(item.title)}</div>`
+        : `<img class="popup-photo" src="${item.photoUrl}">`;
+      return `${media}<div class="popup-body"><div class="popup-meta"><span class="popup-author">${escapeHtml(item.author)}</span> · ${formatDate(item.timestamp)}</div><div class="popup-title">${escapeHtml(item.title)}</div><div class="popup-comment">${escapeHtml(item.comment || '')}</div><div class="popup-actions"><button class="popup-action-btn" onclick="openEditModal('${item.id}', '${type}')">編集</button></div></div>`;
+    }
+    function openEditModal(itemId, type = 'post') {
+      const item = type === 'port' ? loadPortPoints().find(p => p.id === itemId) : posts.find(p => p.id === itemId);
+      if (!item) return;
+      editingType = type; editingPost = item; editingAuthor = item.author;
+      document.getElementById('editPhoto').src = type === 'port' ? 'assets/japan-ocean-research-logo.png' : item.photoUrl;
+      document.getElementById('editTitleInput').value = item.title || '';
+      document.getElementById('editCommentInput').value = item.comment || '';
       renderEditAuthors(); document.getElementById('editModal').classList.add('visible');
     }
     function renderEditAuthors() {
@@ -518,22 +535,36 @@
       const area = document.getElementById('editAuthorArea'); area.innerHTML = '';
       authors.forEach(name => { const chip = document.createElement('button'); chip.className = 'author-chip' + (editingAuthor === name ? ' active' : ''); chip.textContent = name; chip.onclick = () => { editingAuthor = name; renderEditAuthors(); }; area.appendChild(chip); });
     }
-    function closeEditModal() { document.getElementById('editModal').classList.remove('visible'); editingPost = null; editingAuthor = ''; }
+    function closeEditModal() { document.getElementById('editModal').classList.remove('visible'); editingPost = null; editingAuthor = ''; editingType = 'post'; }
     async function saveEdit() {
       const title = document.getElementById('editTitleInput').value.trim();
       const comment = document.getElementById('editCommentInput').value.trim();
       if (!title) { showEditError('タイトルを入力してください'); return; }
       if (!editingAuthor) { showEditError('投稿者を選んでください'); return; }
       const btn = document.getElementById('saveEditBtn'); btn.disabled = true; btn.innerHTML = '<span class="loading-spinner"></span>保存中...';
+      if (editingType === 'port') {
+        const points = loadPortPoints();
+        const idx = points.findIndex(p => p.id === editingPost.id);
+        if (idx !== -1) {
+          points[idx] = { ...points[idx], author: editingAuthor, title, comment };
+          savePortPoints(points); renderPortMarkers();
+        }
+        btn.disabled = false; btn.innerHTML = '保存'; closeEditModal(); return;
+      }
       try {
         await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'edit', id: editingPost.id, author: editingAuthor, title, comment }) });
         const idx = posts.findIndex(p => p.id === editingPost.id);
         if (idx !== -1) { posts[idx].author = editingAuthor; posts[idx].title = title; posts[idx].comment = comment; renderPosts(); }
-        closeEditModal(); setTimeout(loadPosts, 2000);
+        btn.disabled = false; btn.innerHTML = '保存'; closeEditModal(); setTimeout(loadPosts, 2000);
       } catch (err) { console.error('編集エラー:', err); showEditError('保存に失敗しました'); btn.disabled = false; btn.innerHTML = '保存'; }
     }
     async function deleteCurrentPost() {
       if (!editingPost) return;
+      if (editingType === 'port') {
+        if (!confirm(`「${editingPost.title}」を削除しますか？`)) return;
+        savePortPoints(loadPortPoints().filter(p => p.id !== editingPost.id));
+        renderPortMarkers(); closeEditModal(); return;
+      }
       if (!confirm(`「${editingPost.title}」を削除しますか？\n\n※ 写真も一緒に削除されます\n※ この操作は取り消せません`)) return;
       const btn = document.getElementById('saveEditBtn'); btn.disabled = true;
       try {
@@ -545,10 +576,7 @@
     function initMap() {
       map = L.map('map').setView([34.5, 134.0], 6);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© OpenStreetMap' }).addTo(map);
-      REFERENCE_POINTS.forEach(p => {
-        const icon = L.divIcon({ className: '', html: `<div style="background:${p.isStart ? '#20a36b' : '#dc2626'};color:#fff;padding:5px 10px;border-radius:999px;font-size:10px;font-weight:700;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.28);white-space:nowrap;">${p.name}</div>`, iconSize: [70, 24], iconAnchor: [35, 12] });
-        L.marker([p.lat, p.lng], { icon }).addTo(map);
-      });
+      renderPortMarkers();
     }
     async function loadPosts() {
       document.getElementById('loadingOverlay').style.display = 'flex';
@@ -568,13 +596,22 @@
     function renderPosts() {
       Object.values(markers).forEach(m => map.removeLayer(m)); markers = {};
       document.getElementById('postCount').textContent = posts.length;
+      renderPortMarkers();
       if (!posts.length) { document.getElementById('timelineList').innerHTML = '<div class="empty-state"><div class="empty-state-emoji">0</div>まだ投稿がありません<br><small>「投稿」タブから投稿してみましょう</small></div>'; return; }
       document.getElementById('timelineList').innerHTML = posts.map(p => `<div class="post-item" data-id="${p.id}"><div class="post-item-content" onclick="focusPost('${p.id}')"><img class="post-thumb" src="${p.photoUrl}" onerror="this.style.background='#e2e8f0'"><div class="post-content"><div class="post-meta"><span class="post-author">${escapeHtml(p.author)}</span><span>${formatDate(p.timestamp)}</span></div><div class="post-title">${escapeHtml(p.title)}</div><div class="post-comment">${escapeHtml(p.comment || '')}</div></div></div><div class="post-actions"><button class="post-action-btn" onclick="openEditModal('${p.id}')">編集</button><button class="post-action-btn" onclick="focusPost('${p.id}')">地図で見る</button></div></div>`).join('');
       posts.forEach(p => {
         const icon = L.divIcon({ className: '', html: `<img class="marker-photo" src="${p.photoUrl}">`, iconSize: [42, 42], iconAnchor: [21, 21] });
-        markers[p.id] = L.marker([p.lat, p.lng], { icon }).addTo(map).bindPopup(`<img class="popup-photo" src="${p.photoUrl}"><div class="popup-body"><div class="popup-meta"><span class="popup-author">${escapeHtml(p.author)}</span> · ${formatDate(p.timestamp)}</div><div class="popup-title">${escapeHtml(p.title)}</div><div class="popup-comment">${escapeHtml(p.comment || '')}</div><div class="popup-actions"><button class="popup-action-btn" onclick="openEditModal('${p.id}')">編集</button></div></div>`, { maxWidth: 240 });
+        markers[p.id] = L.marker([p.lat, p.lng], { icon }).addTo(map).bindPopup(buildPopupContent(p), { maxWidth: 240 });
       });
-      const bounds = L.latLngBounds(posts.map(p => [p.lat, p.lng])); REFERENCE_POINTS.forEach(p => bounds.extend([p.lat, p.lng])); map.fitBounds(bounds, { padding: [40, 40] });
+      const bounds = L.latLngBounds(posts.map(p => [p.lat, p.lng])); loadPortPoints().forEach(p => bounds.extend([p.lat, p.lng])); map.fitBounds(bounds, { padding: [40, 40] });
+    }
+    function renderPortMarkers() {
+      if (!map) return;
+      Object.values(portMarkers).forEach(m => map.removeLayer(m)); portMarkers = {};
+      loadPortPoints().forEach(p => {
+        const icon = L.divIcon({ className: '', html: `<div class="port-dot" style="background:${p.color || '#0f6f94'}"></div>`, iconSize: [14, 14], iconAnchor: [7, 7] });
+        portMarkers[p.id] = L.marker([p.lat, p.lng], { icon }).addTo(map).bindPopup(buildPopupContent(p, 'port'), { maxWidth: 240 });
+      });
     }
     function focusPost(id) { const post = posts.find(p => p.id === id); if (!post) return; document.querySelectorAll('.post-item').forEach(el => el.classList.remove('active')); document.querySelector(`.post-item[data-id="${id}"]`)?.classList.add('active'); map.flyTo([post.lat, post.lng], 12, { duration: 1 }); markers[id]?.openPopup(); }
     function toggleTimeline() { document.getElementById('timelinePanel').classList.toggle('open'); }
