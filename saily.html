@@ -735,7 +735,7 @@ FAX：0766-86-5441
       }
     ];
     let currentLat = null, currentLng = null, currentPhotoBase64 = null, currentPhotoName = '', currentPhotoTimestamp = '';
-    let miniMap = null, miniMapMarker = null, selectedAuthor = '', posts = [], commentCounts = {}, markers = {}, portMarkers = {}, postClusterLayer = null, map, editingPost = null, editingAuthor = '', editingType = 'post';
+    let miniMap = null, miniMapMarker = null, selectedAuthor = '', posts = [], commentCounts = {}, commentCache = {}, markers = {}, portMarkers = {}, postClusterLayer = null, map, editingPost = null, editingAuthor = '', editingType = 'post';
 
     function switchView(view) {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -923,23 +923,31 @@ FAX：0766-86-5441
 
     function showError(msg) { const el = document.getElementById('errorMsg'); el.textContent = msg; el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 5000); }
     function showEditError(msg) { const el = document.getElementById('editErrorMsg'); el.textContent = msg; el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 5000); }
+    function renderCommentList(list, comments) {
+      if (!comments.length) {
+        list.innerHTML = '<div class="comment-empty">コメントはまだありません</div>';
+        return;
+      }
+      list.innerHTML = comments.map(comment => `<div class="comment-item"><div class="comment-meta">${escapeHtml(comment.author || '匿名')} · ${formatDate(comment.timestamp)}</div><div class="comment-text">${escapeHtml(comment.comment || '')}</div></div>`).join('');
+    }
     async function loadPostComments(postId) {
       const list = document.querySelector(`[data-comments-for="${CSS.escape(postId)}"]`);
       if (!list) return;
-      list.innerHTML = '<div class="comment-empty">読み込み中...</div>';
+      if (commentCache[postId]) {
+        renderCommentList(list, commentCache[postId]);
+      } else {
+        list.innerHTML = '<div class="comment-empty">読み込み中...</div>';
+      }
       try {
         const response = await fetch(`${GAS_URL}?action=getComments&postId=${encodeURIComponent(postId)}&_=${Date.now()}`);
         const data = await response.json();
         const comments = data.comments || [];
+        commentCache[postId] = comments;
         commentCounts[postId] = comments.length;
         updatePostCommentCount(postId);
-        if (!comments.length) {
-          list.innerHTML = '<div class="comment-empty">コメントはまだありません</div>';
-          return;
-        }
-        list.innerHTML = comments.map(comment => `<div class="comment-item"><div class="comment-meta">${escapeHtml(comment.author || '匿名')} · ${formatDate(comment.timestamp)}</div><div class="comment-text">${escapeHtml(comment.comment || '')}</div></div>`).join('');
+        renderCommentList(list, comments);
       } catch (err) {
-        list.innerHTML = '<div class="comment-empty">コメントを読み込めませんでした</div>';
+        if (!commentCache[postId]) list.innerHTML = '<div class="comment-empty">コメントを読み込めませんでした</div>';
       }
     }
     async function loadCommentCounts() {
@@ -949,7 +957,9 @@ FAX：0766-86-5441
         try {
           const response = await fetch(`${GAS_URL}?action=getComments&postId=${encodeURIComponent(id)}&_=${Date.now()}`);
           const data = await response.json();
-          counts[id] = (data.comments || []).length;
+          const comments = data.comments || [];
+          commentCache[id] = comments;
+          counts[id] = comments.length;
         } catch (_) {
           counts[id] = commentCounts[id] || 0;
         }
@@ -978,6 +988,8 @@ FAX：0766-86-5441
         await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'addComment', postId, author: author.trim(), comment, timestamp: formatJstTimestamp() }) });
         input.value = '';
         commentCounts[postId] = (commentCounts[postId] || 0) + 1;
+        commentCache[postId] = [...(commentCache[postId] || []), { author: author.trim(), comment, timestamp: formatJstTimestamp() }];
+        renderCommentList(input.closest('.comment-panel').querySelector('.comment-list'), commentCache[postId]);
         updatePostCommentCount(postId);
         setTimeout(() => loadPostComments(postId), 1200);
       } catch (err) {
@@ -1108,7 +1120,7 @@ FAX：0766-86-5441
       osm.addTo(map);
       seamap.addTo(map);
       map.createPane('portPane');
-      map.getPane('portPane').style.zIndex = 720;
+      map.getPane('portPane').style.zIndex = 650;
       const notice = L.control({ position: 'bottomleft' });
       notice.onAdd = () => {
         const div = L.DomUtil.create('div', 'map-notice');
@@ -1175,7 +1187,7 @@ FAX：0766-86-5441
       loadPortPoints().forEach(p => {
         const color = p.is_home_port ? '#d92626' : (p.color || '#0f6f94');
         const icon = L.divIcon({ className: '', html: `<div class="port-dot" style="background:${color}"></div>`, iconSize: [14, 14], iconAnchor: [7, 7] });
-        portMarkers[p.id] = L.marker([p.lat, p.lng], { icon, pane: 'portPane', zIndexOffset: 10000 }).addTo(map).bindPopup(buildPopupContent(p, 'port'), { maxWidth: 240 });
+        portMarkers[p.id] = L.marker([p.lat, p.lng], { icon, pane: 'portPane' }).addTo(map).bindPopup(buildPopupContent(p, 'port'), { maxWidth: 240 });
       });
     }
     function focusPost(id) {
