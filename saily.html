@@ -851,6 +851,8 @@ TEL：098-897-7017
       const seamap = L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© OpenSeaMap' });
       osm.addTo(map);
       seamap.addTo(map);
+      map.createPane('portPane');
+      map.getPane('portPane').style.zIndex = 720;
       const notice = L.control({ position: 'bottomleft' });
       notice.onAdd = () => {
         const div = L.DomUtil.create('div', 'map-notice');
@@ -922,7 +924,7 @@ TEL：098-897-7017
               iconAnchor: [12, 12]
             })
           : L.divIcon({ className: '', html: `<div class="port-dot" style="background:${p.color || '#0f6f94'}"></div>`, iconSize: [14, 14], iconAnchor: [7, 7] });
-        portMarkers[p.id] = L.marker([p.lat, p.lng], { icon }).addTo(map).bindPopup(buildPopupContent(p, 'port'), { maxWidth: 240 });
+        portMarkers[p.id] = L.marker([p.lat, p.lng], { icon, pane: 'portPane', zIndexOffset: 10000 }).addTo(map).bindPopup(buildPopupContent(p, 'port'), { maxWidth: 240 });
       });
     }
     function focusPost(id) {
