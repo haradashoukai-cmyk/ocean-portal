@@ -85,7 +85,7 @@
     .popup-meta { margin-bottom: 4px; color: var(--muted); font-size: 11px; }
     .popup-author { color: var(--blue); font-weight: 700; }
     .popup-title { margin-bottom: 6px; color: var(--ink); font-size: 14px; font-weight: 700; }
-    .popup-comment { margin-bottom: 8px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .popup-comment { max-height: 240px; margin-bottom: 8px; overflow: auto; color: var(--muted); font-size: 12px; line-height: 1.5; white-space: pre-line; }
     .popup-actions { display: flex; gap: 4px; padding-top: 8px; border-top: 1px solid #e7edf4; }
     .post-view { height: 100%; overflow-y: auto; padding: 16px 10px calc(132px + env(safe-area-inset-bottom)) 10px; background: linear-gradient(180deg, #eef4f8 0%, #f8fbfd 100%); -webkit-overflow-scrolling: touch; }
     .post-container { width: 100%; max-width: 960px; margin: 0 auto; }
@@ -286,7 +286,51 @@
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbxBc_DVbAVhUM4Kh_SV31ah_wl_7YweeNSkpvU2BJ8Rsl-4LtugiVVxF8badfpGa3BE5Q/exec';
     const DEFAULT_PORT_POINTS = [
       { id: 'port_tokyo_bay', author: '港情報', title: '東京湾', comment: '航海の出発地点', lat: 35.5, lng: 139.8, timestamp: '2026-05-04 00:00:00', color: '#20a36b' },
-      { id: 'port_busan', author: '港情報', title: '釜山港', comment: '航海の到着地点', lat: 35.0951, lng: 129.0756, timestamp: '2026-05-04 00:00:00', color: '#dc2626' }
+      { id: 'port_busan', author: '港情報', title: '釜山港', comment: '航海の到着地点', lat: 35.0951, lng: 129.0756, timestamp: '2026-05-04 00:00:00', color: '#dc2626' },
+      {
+        id: 'port_niihama_marina',
+        author: '港情報',
+        title: '新居浜マリーナ（マリンパーク新居浜）',
+        comment: `【所在地】
+愛媛県新居浜市垣生3丁目乙324番地
+N 33°59'45" E 133°20'00"
+
+【入港時の注意】
+・新居浜東港フェリー乗り場の手前右側。マリーナ正面堤防の矢印表示から左折、西側から入港
+・人工海浜方面は浅瀬のため進入不可
+・出入口に漁業者の旗が点在
+・入出港は日の出〜日没のみ、水上オートバイ禁止
+
+【施設仕様】
+水深 3m／受入最大 55ft（海の駅基準では50ft以上不可）／係留＋陸上保管
+
+【設備】
+給電・シャワー・トイレ・自販機・食事・修理対応 すべてあり
+
+【営業時間】
+4〜9月 8:30〜18:30 ／ 10〜3月 8:30〜17:00
+定休日：火曜（祝日の場合翌日）、年末年始
+
+【ビジターバース料金（1日・税込）】
+20ft 1,640円 ／ 25ft 1,850円 ／ 30ft 2,460円
+35ft 3,080円 ／ 40ft 3,700円 ／ 45ft 4,320円
+※クレジットカード不可
+
+【入港手続き】
+船舶検査証書持参のうえ、フロントで「臨時係船届」記入＋使用料支払い
+
+【連絡先】
+TEL：0897-46-5636
+公式：https://www.niihama-marina.com/
+海の駅：https://uminet.jp/marina/detail.php?id=516
+
+【併設施設】
+レストラン Loca、人工海浜（ヤシの木ビーチ）、キャンプ場`,
+        lat: 33.995833,
+        lng: 133.333333,
+        timestamp: '2026-05-11 00:00:00',
+        color: '#0f6f94'
+      }
     ];
     let currentLat = null, currentLng = null, currentPhotoBase64 = null, currentPhotoName = '', currentPhotoTimestamp = '';
     let miniMap = null, miniMapMarker = null, selectedAuthor = '', posts = [], markers = {}, portMarkers = {}, postClusterLayer = null, map, editingPost = null, editingAuthor = '', editingType = 'post';
@@ -515,7 +559,16 @@
     function loadPortPoints() {
       try {
         const saved = JSON.parse(localStorage.getItem('saily_port_points') || 'null');
-        if (Array.isArray(saved)) return saved;
+        if (Array.isArray(saved)) {
+          const merged = DEFAULT_PORT_POINTS.map(defaultPoint => {
+            const savedPoint = saved.find(point => point.id === defaultPoint.id);
+            return savedPoint ? { ...defaultPoint, ...savedPoint } : { ...defaultPoint };
+          });
+          saved.forEach(point => {
+            if (!merged.some(defaultPoint => defaultPoint.id === point.id)) merged.push(point);
+          });
+          return merged;
+        }
       } catch (_) {}
       return DEFAULT_PORT_POINTS.map(p => ({ ...p }));
     }
