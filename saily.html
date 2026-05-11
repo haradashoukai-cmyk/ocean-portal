@@ -67,6 +67,7 @@
     .post-author { color: var(--blue); font-weight: 700; }
     .post-title { margin-bottom: 2px; color: var(--ink); font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .post-comment { color: var(--muted); font-size: 11px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .post-comment-count { margin-top: 5px; color: #7890a8; font-size: 11px; font-weight: 700; }
     .post-actions { display: flex; gap: 4px; margin-top: 7px; padding-top: 7px; border-top: 1px solid #e7edf4; }
     .post-action-btn, .popup-action-btn { background: #f4f8fb; border: 1px solid #e1ebf3; color: var(--blue); padding: 5px 9px; border-radius: 6px; font-size: 11px; font-weight: 700; }
     .post-action-btn:hover, .popup-action-btn:hover { background: #e8f5f7; color: var(--navy); }
@@ -506,7 +507,7 @@ TEL：098-897-7017
       }
     ];
     let currentLat = null, currentLng = null, currentPhotoBase64 = null, currentPhotoName = '', currentPhotoTimestamp = '';
-    let miniMap = null, miniMapMarker = null, selectedAuthor = '', posts = [], markers = {}, portMarkers = {}, postClusterLayer = null, map, editingPost = null, editingAuthor = '', editingType = 'post';
+    let miniMap = null, miniMapMarker = null, selectedAuthor = '', posts = [], commentCounts = {}, markers = {}, portMarkers = {}, postClusterLayer = null, map, editingPost = null, editingAuthor = '', editingType = 'post';
 
     function switchView(view) {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -702,6 +703,8 @@ TEL：098-897-7017
         const response = await fetch(`${GAS_URL}?action=getComments&postId=${encodeURIComponent(postId)}&_=${Date.now()}`);
         const data = await response.json();
         const comments = data.comments || [];
+        commentCounts[postId] = comments.length;
+        updatePostCommentCount(postId);
         if (!comments.length) {
           list.innerHTML = '<div class="comment-empty">コメントはまだありません</div>';
           return;
@@ -710,6 +713,29 @@ TEL：098-897-7017
       } catch (err) {
         list.innerHTML = '<div class="comment-empty">コメントを読み込めませんでした</div>';
       }
+    }
+    async function loadCommentCounts() {
+      const targets = posts.map(p => p.id);
+      const counts = {};
+      await Promise.all(targets.map(async id => {
+        try {
+          const response = await fetch(`${GAS_URL}?action=getComments&postId=${encodeURIComponent(id)}&_=${Date.now()}`);
+          const data = await response.json();
+          counts[id] = (data.comments || []).length;
+        } catch (_) {
+          counts[id] = commentCounts[id] || 0;
+        }
+      }));
+      commentCounts = counts;
+      targets.forEach(updatePostCommentCount);
+    }
+    function formatCommentCount(postId) {
+      const count = commentCounts[postId] || 0;
+      return count ? `コメント ${count}件` : 'コメント 0件';
+    }
+    function updatePostCommentCount(postId) {
+      const el = document.querySelector(`[data-comment-count-for="${CSS.escape(postId)}"]`);
+      if (el) el.textContent = formatCommentCount(postId);
     }
     async function addPostComment(postId) {
       const input = document.getElementById(`commentInput_${postId}`);
@@ -723,6 +749,8 @@ TEL：098-897-7017
       try {
         await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'addComment', postId, author: author.trim(), comment, timestamp: formatJstTimestamp() }) });
         input.value = '';
+        commentCounts[postId] = (commentCounts[postId] || 0) + 1;
+        updatePostCommentCount(postId);
         setTimeout(() => loadPostComments(postId), 1200);
       } catch (err) {
         alert('コメント送信に失敗しました');
@@ -890,6 +918,7 @@ TEL：098-897-7017
         const data = await response.json();
         posts = (data.posts || []).filter(p => !String(p.id || '').startsWith('test_') && !(p.photoUrl || '').includes('example.com'));
         renderPosts();
+        loadCommentCounts();
       } catch (err) {
         console.error('読み込みエラー:', err);
         document.getElementById('timelineList').innerHTML = '<div class="empty-state"><div class="empty-state-emoji">!</div>読み込みに失敗しました</div>';
@@ -904,7 +933,7 @@ TEL：098-897-7017
       document.getElementById('postCount').textContent = posts.length;
       renderPortMarkers();
       if (!posts.length) { document.getElementById('timelineList').innerHTML = '<div class="empty-state"><div class="empty-state-emoji">0</div>まだ投稿がありません<br><small>「投稿」タブから投稿してみましょう</small></div>'; return; }
-      document.getElementById('timelineList').innerHTML = posts.map(p => `<div class="post-item" data-id="${p.id}"><div class="post-item-content" onclick="focusPost('${p.id}')"><img class="post-thumb" src="${p.photoUrl}" onerror="this.style.background='#e2e8f0'"><div class="post-content"><div class="post-meta"><span class="post-author">${escapeHtml(p.author)}</span><span>${formatDate(p.timestamp)}</span></div><div class="post-title">${escapeHtml(p.title)}</div><div class="post-comment">${escapeHtml(p.comment || '')}</div></div></div><div class="post-actions"><button class="post-action-btn" onclick="openEditModal('${p.id}')">編集</button><button class="post-action-btn" onclick="focusPost('${p.id}')">地図で見る</button></div></div>`).join('');
+      document.getElementById('timelineList').innerHTML = posts.map(p => `<div class="post-item" data-id="${p.id}"><div class="post-item-content" onclick="focusPost('${p.id}')"><img class="post-thumb" src="${p.photoUrl}" onerror="this.style.background='#e2e8f0'"><div class="post-content"><div class="post-meta"><span class="post-author">${escapeHtml(p.author)}</span><span>${formatDate(p.timestamp)}</span></div><div class="post-title">${escapeHtml(p.title)}</div><div class="post-comment">${escapeHtml(p.comment || '')}</div><div class="post-comment-count" data-comment-count-for="${escapeHtml(p.id)}">${formatCommentCount(p.id)}</div></div></div><div class="post-actions"><button class="post-action-btn" onclick="openEditModal('${p.id}')">編集</button><button class="post-action-btn" onclick="focusPost('${p.id}')">地図で見る</button></div></div>`).join('');
       posts.forEach(p => {
         const icon = L.divIcon({ className: '', html: `<span class="marker-photo-wrap" style="background-image:url('${escapeQuote(p.photoUrl)}')"></span>`, iconSize: [42, 42], iconAnchor: [21, 21] });
         markers[p.id] = L.marker([p.lat, p.lng], { icon }).bindPopup(buildPopupContent(p), { maxWidth: 240 });
