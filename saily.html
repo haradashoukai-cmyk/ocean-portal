@@ -71,6 +71,7 @@
     .post-action-btn, .popup-action-btn { background: #f4f8fb; border: 1px solid #e1ebf3; color: var(--blue); padding: 5px 9px; border-radius: 6px; font-size: 11px; font-weight: 700; }
     .post-action-btn:hover, .popup-action-btn:hover { background: #e8f5f7; color: var(--navy); }
     .port-dot { width: 14px; height: 14px; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 3px 10px rgba(13, 45, 68, 0.32); }
+    .port-star { width: 24px; height: 24px; display: block; filter: drop-shadow(0 3px 8px rgba(13, 45, 68, 0.32)); }
     .empty-state { padding: 40px 20px; text-align: center; color: var(--muted); font-size: 13px; line-height: 1.6; }
     .empty-state-emoji { font-size: 34px; margin-bottom: 8px; }
     .marker-photo-wrap { box-sizing: border-box; width: 42px; height: 42px; display: block; overflow: hidden; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 3px 12px rgba(13, 45, 68, 0.35); background-color: #e2e8f0; background-position: center; background-size: cover; background-repeat: no-repeat; }
@@ -339,7 +340,8 @@ TEL：0897-46-5636
         lat: 33.995833,
         lng: 133.333333,
         timestamp: '2026-05-11 00:00:00',
-        color: '#0f6f94'
+        color: '#0f6f94',
+        is_home_port: true
       },
       {
         id: 'port_kurahashi_umi_no_eki',
@@ -441,7 +443,59 @@ TEL：092-882-2151
         lat: 33.5925,
         lng: 130.310833,
         timestamp: '2026-05-11 00:00:00',
-        color: '#0f6f94'
+        color: '#0f6f94',
+        is_home_port: true
+      },
+      {
+        id: 'port_ginowan_marina',
+        author: '港情報',
+        title: '宜野湾港マリーナ',
+        comment: `※母港 — 自社艇保管
+
+【所在地】
+沖縄県宜野湾市真志喜4-4-1
+（沖縄本島中部西海岸）
+
+【施設概要】
+沖縄県内で最初に作られた本格的マリーナ
+海上係留 357隻／陸上保管 177隻（合計約630艇収容）
+給油施設あり
+
+【入港時の注意】★リーフに囲まれた航路のため要事前確認
+・航路の左右はリーフ、ブイを早めに確認（GPS・双眼鏡推奨）
+・隣接する牧港漁港のブイと混在するため間違えないこと
+・No.2赤ブイが宜野湾港マリーナの最初の航路ブイ
+・5番ブイ手前でマリーナ方向へ変針（5番を左に置いて回らない）
+・マリーナ入口は狭くジェットスキー多し
+・ビジターバースは奥まで入って左奥
+・バース満杯時は給油桟橋/クレーン桟橋への一時係留は事前許可制
+・沖縄本島東海岸沖から接近する場合は沖縄電力火力発電所の煙突2本を目印
+
+【給油受付】
+午前：〜11:30／午後：〜17:30
+
+【営業時間】
+4〜10月 8:00〜18:30
+11〜3月 9:00〜17:00
+昼休み 12:00〜13:00
+定休日：火曜・年末年始（12/29〜1/3）
+
+【連絡先】
+TEL：098-897-7017
+公式：https://www.ginowan-marina.com
+
+【アクセス】
+那覇空港よりバス系統99番「沖縄コンベンションセンター前」下車徒歩3分（約60分）
+
+【周辺】
+宜野湾市トロピカルビーチ
+沖縄コンベンションセンター
+シーフードレストラン「フィッシュテール」（マリーナ隣接）`,
+        lat: 26.277148,
+        lng: 127.729913,
+        timestamp: '2026-05-11 00:00:00',
+        color: '#0f6f94',
+        is_home_port: true
       }
     ];
     let currentLat = null, currentLng = null, currentPhotoBase64 = null, currentPhotoName = '', currentPhotoTimestamp = '';
@@ -710,7 +764,7 @@ TEL：092-882-2151
         if (Array.isArray(saved)) {
           const merged = DEFAULT_PORT_POINTS.map(defaultPoint => {
             const savedPoint = saved.find(point => point.id === defaultPoint.id);
-            return savedPoint ? { ...defaultPoint, ...savedPoint, color: defaultPoint.color } : { ...defaultPoint };
+            return savedPoint ? { ...defaultPoint, ...savedPoint, color: defaultPoint.color, is_home_port: defaultPoint.is_home_port } : { ...defaultPoint };
           });
           saved.forEach(point => {
             if (!merged.some(defaultPoint => defaultPoint.id === point.id)) merged.push(point);
@@ -860,7 +914,14 @@ TEL：092-882-2151
       if (!map) return;
       Object.values(portMarkers).forEach(m => map.removeLayer(m)); portMarkers = {};
       loadPortPoints().forEach(p => {
-        const icon = L.divIcon({ className: '', html: `<div class="port-dot" style="background:${p.color || '#0f6f94'}"></div>`, iconSize: [14, 14], iconAnchor: [7, 7] });
+        const icon = p.is_home_port
+          ? L.divIcon({
+              className: '',
+              html: `<svg class="port-star" viewBox="0 0 24 24" aria-label="母港"><path d="M12 1.8l2.95 6.03 6.65.96-4.82 4.68 1.14 6.62L12 16.96 6.08 20.09l1.14-6.62L2.4 8.79l6.65-.96L12 1.8z" fill="#FFD700" stroke="#8B6F00" stroke-width="1" stroke-linejoin="round"/></svg>`,
+              iconSize: [24, 24],
+              iconAnchor: [12, 12]
+            })
+          : L.divIcon({ className: '', html: `<div class="port-dot" style="background:${p.color || '#0f6f94'}"></div>`, iconSize: [14, 14], iconAnchor: [7, 7] });
         portMarkers[p.id] = L.marker([p.lat, p.lng], { icon }).addTo(map).bindPopup(buildPopupContent(p, 'port'), { maxWidth: 240 });
       });
     }
