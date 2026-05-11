@@ -1195,12 +1195,17 @@ FAX：0766-86-5441
       if (!post) return;
       document.querySelectorAll('.post-item').forEach(el => el.classList.remove('active'));
       document.querySelector(`.post-item[data-id="${id}"]`)?.classList.add('active');
+      if (window.matchMedia('(max-width: 768px)').matches) {
+        document.getElementById('timelinePanel').classList.remove('open');
+        setTimeout(() => map?.invalidateSize(), 320);
+      }
       const marker = markers[id];
+      const openMarker = () => marker?.openPopup();
       if (postClusterLayer && marker) {
-        postClusterLayer.zoomToShowLayer(marker, () => marker.openPopup());
+        postClusterLayer.zoomToShowLayer(marker, () => setTimeout(openMarker, 340));
       } else {
         map.flyTo([post.lat, post.lng], 12, { duration: 1 });
-        marker?.openPopup();
+        setTimeout(openMarker, 340);
       }
     }
     function toggleTimeline() { document.getElementById('timelinePanel').classList.toggle('open'); }
