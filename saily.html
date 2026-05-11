@@ -87,6 +87,16 @@
     .popup-title { margin-bottom: 6px; color: var(--ink); font-size: 14px; font-weight: 700; }
     .popup-comment { max-height: 240px; margin-bottom: 8px; overflow: auto; color: var(--muted); font-size: 12px; line-height: 1.5; white-space: pre-line; }
     .popup-actions { display: flex; gap: 4px; padding-top: 8px; border-top: 1px solid #e7edf4; }
+    .comment-panel { margin-top: 10px; padding-top: 9px; border-top: 1px solid #e7edf4; }
+    .comment-head { margin-bottom: 6px; color: var(--ink); font-size: 11px; font-weight: 700; }
+    .comment-list { max-height: 118px; overflow-y: auto; display: grid; gap: 6px; }
+    .comment-item { padding: 7px 8px; background: #f6f9fb; border: 1px solid #e7edf4; border-radius: 6px; }
+    .comment-meta { margin-bottom: 2px; color: var(--blue); font-size: 10px; font-weight: 700; }
+    .comment-text { color: var(--muted); font-size: 11px; line-height: 1.45; white-space: pre-line; }
+    .comment-empty { color: var(--muted); font-size: 11px; }
+    .comment-form { display: flex; gap: 5px; margin-top: 7px; }
+    .comment-input { flex: 1; min-width: 0; padding: 7px 8px; border: 1px solid #d7e4ee; border-radius: 6px; font-size: 12px; outline: none; }
+    .comment-submit { padding: 7px 9px; background: var(--blue); color: #fff; border: 0; border-radius: 6px; font-size: 11px; font-weight: 700; }
     .post-view { height: 100%; overflow-y: auto; padding: 16px 10px calc(132px + env(safe-area-inset-bottom)) 10px; background: linear-gradient(180deg, #eef4f8 0%, #f8fbfd 100%); -webkit-overflow-scrolling: touch; }
     .post-container { width: 100%; max-width: 960px; margin: 0 auto; }
     .card { margin-bottom: 12px; padding: 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 4px 16px rgba(15,42,66,0.06); }
@@ -521,6 +531,42 @@ TEL：0897-46-5636
 
     function showError(msg) { const el = document.getElementById('errorMsg'); el.textContent = msg; el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 5000); }
     function showEditError(msg) { const el = document.getElementById('editErrorMsg'); el.textContent = msg; el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 5000); }
+    async function loadPostComments(postId) {
+      const list = document.querySelector(`[data-comments-for="${CSS.escape(postId)}"]`);
+      if (!list) return;
+      list.innerHTML = '<div class="comment-empty">読み込み中...</div>';
+      try {
+        const response = await fetch(`${GAS_URL}?action=getComments&postId=${encodeURIComponent(postId)}&_=${Date.now()}`);
+        const data = await response.json();
+        const comments = data.comments || [];
+        if (!comments.length) {
+          list.innerHTML = '<div class="comment-empty">コメントはまだありません</div>';
+          return;
+        }
+        list.innerHTML = comments.map(comment => `<div class="comment-item"><div class="comment-meta">${escapeHtml(comment.author || '匿名')} · ${formatDate(comment.timestamp)}</div><div class="comment-text">${escapeHtml(comment.comment || '')}</div></div>`).join('');
+      } catch (err) {
+        list.innerHTML = '<div class="comment-empty">コメントを読み込めませんでした</div>';
+      }
+    }
+    async function addPostComment(postId) {
+      const input = document.getElementById(`commentInput_${postId}`);
+      const comment = input?.value.trim();
+      if (!comment) return;
+      let author = selectedAuthor || localStorage.getItem('saily_last_author') || localStorage.getItem('busan_last_author') || '';
+      if (!author) author = prompt('お名前を入力してください') || '';
+      if (!author.trim()) return;
+      const button = input.nextElementSibling;
+      button.disabled = true; button.textContent = '送信中';
+      try {
+        await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'addComment', postId, author: author.trim(), comment, timestamp: formatJstTimestamp() }) });
+        input.value = '';
+        setTimeout(() => loadPostComments(postId), 1200);
+      } catch (err) {
+        alert('コメント送信に失敗しました');
+      } finally {
+        button.disabled = false; button.textContent = '送信';
+      }
+    }
     async function verifyPostReflected(author, title, timeoutMs = 12000) {
       const startedAt = Date.now();
       while (Date.now() - startedAt < timeoutMs) {
@@ -573,11 +619,34 @@ TEL：0897-46-5636
       return DEFAULT_PORT_POINTS.map(p => ({ ...p }));
     }
     function savePortPoints(points) { localStorage.setItem('saily_port_points', JSON.stringify(points)); }
+    function buildCommentsPanel(item, type) {
+      if (type === 'port') return '';
+      const id = escapeQuote(item.id);
+      return `<div class="comment-panel"><div class="comment-head">コメント</div><div class="comment-list" data-comments-for="${id}"><div class="comment-empty">読み込み中...</div></div><div class="comment-form"><input class="comment-input" id="commentInput_${id}" placeholder="コメントを入力"><button class="comment-submit" onclick="addPostComment('${id}')">送信</button></div></div>`;
+    }
     function buildPopupContent(item, type = 'post') {
       const media = type === 'port'
         ? `<div class="popup-photo port">${escapeHtml(item.title)}</div>`
         : `<img class="popup-photo" src="${item.photoUrl}">`;
       return `${media}<div class="popup-body"><div class="popup-meta"><span class="popup-author">${escapeHtml(item.author)}</span> · ${formatDate(item.timestamp)}</div><div class="popup-title">${escapeHtml(item.title)}</div><div class="popup-comment">${escapeHtml(item.comment || '')}</div><div class="popup-actions"><button class="popup-action-btn" onclick="openEditModal('${item.id}', '${type}')">編集</button></div></div>`;
+    }
+    function buildPopupContent(item, type = 'post') {
+      const media = type === 'port'
+        ? `<div class="popup-photo port">${escapeHtml(item.title)}</div>`
+        : `<img class="popup-photo" src="${item.photoUrl}">`;
+      return `${media}<div class="popup-body"><div class="popup-meta"><span class="popup-author">${escapeHtml(item.author)}</span> · ${formatDate(item.timestamp)}</div><div class="popup-title">${escapeHtml(item.title)}</div><div class="popup-comment">${escapeHtml(item.comment || '')}</div><div class="popup-actions"><button class="popup-action-btn" onclick="openEditModal('${item.id}', '${type}')">編集</button></div>${buildCommentsPanel(item, type)}</div>`;
+    }
+    function buildPopupContent(item, type = 'post') {
+      const media = type === 'port'
+        ? `<div class="popup-photo port">${escapeHtml(item.title)}</div>`
+        : `<img class="popup-photo" src="${item.photoUrl}">`;
+      return `${media}<div class="popup-body"><div class="popup-meta"><span class="popup-author">${escapeHtml(item.author)}</span> · ${formatDate(item.timestamp)}</div><div class="popup-title">${escapeHtml(item.title)}</div><div class="popup-comment">${escapeHtml(item.comment || '')}</div><div class="popup-actions"><button class="popup-action-btn" onclick="openEditModal('${item.id}', '${type}')">編集</button></div>${buildCommentsPanel(item, type)}</div>`;
+    }
+    function buildPopupContent(item, type = 'post') {
+      const media = type === 'port'
+        ? `<div class="popup-photo port">${escapeHtml(item.title)}</div>`
+        : `<img class="popup-photo" src="${item.photoUrl}">`;
+      return `${media}<div class="popup-body"><div class="popup-meta"><span class="popup-author">${escapeHtml(item.author)}</span> · ${formatDate(item.timestamp)}</div><div class="popup-title">${escapeHtml(item.title)}</div><div class="popup-comment">${escapeHtml(item.comment || '')}</div><div class="popup-actions"><button class="popup-action-btn" onclick="openEditModal('${item.id}', '${type}')">編集</button></div>${buildCommentsPanel(item, type)}</div>`;
     }
     function openEditModal(itemId, type = 'post') {
       const item = type === 'port' ? loadPortPoints().find(p => p.id === itemId) : posts.find(p => p.id === itemId);
@@ -650,6 +719,10 @@ TEL：0897-46-5636
         }
       });
       map.addLayer(postClusterLayer);
+      map.on('popupopen', event => {
+        const postId = event.popup.getElement()?.querySelector('[data-comments-for]')?.dataset.commentsFor;
+        if (postId) loadPostComments(postId);
+      });
       renderPortMarkers();
     }
     async function loadPosts() {
