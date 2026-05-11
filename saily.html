@@ -845,7 +845,7 @@ TEL：098-897-7017
       const seamap = L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© OpenSeaMap' });
       osm.addTo(map);
       seamap.addTo(map);
-      const notice = L.control({ position: 'bottomright' });
+      const notice = L.control({ position: 'bottomleft' });
       notice.onAdd = () => {
         const div = L.DomUtil.create('div', 'map-notice');
         div.textContent = '海図レイヤーは参考表示です。航海判断には必ず公式海図・水路通報・現地情報をご確認ください。';
@@ -880,7 +880,7 @@ TEL：098-897-7017
       try {
         const response = await fetch(GAS_URL + '?action=get');
         const data = await response.json();
-        posts = (data.posts || []).filter(p => p.author !== 'テスト' && !(p.photoUrl || '').includes('example.com'));
+        posts = (data.posts || []).filter(p => !String(p.id || '').startsWith('test_') && !(p.photoUrl || '').includes('example.com'));
         renderPosts();
       } catch (err) {
         console.error('読み込みエラー:', err);
