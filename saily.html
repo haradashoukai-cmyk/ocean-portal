@@ -89,6 +89,7 @@
     .popup-author { color: var(--blue); font-weight: 700; }
     .popup-title { margin-bottom: 6px; color: var(--ink); font-size: 14px; font-weight: 700; }
     .popup-comment { max-height: 240px; margin-bottom: 8px; overflow: auto; color: var(--muted); font-size: 12px; line-height: 1.5; white-space: pre-line; }
+    .boat-photo { width: 100%; max-height: 150px; margin: 6px 0 10px; object-fit: cover; border-radius: 7px; border: 1px solid #e1ebf3; cursor: zoom-in; display: block; }
     .popup-actions { display: flex; gap: 4px; padding-top: 8px; border-top: 1px solid #e7edf4; }
     .comment-panel { margin-top: 10px; padding-top: 9px; border-top: 1px solid #e7edf4; }
     .comment-head { margin-bottom: 6px; color: var(--ink); font-size: 11px; font-weight: 700; }
@@ -399,8 +400,8 @@ TEL：0897-46-5636
 【所属艇】
 ⛵ トランサイドⅥ
 Nauticat 42
-全長 11.07m / 1995年進水
-写真：後日追加予定（boat_transide6.jpg）`,
+全長 36ft / 1995年進水
+写真：assets/boat_transide6.jpg`,
         lat: 33.995833,
         lng: 133.333333,
         timestamp: '2026-05-11 00:00:00',
@@ -508,8 +509,8 @@ TEL：092-882-2151
 【所属艇】
 ⛵ トランサイドⅢ
 Jeanneau Sun Odyssey 36F
-全長 10.50m / 1996年進水
-写真：後日追加予定（boat_transide3.jpg）`,
+全長 34ft / 1996年進水
+写真：assets/boat_transide3.jpg`,
         lat: 33.5925,
         lng: 130.310833,
         timestamp: '2026-05-11 00:00:00',
@@ -565,13 +566,13 @@ TEL：098-897-7017
 【所属艇】
 ⛵ オッコシ
 Bertram 33SF
-全長 9.85m / 1991年進水
-写真：後日追加予定（boat_okkoshi.jpg）
+全長 32ft / 1991年進水
+写真：assets/boat_okkoshi.jpg
 
 ⛵ トランサイドⅡ
 Beneteau First 310
-全長 8.66m / 1992年進水
-写真：後日追加予定（boat_transide2.jpg）`,
+全長 28ft / 1992年進水
+写真：assets/boat_transide2.jpg`,
         lat: 26.277148,
         lng: 127.729913,
         timestamp: '2026-05-11 00:00:00',
@@ -635,8 +636,8 @@ TEL：0557-38-7811
 【所属艇】
 ⛵ トランサイドⅣ
 リョーエー工業 BW-30
-全長 8.37m / 1978年進水
-写真：後日追加予定（boat_transide4.jpg）`,
+全長 27ft / 1978年進水
+写真：assets/boat_transide4.jpg`,
         lat: 34.9842,
         lng: 139.0945,
         timestamp: '2026-05-11 00:00:00',
@@ -713,8 +714,8 @@ Instagram：@otaruportmarina
 【所属艇】
 ⛵ トランサイド
 Westerly Oceanranger 38
-全長 10.13m / 1991年進水
-写真：後日追加予定（boat_transide.jpg）`,
+全長 33ft / 1991年進水
+写真：assets/boat_transide.jpg`,
         lat: 43.1931,
         lng: 141.0167,
         timestamp: '2026-05-11 00:00:00',
@@ -776,8 +777,8 @@ FAX：0766-86-5441
 【所属艇】
 ⛵ トランサイドⅤ
 Jeanneau Voyage 11.20
-全長 9.80m / 1991年進水
-写真：後日追加予定（boat_transide5.jpg）`,
+全長 32ft / 1991年進水
+写真：assets/boat_transide5.jpg`,
         lat: 36.7667,
         lng: 137.1,
         timestamp: '2026-05-11 00:00:00',
@@ -1219,11 +1220,21 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       const id = escapeQuote(item.id);
       return `<div class="comment-panel"><div class="comment-head">コメント</div><div class="comment-list" data-comments-for="${id}"><div class="comment-empty">読み込み中...</div></div><div class="comment-form"><input class="comment-input" id="commentInput_${id}" placeholder="コメントを入力"><button class="comment-submit" onclick="addPostComment('${id}')">送信</button></div></div>`;
     }
+    function formatPopupComment(text) {
+      return String(text || '').split('\n').map(line => {
+        const match = line.match(/^写真：\s*(assets\/[A-Za-z0-9_.-]+\.(?:jpg|jpeg|png|webp))$/i);
+        if (match) {
+          const src = match[1];
+          return `<img class="boat-photo" src="${src}" alt="所属艇写真" onclick="openPhotoViewer('${escapeQuote(src)}')">`;
+        }
+        return escapeHtml(line);
+      }).join('\n');
+    }
     function buildPopupContent(item, type = 'post') {
       const media = type === 'port'
         ? `<div class="popup-photo port">${escapeHtml(item.title)}</div>`
         : `<img class="popup-photo zoomable" src="${item.photoUrl}" onclick="openPhotoViewer('${escapeQuote(item.photoUrl)}')">`;
-      return `${media}<div class="popup-body"><div class="popup-meta"><span class="popup-author">${escapeHtml(item.author)}</span> · ${formatDate(item.timestamp)}</div><div class="popup-title">${escapeHtml(item.title)}</div><div class="popup-comment">${escapeHtml(item.comment || '')}</div><div class="popup-actions"><button class="popup-action-btn" onclick="openEditModal('${item.id}', '${type}')">編集</button></div>${buildCommentsPanel(item, type)}</div>`;
+      return `${media}<div class="popup-body"><div class="popup-meta"><span class="popup-author">${escapeHtml(item.author)}</span> · ${formatDate(item.timestamp)}</div><div class="popup-title">${escapeHtml(item.title)}</div><div class="popup-comment">${formatPopupComment(item.comment || '')}</div><div class="popup-actions"><button class="popup-action-btn" onclick="openEditModal('${item.id}', '${type}')">編集</button></div>${buildCommentsPanel(item, type)}</div>`;
     }
     function openEditModal(itemId, type = 'post') {
       const item = type === 'port' ? loadPortPoints().find(p => p.id === itemId) : posts.find(p => p.id === itemId);
