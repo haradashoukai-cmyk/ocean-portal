@@ -79,7 +79,9 @@
     .post-cluster.medium { background: var(--navy); }
     .post-cluster.large { background: #0b1f2f; }
     .map-notice { max-width: 300px; padding: 7px 9px; background: rgba(255,255,255,0.94); border: 1px solid #d7e4ee; border-radius: 6px; color: #334155; font-size: 10px; line-height: 1.45; box-shadow: 0 2px 8px rgba(13,45,68,0.12); }
-    .leaflet-popup-pane { z-index: 900; }
+    #mapView.popup-active .timeline-toggle, #mapView.popup-active .map-notice { opacity: 0.18; pointer-events: none; }
+    #mapView.popup-active .leaflet-control-container { z-index: 100; }
+    .leaflet-popup-pane { z-index: 1200; }
     .leaflet-popup-content-wrapper { border-radius: 8px; padding: 0; overflow: hidden; box-shadow: var(--shadow); }
     .leaflet-popup-content { margin: 0; width: 240px !important; }
     .popup-photo { width: 100%; height: 140px; object-fit: cover; display: block; }
@@ -1335,8 +1337,12 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       });
       map.addLayer(postClusterLayer);
       map.on('popupopen', event => {
+        document.getElementById('mapView').classList.add('popup-active');
         const postId = event.popup.getElement()?.querySelector('[data-comments-for]')?.dataset.commentsFor;
         if (postId) loadPostComments(postId);
+      });
+      map.on('popupclose', () => {
+        document.getElementById('mapView').classList.remove('popup-active');
       });
       renderPortMarkers();
     }
