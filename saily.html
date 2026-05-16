@@ -314,6 +314,7 @@
 
   <script>
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbxBc_DVbAVhUM4Kh_SV31ah_wl_7YweeNSkpvU2BJ8Rsl-4LtugiVVxF8badfpGa3BE5Q/exec';
+    const PORTS_GAS_URL = 'https://script.google.com/macros/s/AKfycbw98Os098I07B7iqhyyNqJzvSaDGJbmlmKIM7yiztEl84GxMDLixoaDWuxeQkCSfCrP/exec';
     const DEFAULT_PORT_POINTS = [
       { id: 'port_tokyo_bay', author: '港情報', title: '東京湾', comment: '航海の出発地点', lat: 35.5, lng: 139.8, timestamp: '2026-05-04 00:00:00', color: '#0f6f94' },
       {
@@ -892,14 +893,14 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       }
     ];
     let currentLat = null, currentLng = null, currentPhotoBase64 = null, currentPhotoName = '', currentPhotoTimestamp = '';
-    let miniMap = null, miniMapMarker = null, selectedAuthor = '', posts = [], commentCounts = {}, commentCache = {}, markers = {}, portMarkers = {}, postClusterLayer = null, map, editingPost = null, editingAuthor = '', editingType = 'post';
+    let miniMap = null, miniMapMarker = null, selectedAuthor = '', posts = [], portPoints = DEFAULT_PORT_POINTS.map(p => ({ ...p })), commentCounts = {}, commentCache = {}, markers = {}, portMarkers = {}, postClusterLayer = null, map, editingPost = null, editingAuthor = '', editingType = 'post';
 
     function switchView(view) {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       document.querySelector(`.tab[data-view="${view}"]`).classList.add('active');
       document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
       document.getElementById(view + 'View').classList.add('active');
-      if (view === 'map') { setTimeout(() => map?.invalidateSize(), 100); loadPosts(); }
+      if (view === 'map') { setTimeout(() => map?.invalidateSize(), 100); loadPorts(); loadPosts(); }
     }
 
     function loadAuthors() {
@@ -1200,22 +1201,33 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
     }
 
     function loadPortPoints() {
-      try {
-        const saved = JSON.parse(localStorage.getItem('saily_port_points') || 'null');
-        if (Array.isArray(saved)) {
-          const merged = DEFAULT_PORT_POINTS.map(defaultPoint => {
-            const savedPoint = saved.find(point => point.id === defaultPoint.id);
-            return savedPoint ? { ...defaultPoint, ...savedPoint, color: defaultPoint.color, is_home_port: defaultPoint.is_home_port } : { ...defaultPoint };
-          });
-          saved.forEach(point => {
-            if (!merged.some(defaultPoint => defaultPoint.id === point.id)) merged.push(point);
-          });
-          return merged;
-        }
-      } catch (_) {}
-      return DEFAULT_PORT_POINTS.map(p => ({ ...p }));
+      return portPoints.map(p => ({ ...p }));
     }
-    function savePortPoints(points) { localStorage.setItem('saily_port_points', JSON.stringify(points)); }
+    async function loadPorts() {
+      try {
+        const response = await fetch(`${PORTS_GAS_URL}?action=getPorts&_=${Date.now()}`);
+        const data = await response.json();
+        const ports = (data.ports || [])
+          .filter(p => p.id && p.title && Number.isFinite(Number(p.lat)) && Number.isFinite(Number(p.lng)))
+          .map(p => ({
+            id: String(p.id),
+            author: p.author || '港情報',
+            title: p.title,
+            comment: p.comment || '',
+            lat: Number(p.lat),
+            lng: Number(p.lng),
+            timestamp: p.timestamp || formatJstTimestamp(),
+            color: p.color || '#0f6f94',
+            is_home_port: !!p.is_home_port
+          }));
+        if (ports.length) portPoints = ports;
+      } catch (err) {
+        console.warn('港情報の読み込みに失敗しました。内蔵データを使います。', err);
+        portPoints = DEFAULT_PORT_POINTS.map(p => ({ ...p }));
+      }
+      renderPortMarkers();
+    }
+    function savePortPoints(points) { portPoints = points.map(p => ({ ...p })); }
     function buildCommentsPanel(item, type) {
       if (type === 'port') return '';
       const id = escapeQuote(item.id);
@@ -1235,7 +1247,8 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       const media = type === 'port'
         ? `<div class="popup-photo port">${escapeHtml(item.title)}</div>`
         : `<img class="popup-photo zoomable" src="${item.photoUrl}" onclick="openPhotoViewer('${escapeQuote(item.photoUrl)}')">`;
-      return `${media}<div class="popup-body"><div class="popup-meta"><span class="popup-author">${escapeHtml(item.author)}</span> · ${formatDate(item.timestamp)}</div><div class="popup-title">${escapeHtml(item.title)}</div><div class="popup-comment">${formatPopupComment(item.comment || '')}</div><div class="popup-actions"><button class="popup-action-btn" onclick="openEditModal('${item.id}', '${type}')">編集</button></div>${buildCommentsPanel(item, type)}</div>`;
+      const actions = type === 'port' ? '' : `<div class="popup-actions"><button class="popup-action-btn" onclick="openEditModal('${item.id}', '${type}')">編集</button></div>`;
+      return `${media}<div class="popup-body"><div class="popup-meta"><span class="popup-author">${escapeHtml(item.author)}</span> · ${formatDate(item.timestamp)}</div><div class="popup-title">${escapeHtml(item.title)}</div><div class="popup-comment">${formatPopupComment(item.comment || '')}</div>${actions}${buildCommentsPanel(item, type)}</div>`;
     }
     function openEditModal(itemId, type = 'post') {
       const item = type === 'port' ? loadPortPoints().find(p => p.id === itemId) : posts.find(p => p.id === itemId);
@@ -1390,7 +1403,7 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
     initMap(); renderAuthors();
     const lastAuthor = localStorage.getItem('saily_last_author') || localStorage.getItem('busan_last_author');
     if (lastAuthor && loadAuthors().includes(lastAuthor)) selectAuthor(lastAuthor);
-    loadPosts();
+    loadPorts().finally(loadPosts);
   </script>
 </body>
 </html>
