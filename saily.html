@@ -31,19 +31,21 @@
     html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans JP', 'Hiragino Sans', sans-serif; background: var(--page); color: var(--ink); }
     button, input, textarea { font: inherit; letter-spacing: 0; }
     button { cursor: pointer; }
-    .header { background: var(--panel); border-bottom: 1px solid var(--line); box-shadow: 0 2px 18px rgba(17, 42, 64, 0.08); }
+    .header { position: relative; background: var(--panel); border-bottom: 1px solid var(--line); box-shadow: 0 2px 18px rgba(17, 42, 64, 0.08); }
     .header-top { min-height: 64px; padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
     .header-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
     .brand-mark { width: 46px; height: 46px; display: block; object-fit: contain; border-radius: 50%; filter: drop-shadow(0 8px 18px rgba(15, 111, 148, 0.24)); flex-shrink: 0; }
     .header-title h1 { font-family: 'Zen Maru Gothic', sans-serif; font-size: 20px; line-height: 1.1; color: var(--navy); }
     .header-title p { margin-top: 3px; font-size: 11px; color: var(--muted); }
-    .post-count { background: #eef8f8; border: 1px solid #cde8ea; color: var(--blue); padding: 7px 12px; border-radius: 999px; font-size: 12px; white-space: nowrap; }
-    .post-count strong { color: var(--green); font-size: 15px; }
-    .tabs { display: flex; gap: 4px; padding: 0 8px; background: #f8fbfd; border-top: 1px solid var(--line); }
-    .tab { flex: 1; padding: 12px; text-align: center; user-select: none; color: var(--muted); font-size: 14px; font-weight: 700; border-bottom: 3px solid transparent; transition: 0.2s; }
-    .tab:hover { color: var(--blue); background: #eef6f8; }
-    .tab.active { color: var(--navy); background: #fff; border-bottom-color: var(--cyan); }
-    .main { height: calc(100vh - 112px); height: calc(100dvh - 112px); position: relative; overflow: hidden; }
+    .header-notice { flex: 1; min-width: 180px; max-width: 520px; padding: 7px 10px; background: #f6fafc; border: 1px solid #d7e4ee; border-radius: 7px; color: #41556c; font-size: 11px; line-height: 1.45; }
+    .menu-button { width: 44px; height: 44px; display: grid; place-items: center; background: #f6fafc; border: 1px solid #d7e4ee; border-radius: 8px; color: var(--navy); font-size: 24px; font-weight: 700; line-height: 1; }
+    .menu-button:hover { background: #eef6f8; color: var(--blue); }
+    .app-menu { position: absolute; top: 58px; right: 12px; z-index: 2000; width: min(280px, calc(100vw - 24px)); display: none; padding: 8px; background: rgba(255,255,255,0.98); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); }
+    .app-menu.open { display: block; }
+    .menu-item { width: 100%; min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; background: transparent; border: 0; border-radius: 6px; color: var(--ink); font-size: 14px; font-weight: 700; text-align: left; }
+    .menu-item:hover { background: #eef8fb; color: var(--blue); }
+    .menu-count { min-width: 44px; padding: 3px 8px; border-radius: 999px; background: #edf7f9; color: var(--blue); font-size: 11px; font-weight: 700; text-align: center; }
+    .main { height: calc(100vh - 65px); height: calc(100dvh - 65px); position: relative; overflow: hidden; }
     .view { position: absolute; inset: 0; display: none; }
     .view.active { display: block; }
     #map { width: 100%; height: 100%; background: #b9ddec; }
@@ -68,6 +70,7 @@
     .post-title { margin-bottom: 2px; color: var(--ink); font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .post-comment { color: var(--muted); font-size: 11px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     .post-comment-count { margin-top: 5px; color: #7890a8; font-size: 11px; font-weight: 700; }
+    .port-list-badge { color: var(--blue); font-size: 11px; font-weight: 700; }
     .post-actions { display: flex; gap: 4px; margin-top: 7px; padding-top: 7px; border-top: 1px solid #e7edf4; }
     .post-action-btn, .popup-action-btn { background: #f4f8fb; border: 1px solid #e1ebf3; color: var(--blue); padding: 5px 9px; border-radius: 6px; font-size: 11px; font-weight: 700; }
     .post-action-btn:hover, .popup-action-btn:hover { background: #e8f5f7; color: var(--navy); }
@@ -79,8 +82,7 @@
     .post-cluster { width: 42px; height: 42px; display: grid; place-items: center; background: var(--blue); color: #fff; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 4px 14px rgba(13, 45, 68, 0.32); font-size: 13px; font-weight: 700; }
     .post-cluster.medium { background: var(--navy); }
     .post-cluster.large { background: #0b1f2f; }
-    .map-notice { max-width: 300px; padding: 7px 9px; background: rgba(255,255,255,0.94); border: 1px solid #d7e4ee; border-radius: 6px; color: #334155; font-size: 10px; line-height: 1.45; box-shadow: 0 2px 8px rgba(13,45,68,0.12); }
-    #mapView.popup-active .timeline-toggle, #mapView.popup-active .map-notice { opacity: 0.18; pointer-events: none; }
+    #mapView.popup-active .timeline-toggle { opacity: 0.18; pointer-events: none; }
     #mapView.popup-active .leaflet-control-container { z-index: 100; }
     .leaflet-popup-pane { z-index: 1200; }
     .leaflet-popup-content-wrapper { border-radius: 8px; padding: 0; overflow: hidden; box-shadow: var(--shadow); }
@@ -120,6 +122,7 @@
     .voyage-point-main { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
     .voyage-point-title { color: var(--ink); font-size: 14px; font-weight: 700; line-height: 1.35; }
     .voyage-point-meta { margin-top: 3px; color: var(--muted); font-size: 11px; line-height: 1.5; }
+    .voyage-point-detail { white-space: pre-line; }
     .voyage-point-note { margin-top: 7px; color: #52657d; font-size: 12px; line-height: 1.55; white-space: pre-line; }
     .voyage-actions { margin-top: 9px; display: flex; gap: 6px; }
     .voyage-action-btn { padding: 7px 10px; background: #f4f8fb; border: 1px solid #dce8f1; border-radius: 6px; color: var(--blue); font-size: 12px; font-weight: 700; }
@@ -222,10 +225,11 @@
       .header-top { min-height: 58px; padding: 10px 12px; }
       .brand-mark { width: 40px; height: 40px; }
       .header-title h1 { font-size: 18px; }
-      .post-count { padding: 6px 9px; font-size: 11px; }
-      .main { height: calc(100vh - 106px); height: calc(100dvh - 106px); }
+      .header-notice { min-width: 0; max-width: 52vw; padding: 5px 7px; font-size: 9px; line-height: 1.35; }
+      .menu-button { width: 40px; height: 40px; font-size: 22px; }
+      .app-menu { top: 54px; right: 10px; }
+      .main { height: calc(100vh - 59px); height: calc(100dvh - 59px); }
       .timeline-toggle { right: 12px; bottom: calc(28px + env(safe-area-inset-bottom)); padding: 12px 18px; }
-      .map-notice { max-width: 172px; margin-bottom: calc(64px + env(safe-area-inset-bottom)); padding: 6px 8px; font-size: 9px; line-height: 1.4; }
       .leaflet-popup-content-wrapper { max-height: calc(100dvh - 142px); overflow-y: auto; }
       .leaflet-popup-content { width: min(82vw, 300px) !important; }
       .popup-photo { height: 150px; }
@@ -250,12 +254,15 @@
           <p>日本海洋研究所</p>
         </div>
       </div>
-      <div class="post-count"><strong id="postCount">0</strong> 投稿</div>
-    </div>
-    <div class="tabs">
-      <div class="tab active" data-view="map" onclick="switchView('map')">マップ</div>
-      <div class="tab" data-view="voyage" onclick="switchView('voyage')">一覧</div>
-      <div class="tab" data-view="post" onclick="switchView('post')">投稿</div>
+      <div class="header-notice">海図は参考表示です。航海判断は公式情報で確認。</div>
+      <button class="menu-button" type="button" onclick="toggleAppMenu()" aria-label="メニュー">☰</button>
+      <div class="app-menu" id="appMenu">
+        <button class="menu-item" type="button" onclick="switchView('map')"><span>マップ</span></button>
+        <button class="menu-item" type="button" onclick="switchView('voyage')"><span>回航予定</span><span class="menu-count" id="voyageMenuCount">0件</span></button>
+        <button class="menu-item" type="button" onclick="switchView('post')"><span>投稿する</span></button>
+        <button class="menu-item" type="button" onclick="openPostList()"><span>投稿一覧</span><span class="menu-count" id="postMenuCount">0件</span></button>
+        <button class="menu-item" type="button" onclick="openPortList()"><span>港情報</span><span class="menu-count" id="portMenuCount">0件</span></button>
+      </div>
     </div>
   </header>
 
@@ -263,10 +270,13 @@
     <div class="view active" id="mapView">
       <div id="map"></div>
       <div class="loading-overlay" id="loadingOverlay" style="display:none;"><div class="loader"></div><span>読み込み中...</span></div>
-      <button class="timeline-toggle" onclick="toggleTimeline()">投稿一覧</button>
       <div class="timeline-panel" id="timelinePanel">
         <div class="timeline-header"><div class="timeline-title">投稿一覧</div><button class="timeline-close" onclick="toggleTimeline()">×</button></div>
         <div class="timeline-list" id="timelineList"></div>
+      </div>
+      <div class="timeline-panel" id="portListPanel">
+        <div class="timeline-header"><div class="timeline-title">港情報一覧</div><button class="timeline-close" onclick="togglePortList()">×</button></div>
+        <div class="timeline-list" id="portList"></div>
       </div>
     </div>
 
@@ -932,39 +942,144 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
     ];
     const VOYAGE_POINTS = [
       {
+        id: 'voyage_v2026_01_izuhara_rental_car',
+        voyageId: 'V2026-01',
+        seq: 6,
+        date: '2026/05/16',
+        arriveDate: '2026/05/16',
+        departDate: '2026/05/18',
+        title: 'バジェットレンタカー 厳原港SS店',
+        kind: 'レンタカー',
+        status: '予約済',
+        lat: 34.1986,
+        lng: 129.2919,
+        accommodation: 'バジェットレンタカー 厳原港SS店',
+        address: '〒817-0016 長崎県対馬市厳原東里352-4',
+        tel: '0920-52-1571',
+        access: '対馬の海の玄関口「厳原港」から350m・徒歩5分\nアポロマークのガソリンスタンドが目印',
+        checkIn: '5/16（土）13:00',
+        checkOut: '5/18（月）12:00',
+        holder: '原田 貴好',
+        contact: '090-2236-0047（当日利用者の連絡先として原田さんの携帯番号を登録）',
+        carType: 'トヨタ ノア',
+        amountJpy: '返却時清算 / 保証なしの場合 ¥37,070',
+        paymentStatus: 'クレジットカード または 現金',
+        cancelLimit: '途中キャンセル可（受付時に変更も可）',
+        notes: '返却時間は取り急ぎ12時で予約。受付時に変更可能。',
+        transfer: '店舗まで徒歩5分。送迎希望の場合は厳原タクシー（有）0920-52-0227 に直接連絡し、「バジェットレンタカー厳原港SS店まで」と伝える。料金はバジェットレンタカー負担（厳原港SS ⇔ ターミナル間のみ対象）。',
+        usagePlan: '5/16（土）13:00〜夕方：原田・亀山が対馬観光に使用（ヨット到着待ち）\n5/17（日）以降：熊谷さんが継続使用する可能性あり（現地判断）\n5/18（月）12:00：返却予定（継続使用する場合は受付時に変更）',
+        content: '5/16（土）13:00〜5/18（月）12:00、厳原港近くでトヨタ ノアを予約。原田・亀山の対馬観光と、その後の現地使用を想定。',
+        visible: true
+      },
+      {
+        id: 'voyage_v2026_01_may17_sail_to_busan',
+        voyageId: 'V2026-01',
+        seq: 6.5,
+        date: '2026/05/17',
+        title: '5/17（日）厳原出港・釜山へ夜通し航行',
+        kind: '予定',
+        status: '要確認',
+        showMarker: false,
+        checkIn: '5/17（日）早朝',
+        checkOut: '5/18（月）昼頃',
+        content: 'ヨット組（大場・山田・原田・亀山）は早朝に厳原を出港し、釜山へ夜通し航行予定。具体時刻は要確認。',
+        scheduleDetail: '【ヨット組（4名：大場・山田・原田・亀山）】\n早朝：ヨット 厳原出港 → 釜山へ（具体時刻要確認）\n夜通し航行\n\n【対馬残留（熊谷さん）】\nレンタカーは熊谷さんが継続使用する可能性あり（現地で判断）。\n\n【釜山入り後（パクさん対応・事務所未把握）】\n4名の5/17夜の宿泊：パクさん手配。',
+        visible: true
+      },
+      {
+        id: 'voyage_v2026_01_may18_busan_arrival',
+        voyageId: 'V2026-01',
+        seq: 6.8,
+        date: '2026/05/18',
+        title: '5/18（月）釜山到着・レンタカー返却予定',
+        kind: '予定',
+        status: '要確認',
+        showMarker: false,
+        checkIn: '5/18（月）00:00',
+        checkOut: '5/18（月）夜',
+        content: '昼頃にヨットで釜山到着予定。対馬では熊谷さんが待機。厳原レンタカーは12:00返却予定。東横INN釜山中央駅のキャンセル無料期限は本日00:00（現地時間）。',
+        scheduleDetail: '【ヨット組（4名）】\n昼頃：ヨット 釜山到着。\n釜山到着後の予定：パクさん対応。\n5/18夜の宿泊：パクさん手配。\n\n【レンタカー】\n12:00：返却予定（厳原）。\n熊谷さんが継続使用する場合は受付時に変更可（途中キャンセルも可）。\n継続使用の可否は現地で決定。\n\n【釜山ホテル関連】\n本日 00:00（現地時間）：東横INN釜山中央駅 キャンセル無料期限。\n以降は全泊分の宿泊料金100%発生。',
+        visible: true
+      },
+      {
         id: 'voyage_v2026_01_busan_toyoko',
         voyageId: 'V2026-01',
         seq: 7,
-        date: '2026/05/18',
-        arriveDate: '2026/05/18',
-        departDate: '2026/05/22',
-        title: '釜山 東横INN釜山中央駅',
+        date: '2026/05/19',
+        arriveDate: '2026/05/19',
+        departDate: '2026/05/21',
+        title: '東横INN釜山中央駅 宿泊予定',
         kind: '宿泊',
         status: '予約済',
         lat: 35.1091,
         lng: 129.0366,
-        accommodation: '東横INN釜山中央駅',
+        accommodation: '東横INN釜山中央駅（TOYOKO INN BUSAN JUNGANG STATION）',
         address: '釜山広域市中区中央大路125',
         tel: '+82-51-442-1045',
+        fax: '+82-51-442-1046',
+        checkIn: '5/19（火）15:00以降',
+        checkOut: '5/21（木）10:00（2泊）',
+        guests: '1号室：HARADA TAKAYOSHI\n2号室：OBA KENTARO\n3号室：YAMADA SEIJI\n4号室：KAMEYAMA HIROAKI',
+        roomType: 'シングル×4部屋・禁煙・朝食付・WiFi無料',
+        breakfast: '7:00〜9:30 / ホテル2階',
         reservationRef: 'RYa0mtbptw_1〜4',
-        holder: 'HARADA TAKAYOSHI',
-        paymentStatus: '事前（楽天）',
-        amountJpy: '53,728円',
-        contact: 'バクさん（連絡先要確認）',
-        notes: 'シングル×4部屋・朝食付。5/19 IN 15:00 / 5/21 OUT 10:00',
-        content: '5/18 長崎ヨット→釜山到着（夜通し航行）。5/17〜5/18の宿泊はバクさん対応。5/19・20 東横INN釜山中央駅 宿泊（4名）。5/21 チェックアウト後の宿泊は未定。5/22 釜山出航。',
+        holder: '原田 貴好',
+        paymentStatus: 'オンラインカード決済済み（楽天トラベル・事前払）',
+        amountJpy: '¥6,716 × 4部屋 × 2泊 = ¥53,728（サービス料・税込）',
+        cancelLimit: '2026/5/18 00:00（現地時間）まで無料／以降100%',
+        access: '地下鉄1号線「中央駅」17番出口より徒歩約5分\n金海空港よりタクシー約30分\nKTX釜山駅・釜山国際旅客ターミナルよりタクシー約8分',
+        localInfo: 'フロントスタッフ：日本語対応可\n100Vコンセント使用可（フロントで要確認）\n韓国プラグ形状（Cタイプ/SE型）変換プラグの要否：要確認\n宿泊者全員にメール共有済み',
+        checkInNotes: '日本国籍パスポートの提示が必要（日本国籍限定プラン）\n予約確認書を印刷してフロント提示推奨\nチェックイン予定時間に遅れる場合は要連絡（門限なし）',
+        contact: '',
+        notes: '2泊。シングル4部屋・朝食付。',
+        content: '5/19（火）15:00以降チェックイン、5/21（木）10:00チェックアウト。東横INN釜山中央駅に4名・4部屋で宿泊予定。',
         visible: true
       }
     ];
     let miniMap = null, miniMapMarker = null, selectedAuthor = '', posts = [], portPoints = DEFAULT_PORT_POINTS.map(p => ({ ...p })), commentCounts = {}, commentCache = {}, markers = {}, portMarkers = {}, voyageMarkers = {}, postClusterLayer = null, map, editingPost = null, editingAuthor = '', editingType = 'post';
 
+    function toggleAppMenu() {
+      document.getElementById('appMenu')?.classList.toggle('open');
+    }
+    function closeAppMenu() {
+      document.getElementById('appMenu')?.classList.remove('open');
+    }
     function switchView(view) {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.querySelector(`.tab[data-view="${view}"]`).classList.add('active');
+      closeAppMenu();
+      document.getElementById('timelinePanel')?.classList.remove('open');
+      document.getElementById('portListPanel')?.classList.remove('open');
       document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
       document.getElementById(view + 'View').classList.add('active');
       if (view === 'map') { setTimeout(() => map?.invalidateSize(), 100); loadPorts(); loadPosts(); }
       if (view === 'voyage') renderVoyages();
+    }
+    function openPostList() {
+      switchView('map');
+      setTimeout(() => {
+        document.getElementById('portListPanel')?.classList.remove('open');
+        document.getElementById('timelinePanel')?.classList.add('open');
+        map?.invalidateSize();
+      }, 140);
+    }
+    function openPortList() {
+      switchView('map');
+      setTimeout(() => {
+        renderPortList();
+        document.getElementById('timelinePanel')?.classList.remove('open');
+        document.getElementById('portListPanel')?.classList.add('open');
+        map?.invalidateSize();
+      }, 140);
+    }
+    function togglePortList() {
+      document.getElementById('portListPanel')?.classList.toggle('open');
+    }
+    function updateMenuCounts() {
+      const postCount = document.getElementById('postMenuCount');
+      const portCount = document.getElementById('portMenuCount');
+      const voyageCount = document.getElementById('voyageMenuCount');
+      if (postCount) postCount.textContent = `${posts.length}件`;
+      if (portCount) portCount.textContent = `${loadPortPoints().length}件`;
+      if (voyageCount) voyageCount.textContent = `${VOYAGE_POINTS.filter(p => p.visible !== false && VOYAGES.find(v => v.id === p.voyageId && v.visible !== false)).length}件`;
     }
 
     function loadAuthors() {
@@ -1290,6 +1405,8 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
         portPoints = DEFAULT_PORT_POINTS.map(p => ({ ...p }));
       }
       renderPortMarkers();
+      renderPortList();
+      updateMenuCounts();
     }
     function savePortPoints(points) { portPoints = points.map(p => ({ ...p })); }
     function buildCommentsPanel(item, type) {
@@ -1376,14 +1493,6 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       map.getPane('portPane').style.zIndex = 650;
       map.createPane('voyagePane');
       map.getPane('voyagePane').style.zIndex = 670;
-      const notice = L.control({ position: 'bottomleft' });
-      notice.onAdd = () => {
-        const div = L.DomUtil.create('div', 'map-notice');
-        div.textContent = '海図レイヤーは参考表示です。航海判断には必ず公式海図・水路通報・現地情報をご確認ください。';
-        L.DomEvent.disableClickPropagation(div);
-        return div;
-      };
-      notice.addTo(map);
       postClusterLayer = L.markerClusterGroup({
         showCoverageOnHover: false,
         spiderfyOnMaxZoom: true,
@@ -1427,13 +1536,14 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
     }
     function escapeHtml(s) { if (!s) return ''; return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
     function escapeQuote(s) { return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
-    function activeVoyagePoints() { return VOYAGE_POINTS.filter(p => p.visible !== false && VOYAGES.find(v => v.id === p.voyageId && v.visible !== false)); }
+    function activeVoyagePoints() { return VOYAGE_POINTS.filter(p => p.visible !== false && p.showMarker !== false && Number.isFinite(Number(p.lat)) && Number.isFinite(Number(p.lng)) && VOYAGES.find(v => v.id === p.voyageId && v.visible !== false)); }
     function renderPosts() {
       if (postClusterLayer) postClusterLayer.clearLayers();
       markers = {};
-      document.getElementById('postCount').textContent = posts.length;
       renderPortMarkers();
       renderVoyageMarkers();
+      renderPortList();
+      updateMenuCounts();
       if (!posts.length) { document.getElementById('timelineList').innerHTML = '<div class="empty-state"><div class="empty-state-emoji">0</div>まだ投稿がありません<br><small>「投稿」タブから投稿してみましょう</small></div>'; return; }
       document.getElementById('timelineList').innerHTML = posts.map(p => `<div class="post-item" data-id="${p.id}"><div class="post-item-content" onclick="focusPost('${p.id}')"><img class="post-thumb" src="${p.photoUrl}" onerror="this.style.background='#e2e8f0'"><div class="post-content"><div class="post-meta"><span class="post-author">${escapeHtml(p.author)}</span><span>${formatDate(p.timestamp)}</span></div><div class="post-title">${escapeHtml(p.title)}</div><div class="post-comment">${escapeHtml(p.comment || '')}</div><div class="post-comment-count" data-comment-count-for="${escapeHtml(p.id)}">${formatCommentCount(p.id)}</div></div></div><div class="post-actions"><button class="post-action-btn" onclick="openEditModal('${p.id}')">編集</button><button class="post-action-btn" onclick="focusPost('${p.id}')">地図で見る</button></div></div>`).join('');
       posts.forEach(p => {
@@ -1452,9 +1562,41 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
         portMarkers[p.id] = L.marker([p.lat, p.lng], { icon, pane: 'portPane' }).addTo(map).bindPopup(buildPopupContent(p, 'port'), { maxWidth: 240 });
       });
     }
+    function renderPortList() {
+      const list = document.getElementById('portList');
+      if (!list) return;
+      const ports = loadPortPoints().slice().sort((a, b) => String(a.title || '').localeCompare(String(b.title || ''), 'ja'));
+      if (!ports.length) {
+        list.innerHTML = '<div class="empty-state"><div class="empty-state-emoji">0</div>港情報がありません</div>';
+        return;
+      }
+      list.innerHTML = ports.map(p => `<div class="post-item" data-port-id="${p.id}"><div class="post-item-content" onclick="focusPort('${p.id}')"><div class="post-content"><div class="post-meta"><span class="post-author">港情報</span><span class="port-list-badge">${p.is_home_port ? '母港' : '通常'}</span></div><div class="post-title">${escapeHtml(p.title)}</div><div class="post-comment">${escapeHtml(p.comment || '')}</div></div></div><div class="post-actions"><button class="post-action-btn" onclick="focusPort('${p.id}')">地図で見る</button></div></div>`).join('');
+    }
+    function focusPort(id) {
+      const port = loadPortPoints().find(p => p.id === id);
+      if (!port) return;
+      document.querySelectorAll('[data-port-id]').forEach(el => el.classList.remove('active'));
+      document.querySelector(`[data-port-id="${CSS.escape(id)}"]`)?.classList.add('active');
+      if (window.matchMedia('(max-width: 768px)').matches) {
+        document.getElementById('portListPanel')?.classList.remove('open');
+        setTimeout(() => map?.invalidateSize(), 320);
+      }
+      map?.flyTo([port.lat, port.lng], 12, { duration: 0.8 });
+      setTimeout(() => portMarkers[id]?.openPopup(), 520);
+    }
     function buildVoyagePopup(point) {
       const voyage = VOYAGES.find(v => v.id === point.voyageId);
-      return `<div class="popup-body"><div class="popup-meta"><span class="popup-author">${escapeHtml(voyage?.name || '回航')}</span> · ${escapeHtml(point.date || '')}</div><div class="popup-title">${escapeHtml(point.title)}</div><div class="popup-comment">${escapeHtml(point.content || '')}</div><div class="popup-comment"><strong>宿泊:</strong> ${escapeHtml(point.accommodation || '')}<br><strong>住所:</strong> ${escapeHtml(point.address || '')}<br><strong>TEL:</strong> ${escapeHtml(point.tel || '')}<br><strong>予約:</strong> ${escapeHtml(point.reservationRef || '')}<br><strong>金額:</strong> ${escapeHtml(point.amountJpy || '')}<br><strong>メモ:</strong> ${escapeHtml(point.notes || '')}</div></div>`;
+      const base = `<div class="popup-body"><div class="popup-meta"><span class="popup-author">${escapeHtml(voyage?.name || '回航')}</span> · ${escapeHtml(point.date || '')}</div><div class="popup-title">${escapeHtml(point.title)}</div><div class="popup-comment">${escapeHtml(point.content || '')}</div><div class="popup-comment"><strong>施設:</strong> ${escapeHtml(point.accommodation || '')}<br><strong>住所:</strong> ${escapeHtml(point.address || '')}<br><strong>TEL:</strong> ${escapeHtml(point.tel || '')}<br><strong>FAX:</strong> ${escapeHtml(point.fax || '')}<br><strong>開始:</strong> ${escapeHtml(point.checkIn || '')}<br><strong>終了:</strong> ${escapeHtml(point.checkOut || '')}<br><strong>車種/部屋:</strong> ${escapeHtml(point.carType || point.roomType || '')}<br><strong>朝食:</strong> ${escapeHtml(point.breakfast || '')}<br><strong>料金:</strong> ${escapeHtml(point.amountJpy || '')}<br><strong>支払:</strong> ${escapeHtml(point.paymentStatus || '')}<br><strong>予約番号:</strong> ${escapeHtml(point.reservationRef || '')}<br><strong>代表者:</strong> ${escapeHtml(point.holder || '')}<br><strong>連絡先:</strong> ${escapeHtml(point.contact || '')}<br><strong>キャンセル:</strong> ${escapeHtml(point.cancelLimit || '')}<br><strong>メモ:</strong> ${escapeHtml(point.notes || '')}</div>`;
+      const sections = [
+        point.guests ? `<div class="popup-comment"><strong>宿泊者・部屋割り</strong><br>${escapeHtml(point.guests)}</div>` : '',
+        point.access ? `<div class="popup-comment"><strong>アクセス</strong><br>${escapeHtml(point.access)}</div>` : '',
+        point.scheduleDetail ? `<div class="popup-comment"><strong>詳細</strong><br>${escapeHtml(point.scheduleDetail)}</div>` : '',
+        point.transfer ? `<div class="popup-comment"><strong>送迎</strong><br>${escapeHtml(point.transfer)}</div>` : '',
+        point.usagePlan ? `<div class="popup-comment"><strong>用途・使用予定</strong><br>${escapeHtml(point.usagePlan)}</div>` : '',
+        point.localInfo ? `<div class="popup-comment"><strong>現地情報</strong><br>${escapeHtml(point.localInfo)}</div>` : '',
+        point.checkInNotes ? `<div class="popup-comment"><strong>チェックイン時の注意</strong><br>${escapeHtml(point.checkInNotes)}</div>` : ''
+      ].join('');
+      return `${base}${sections}</div>`;
     }
     function renderVoyageMarkers() {
       if (!map) return;
@@ -1467,9 +1609,10 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
     function renderVoyages() {
       const list = document.getElementById('voyageList');
       if (!list) return;
+      updateMenuCounts();
       list.innerHTML = VOYAGES.map(v => {
         const points = VOYAGE_POINTS.filter(p => p.voyageId === v.id && p.visible !== false).sort((a, b) => (a.seq || 0) - (b.seq || 0));
-        return `<div class="voyage-card"><div class="voyage-head"><div><div class="voyage-name">${escapeHtml(v.name)}</div><div class="voyage-ship">${escapeHtml(v.ship)}</div></div><span class="voyage-badge">${points.length}件</span></div><div class="voyage-period">${escapeHtml(v.startDate)} 〜 ${escapeHtml(v.endDate)}</div>${points.map(p => `<div class="voyage-point" data-voyage-point="${p.id}"><div class="voyage-point-main"><div><div class="voyage-point-title">${escapeHtml(p.date)} ${escapeHtml(p.title)}</div><div class="voyage-point-meta">${escapeHtml(p.kind)} · ${escapeHtml(p.arriveDate)}〜${escapeHtml(p.departDate)} · ${escapeHtml(p.accommodation || '')}</div></div><span class="voyage-status">${escapeHtml(p.status || '')}</span></div><div class="voyage-point-note">${escapeHtml(p.content || '')}</div><div class="voyage-point-meta">住所：${escapeHtml(p.address || '')}<br>TEL：${escapeHtml(p.tel || '')}<br>予約：${escapeHtml(p.reservationRef || '')} / ${escapeHtml(p.holder || '')}<br>支払：${escapeHtml(p.paymentStatus || '')} / ${escapeHtml(p.amountJpy || '')}<br>連絡：${escapeHtml(p.contact || '')}<br>メモ：${escapeHtml(p.notes || '')}</div><div class="voyage-actions"><button class="voyage-action-btn" onclick="focusVoyagePoint('${p.id}')">地図で見る</button></div></div>`).join('')}</div>`;
+        return `<div class="voyage-card"><div class="voyage-head"><div><div class="voyage-name">${escapeHtml(v.name)}</div><div class="voyage-ship">${escapeHtml(v.ship)}</div></div><span class="voyage-badge">${points.length}件</span></div><div class="voyage-period">${escapeHtml(v.startDate)} 〜 ${escapeHtml(v.endDate)}</div>${points.map(p => `<div class="voyage-point" data-voyage-point="${p.id}"><div class="voyage-point-main"><div><div class="voyage-point-title">${escapeHtml(p.date)} ${escapeHtml(p.title)}</div><div class="voyage-point-meta">${escapeHtml(p.kind)} · ${escapeHtml(p.checkIn || p.arriveDate || '')}〜${escapeHtml(p.checkOut || p.departDate || '')}</div></div><span class="voyage-status">${escapeHtml(p.status || '')}</span></div><div class="voyage-point-note">${escapeHtml(p.content || '')}</div>${p.scheduleDetail ? `<div class="voyage-point-meta voyage-point-detail">${escapeHtml(p.scheduleDetail)}</div>` : `<div class="voyage-point-meta">施設：${escapeHtml(p.accommodation || '')}<br>住所：${escapeHtml(p.address || '')}<br>TEL：${escapeHtml(p.tel || '')}${p.fax ? ` / FAX：${escapeHtml(p.fax)}` : ''}<br>車種/部屋：${escapeHtml(p.carType || p.roomType || '')}<br>料金：${escapeHtml(p.amountJpy || '')}<br>支払：${escapeHtml(p.paymentStatus || '')}<br>予約：${escapeHtml(p.reservationRef || '')} / ${escapeHtml(p.holder || '')}<br>キャンセル：${escapeHtml(p.cancelLimit || '')}</div>`}<div class="voyage-actions">${p.showMarker === false ? '' : `<button class="voyage-action-btn" onclick="focusVoyagePoint('${p.id}')">地図で見る</button>`}</div></div>`).join('')}</div>`;
       }).join('');
     }
     function focusVoyagePoint(id) {
