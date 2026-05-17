@@ -71,7 +71,7 @@
     .post-comment-count { margin-top: 5px; color: #7890a8; font-size: 11px; font-weight: 700; }
     .port-list-badge { color: var(--blue); font-size: 11px; font-weight: 700; }
     .boat-list-photo { width: 76px; height: 54px; border-radius: 6px; object-fit: cover; border: 1px solid #e1ebf3; background: #e2e8f0; flex-shrink: 0; cursor: zoom-in; }
-    .map-notice { padding: 5px 8px; margin: 0 0 20px 0; background: rgba(255,255,255,0.94); border: 1px solid #d7e4ee; border-radius: 6px; color: #334155; font-size: 10px; line-height: 1.35; box-shadow: 0 2px 8px rgba(13,45,68,0.12); }
+    .map-notice { width: max-content; max-width: calc(100vw - 28px); padding: 5px 8px; margin: 0 0 18px 0; background: rgba(255,255,255,0.94); border: 1px solid #d7e4ee; border-radius: 6px; color: #334155; font-size: 10px; line-height: 1.35; white-space: nowrap; box-shadow: 0 2px 8px rgba(13,45,68,0.12); }
     .post-actions { display: flex; gap: 4px; margin-top: 7px; padding-top: 7px; border-top: 1px solid #e7edf4; }
     .post-action-btn, .popup-action-btn { background: #f4f8fb; border: 1px solid #e1ebf3; color: var(--blue); padding: 5px 9px; border-radius: 6px; font-size: 11px; font-weight: 700; }
     .post-action-btn:hover, .popup-action-btn:hover { background: #e8f5f7; color: var(--navy); }
@@ -86,16 +86,17 @@
     #mapView.popup-active .timeline-toggle { opacity: 0.18; pointer-events: none; }
     #mapView.popup-active .leaflet-control-container { z-index: 100; }
     .leaflet-popup-pane { z-index: 1200; }
-    .leaflet-popup-content-wrapper { border-radius: 8px; padding: 0; overflow: hidden; box-shadow: var(--shadow); }
-    .leaflet-popup-content { margin: 0; width: 240px !important; }
+    .leaflet-control-zoom { display: none; }
+    .leaflet-popup-content-wrapper { border-radius: 8px; padding: 0; overflow: hidden; border: 1px solid var(--line); box-shadow: var(--shadow); }
+    .leaflet-popup-content { margin: 0; width: 280px !important; font-family: 'Noto Sans JP', 'Hiragino Sans', sans-serif; }
     .popup-photo { width: 100%; height: 140px; object-fit: cover; display: block; }
     .popup-photo.zoomable { cursor: zoom-in; }
     .popup-photo.port { height: 92px; display: grid; place-items: center; background: linear-gradient(135deg, #e7f8f0, #e8f5f7); color: var(--navy); font-family: 'Zen Maru Gothic', sans-serif; font-size: 20px; font-weight: 700; }
-    .popup-body { padding: 12px 14px; }
-    .popup-meta { margin-bottom: 4px; color: var(--muted); font-size: 11px; }
+    .popup-body { padding: 13px 14px; background: #fff; }
+    .popup-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 5px; color: #7f8ea3; font-size: 10px; }
     .popup-author { color: var(--blue); font-weight: 700; }
-    .popup-title { margin-bottom: 6px; color: var(--ink); font-size: 14px; font-weight: 700; }
-    .popup-comment { max-height: 240px; margin-bottom: 8px; overflow: auto; color: var(--muted); font-size: 12px; line-height: 1.5; white-space: pre-line; }
+    .popup-title { margin-bottom: 7px; color: var(--ink); font-size: 14px; font-weight: 700; line-height: 1.35; }
+    .popup-comment { max-height: 240px; margin-bottom: 8px; overflow: auto; color: var(--muted); font-size: 12px; line-height: 1.58; white-space: pre-line; }
     .boat-photo { width: 100%; max-height: 150px; margin: 6px 0 10px; object-fit: cover; border-radius: 7px; border: 1px solid #e1ebf3; cursor: zoom-in; display: block; }
     .popup-actions { display: flex; gap: 4px; padding-top: 8px; border-top: 1px solid #e7edf4; }
     .comment-panel { margin-top: 10px; padding-top: 9px; border-top: 1px solid #e7edf4; }
@@ -230,9 +231,9 @@
       .app-menu { top: 54px; right: 10px; }
       .main { height: calc(100vh - 59px); height: calc(100dvh - 59px); }
       .timeline-toggle { right: 12px; bottom: calc(28px + env(safe-area-inset-bottom)); padding: 12px 18px; }
-      .map-notice { max-width: 210px; margin-bottom: 18px; font-size: 9px; }
+      .map-notice { max-width: calc(100vw - 24px); margin-bottom: 18px; font-size: 9px; }
       .leaflet-popup-content-wrapper { max-height: calc(100dvh - 142px); overflow-y: auto; }
-      .leaflet-popup-content { width: min(82vw, 300px) !important; }
+      .leaflet-popup-content { width: min(84vw, 320px) !important; }
       .popup-photo { height: 150px; }
       .popup-comment { max-height: 136px; }
       .comment-list { max-height: 72px; }
@@ -1458,7 +1459,7 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
     }
     function buildPopupContent(item, type = 'post') {
       const media = type === 'port'
-        ? `<div class="popup-photo port">${escapeHtml(item.title)}</div>`
+        ? ''
         : `<img class="popup-photo zoomable" src="${item.photoUrl}" onclick="openPhotoViewer('${escapeQuote(item.photoUrl)}')">`;
       const actions = type === 'port' ? '' : `<div class="popup-actions"><button class="popup-action-btn" onclick="openEditModal('${item.id}', '${type}')">編集</button></div>`;
       return `${media}<div class="popup-body"><div class="popup-meta"><span class="popup-author">${escapeHtml(item.author)}</span> · ${formatDate(item.timestamp)}</div><div class="popup-title">${escapeHtml(item.title)}</div><div class="popup-comment">${formatPopupComment(item.comment || '')}</div>${actions}${buildCommentsPanel(item, type)}</div>`;
@@ -1516,7 +1517,7 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
     }
 
     function initMap() {
-      map = L.map('map').setView([34.5, 134.0], 6);
+      map = L.map('map', { zoomControl: false }).setView([34.5, 134.0], 6);
       const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' });
       const seamap = L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© OpenSeaMap' });
       osm.addTo(map);
