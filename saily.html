@@ -121,11 +121,18 @@
     .voyage-period { margin-bottom: 12px; color: var(--muted); font-size: 12px; }
     .voyage-close { width: 34px; height: 34px; flex-shrink: 0; display: grid; place-items: center; background: #f6fafc; border: 1px solid #d7e4ee; border-radius: 8px; color: var(--muted); font-size: 20px; line-height: 1; }
     .voyage-close:hover { background: #eef8fb; color: var(--blue); }
-    .voyage-day { margin-top: 14px; border-top: 1px solid #e7edf4; }
+    .voyage-day { margin-top: 14px; padding-top: 2px; border-top: 1px solid #e7edf4; cursor: pointer; }
     .voyage-day:first-of-type { margin-top: 0; border-top: 0; }
     .voyage-day-head { position: sticky; top: -14px; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 0 8px; background: #fff; }
     .voyage-day-title { color: var(--navy); font-size: 13px; font-weight: 700; }
     .voyage-day-count { min-width: 38px; padding: 3px 8px; border-radius: 999px; background: #edf7f9; color: var(--blue); font-size: 11px; font-weight: 700; text-align: center; }
+    .voyage-day-summary { margin: 0; padding: 0 0 2px 18px; color: #52657d; font-size: 12px; line-height: 1.6; }
+    .voyage-day-summary li { margin: 2px 0; }
+    .voyage-day-time { color: var(--blue); font-weight: 700; }
+    .voyage-day-detail { max-height: 0; overflow: hidden; transition: max-height 0.2s ease; }
+    .voyage-day.expanded .voyage-day-detail { max-height: none; }
+    .voyage-day .voyage-expand-hint { margin-left: 18px; }
+    .voyage-day.expanded > .voyage-expand-hint { display: none; }
     .voyage-point { padding: 11px 0; border-top: 1px solid #e7edf4; cursor: pointer; }
     .voyage-point:first-of-type { border-top: 0; }
     .voyage-point-main { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
@@ -1365,8 +1372,16 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       const boatCount = document.getElementById('boatMenuCount');
       if (postCount) postCount.textContent = `${posts.length}件`;
       if (portCount) portCount.textContent = `${loadPortPoints().length}件`;
-      if (voyageCount) voyageCount.textContent = `${VOYAGE_POINTS.filter(p => p.visible !== false && VOYAGES.find(v => v.id === p.voyageId && v.visible !== false)).length}件`;
+      if (voyageCount) voyageCount.textContent = `${countVoyageDays()}件`;
       if (boatCount) boatCount.textContent = `${BOATS.filter(b => b.visible !== false).length}件`;
+    }
+    function countVoyageDays(voyageId = null) {
+      const days = new Set(
+        VOYAGE_POINTS
+          .filter(p => p.visible !== false && (!voyageId || p.voyageId === voyageId) && VOYAGES.find(v => v.id === p.voyageId && v.visible !== false))
+          .map(p => p.date || '日付未設定')
+      );
+      return days.size;
     }
 
     function loadAuthors() {
@@ -1934,6 +1949,11 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       const details = buildVoyageDetailHtml(point);
       return `<div class="popup-body"><div class="popup-meta"><span class="popup-author">${escapeHtml(voyage?.name || '回航')}</span> · ${escapeHtml(point.date || '')}</div><div class="popup-title">${escapeHtml(point.title)}</div><div class="popup-comment">${escapeHtml(point.content || '')}</div>${details ? `<div class="popup-comment">${details}</div>` : ''}</div>`;
     }
+    function voyagePointTime(point) {
+      const value = point.checkIn || point.arriveDate || '';
+      const match = String(value).match(/(\d{1,2}:\d{2})/);
+      return match ? match[1] : '';
+    }
     function renderVoyageMarkers() {
       if (!map) return;
       Object.values(voyageMarkers).forEach(m => map.removeLayer(m)); voyageMarkers = {};
@@ -1954,12 +1974,22 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
           days[date].push(point);
           return days;
         }, {});
-        const dayHtml = Object.entries(grouped).map(([date, dayPoints]) => `<section class="voyage-day"><div class="voyage-day-head"><div class="voyage-day-title">${escapeHtml(date)}</div><div class="voyage-day-count">${dayPoints.length}件</div></div>${dayPoints.map(p => {
+        const dayHtml = Object.entries(grouped).map(([date, dayPoints], index) => {
+          const dayId = `${v.id}_day_${index}`;
+          const summary = dayPoints.map(p => `<li><span class="voyage-day-time">${escapeHtml(voyagePointTime(p))}</span>${voyagePointTime(p) ? ' ' : ''}${escapeHtml(p.title)}</li>`).join('');
+          const detailsHtml = dayPoints.map(p => {
             const details = buildVoyageDetailHtml(p);
-            return `<div class="voyage-point" data-voyage-point="${p.id}" onclick="toggleVoyagePoint('${p.id}')"><div class="voyage-point-main"><div><div class="voyage-point-title">${escapeHtml(p.title)}</div><div class="voyage-point-meta">${escapeHtml(p.kind)} · ${escapeHtml(p.checkIn || p.arriveDate || '')}〜${escapeHtml(p.checkOut || p.departDate || '')}</div></div><span class="voyage-status">${escapeHtml(p.status || '')}</span></div><div class="voyage-point-note">${escapeHtml(p.content || '')}</div>${details ? `<div class="voyage-point-detail is-collapsed">${details}</div><div class="voyage-expand-hint">続きを見る</div>` : ''}<div class="voyage-actions">${p.showMarker === false ? '' : `<button class="voyage-action-btn" onclick="event.stopPropagation(); focusVoyagePoint('${p.id}')">地図で見る</button>`}</div></div>`;
-          }).join('')}</section>`).join('');
-        return `<div class="voyage-card"><div class="voyage-head"><div><div class="voyage-name">${escapeHtml(v.name)}</div><div class="voyage-ship">${escapeHtml(v.ship)}</div></div><span class="voyage-badge">${points.length}件</span></div><div class="voyage-period">${escapeHtml(v.startDate)} 〜 ${escapeHtml(v.endDate)}</div>${dayHtml}</div>`;
+            return `<div class="voyage-point" data-voyage-point="${p.id}" onclick="event.stopPropagation(); toggleVoyagePoint('${p.id}')"><div class="voyage-point-main"><div><div class="voyage-point-title">${escapeHtml(p.title)}</div><div class="voyage-point-meta">${escapeHtml(p.kind)} · ${escapeHtml(p.checkIn || p.arriveDate || '')}〜${escapeHtml(p.checkOut || p.departDate || '')}</div></div><span class="voyage-status">${escapeHtml(p.status || '')}</span></div><div class="voyage-point-note">${escapeHtml(p.content || '')}</div>${details ? `<div class="voyage-point-detail is-collapsed">${details}</div><div class="voyage-expand-hint">詳細を見る</div>` : ''}<div class="voyage-actions">${p.showMarker === false ? '' : `<button class="voyage-action-btn" onclick="event.stopPropagation(); focusVoyagePoint('${p.id}')">地図で見る</button>`}</div></div>`;
+          }).join('');
+          return `<section class="voyage-day" data-voyage-day="${dayId}" onclick="toggleVoyageDay('${dayId}')"><div class="voyage-day-head"><div class="voyage-day-title">${escapeHtml(date)}</div><div class="voyage-day-count">${dayPoints.length}件</div></div><ul class="voyage-day-summary">${summary}</ul><div class="voyage-expand-hint">この日の詳細を見る</div><div class="voyage-day-detail">${detailsHtml}</div></section>`;
+        }).join('');
+        return `<div class="voyage-card"><div class="voyage-head"><div><div class="voyage-name">${escapeHtml(v.name)}</div><div class="voyage-ship">${escapeHtml(v.ship)}</div></div><span class="voyage-badge">${Object.keys(grouped).length}日</span></div><div class="voyage-period">${escapeHtml(v.startDate)} 〜 ${escapeHtml(v.endDate)}</div>${dayHtml}</div>`;
       }).join('');
+    }
+    function toggleVoyageDay(id) {
+      const dayEl = document.querySelector(`.voyage-day[data-voyage-day="${CSS.escape(id)}"]`);
+      if (!dayEl) return;
+      dayEl.classList.toggle('expanded');
     }
     function toggleVoyagePoint(id) {
       const pointEl = document.querySelector(`.voyage-point[data-voyage-point="${CSS.escape(id)}"]`);
