@@ -121,6 +121,11 @@
     .voyage-period { margin-bottom: 12px; color: var(--muted); font-size: 12px; }
     .voyage-close { width: 34px; height: 34px; flex-shrink: 0; display: grid; place-items: center; background: #f6fafc; border: 1px solid #d7e4ee; border-radius: 8px; color: var(--muted); font-size: 20px; line-height: 1; }
     .voyage-close:hover { background: #eef8fb; color: var(--blue); }
+    .voyage-day { margin-top: 14px; border-top: 1px solid #e7edf4; }
+    .voyage-day:first-of-type { margin-top: 0; border-top: 0; }
+    .voyage-day-head { position: sticky; top: -14px; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 0 8px; background: #fff; }
+    .voyage-day-title { color: var(--navy); font-size: 13px; font-weight: 700; }
+    .voyage-day-count { min-width: 38px; padding: 3px 8px; border-radius: 999px; background: #edf7f9; color: var(--blue); font-size: 11px; font-weight: 700; text-align: center; }
     .voyage-point { padding: 11px 0; border-top: 1px solid #e7edf4; cursor: pointer; }
     .voyage-point:first-of-type { border-top: 0; }
     .voyage-point-main { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
@@ -1943,10 +1948,17 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       updateMenuCounts();
       list.innerHTML = VOYAGES.map(v => {
         const points = VOYAGE_POINTS.filter(p => p.voyageId === v.id && p.visible !== false).sort((a, b) => (a.seq || 0) - (b.seq || 0));
-        return `<div class="voyage-card"><div class="voyage-head"><div><div class="voyage-name">${escapeHtml(v.name)}</div><div class="voyage-ship">${escapeHtml(v.ship)}</div></div><span class="voyage-badge">${points.length}件</span></div><div class="voyage-period">${escapeHtml(v.startDate)} 〜 ${escapeHtml(v.endDate)}</div>${points.map(p => {
-          const details = buildVoyageDetailHtml(p);
-          return `<div class="voyage-point" data-voyage-point="${p.id}" onclick="toggleVoyagePoint('${p.id}')"><div class="voyage-point-main"><div><div class="voyage-point-title">${escapeHtml(p.date)} ${escapeHtml(p.title)}</div><div class="voyage-point-meta">${escapeHtml(p.kind)} · ${escapeHtml(p.checkIn || p.arriveDate || '')}〜${escapeHtml(p.checkOut || p.departDate || '')}</div></div><span class="voyage-status">${escapeHtml(p.status || '')}</span></div><div class="voyage-point-note">${escapeHtml(p.content || '')}</div>${details ? `<div class="voyage-point-detail is-collapsed">${details}</div><div class="voyage-expand-hint">続きを見る</div>` : ''}<div class="voyage-actions">${p.showMarker === false ? '' : `<button class="voyage-action-btn" onclick="event.stopPropagation(); focusVoyagePoint('${p.id}')">地図で見る</button>`}</div></div>`;
-        }).join('')}</div>`;
+        const grouped = points.reduce((days, point) => {
+          const date = point.date || '日付未設定';
+          if (!days[date]) days[date] = [];
+          days[date].push(point);
+          return days;
+        }, {});
+        const dayHtml = Object.entries(grouped).map(([date, dayPoints]) => `<section class="voyage-day"><div class="voyage-day-head"><div class="voyage-day-title">${escapeHtml(date)}</div><div class="voyage-day-count">${dayPoints.length}件</div></div>${dayPoints.map(p => {
+            const details = buildVoyageDetailHtml(p);
+            return `<div class="voyage-point" data-voyage-point="${p.id}" onclick="toggleVoyagePoint('${p.id}')"><div class="voyage-point-main"><div><div class="voyage-point-title">${escapeHtml(p.title)}</div><div class="voyage-point-meta">${escapeHtml(p.kind)} · ${escapeHtml(p.checkIn || p.arriveDate || '')}〜${escapeHtml(p.checkOut || p.departDate || '')}</div></div><span class="voyage-status">${escapeHtml(p.status || '')}</span></div><div class="voyage-point-note">${escapeHtml(p.content || '')}</div>${details ? `<div class="voyage-point-detail is-collapsed">${details}</div><div class="voyage-expand-hint">続きを見る</div>` : ''}<div class="voyage-actions">${p.showMarker === false ? '' : `<button class="voyage-action-btn" onclick="event.stopPropagation(); focusVoyagePoint('${p.id}')">地図で見る</button>`}</div></div>`;
+          }).join('')}</section>`).join('');
+        return `<div class="voyage-card"><div class="voyage-head"><div><div class="voyage-name">${escapeHtml(v.name)}</div><div class="voyage-ship">${escapeHtml(v.ship)}</div></div><span class="voyage-badge">${points.length}件</span></div><div class="voyage-period">${escapeHtml(v.startDate)} 〜 ${escapeHtml(v.endDate)}</div>${dayHtml}</div>`;
       }).join('');
     }
     function toggleVoyagePoint(id) {
