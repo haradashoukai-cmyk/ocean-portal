@@ -119,12 +119,22 @@
     .voyage-ship { margin-top: 3px; color: var(--muted); font-size: 12px; }
     .voyage-badge, .voyage-status { display: inline-flex; align-items: center; min-height: 24px; padding: 3px 8px; border-radius: 999px; border: 1px solid #d7e4ee; background: #f6fafc; color: var(--blue); font-size: 11px; font-weight: 700; white-space: nowrap; }
     .voyage-period { margin-bottom: 12px; color: var(--muted); font-size: 12px; }
-    .voyage-point { padding: 11px 0; border-top: 1px solid #e7edf4; }
+    .voyage-close { width: 34px; height: 34px; flex-shrink: 0; display: grid; place-items: center; background: #f6fafc; border: 1px solid #d7e4ee; border-radius: 8px; color: var(--muted); font-size: 20px; line-height: 1; }
+    .voyage-close:hover { background: #eef8fb; color: var(--blue); }
+    .voyage-point { padding: 11px 0; border-top: 1px solid #e7edf4; cursor: pointer; }
     .voyage-point:first-of-type { border-top: 0; }
     .voyage-point-main { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
     .voyage-point-title { color: var(--ink); font-size: 14px; font-weight: 700; line-height: 1.35; }
     .voyage-point-meta { margin-top: 3px; color: var(--muted); font-size: 11px; line-height: 1.5; }
-    .voyage-point-detail { white-space: pre-line; }
+    .voyage-point-detail { position: relative; max-height: none; margin-top: 8px; overflow: hidden; color: var(--muted); font-size: 11px; line-height: 1.55; white-space: pre-line; transition: max-height 0.2s ease; }
+    .voyage-point-detail.is-collapsed { max-height: 4.8em; }
+    .voyage-point-detail.is-collapsed::after { content: '…'; position: absolute; right: 0; bottom: 0; padding-left: 28px; background: linear-gradient(90deg, rgba(255,255,255,0), #fff 38%); color: var(--muted); font-weight: 700; }
+    .voyage-point.expanded .voyage-point-detail { max-height: none; }
+    .voyage-point.expanded .voyage-point-detail::after { display: none; }
+    .voyage-detail-row { margin-bottom: 2px; }
+    .voyage-detail-row strong { color: #52657d; }
+    .voyage-expand-hint { margin-top: 5px; color: var(--blue); font-size: 11px; font-weight: 700; }
+    .voyage-point.expanded .voyage-expand-hint { display: none; }
     .voyage-point-note { margin-top: 7px; color: #52657d; font-size: 12px; line-height: 1.55; white-space: pre-line; }
     .voyage-actions { margin-top: 9px; display: flex; gap: 6px; }
     .voyage-action-btn { padding: 7px 10px; background: #f4f8fb; border: 1px solid #dce8f1; border-radius: 6px; color: var(--blue); font-size: 12px; font-weight: 700; }
@@ -288,7 +298,16 @@
 
     <div class="view" id="voyageView">
       <div class="voyage-view">
-        <div class="voyage-container" id="voyageList"></div>
+        <div class="voyage-container">
+          <div class="voyage-head">
+            <div>
+              <div class="voyage-name">回航予定</div>
+              <div class="voyage-ship">スケジュールと詳細</div>
+            </div>
+            <button class="voyage-close" type="button" onclick="switchView('map')" aria-label="閉じる">×</button>
+          </div>
+          <div id="voyageList"></div>
+        </div>
       </div>
     </div>
 
@@ -1646,19 +1665,39 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       focusPort(boat.portId);
       document.getElementById('boatListPanel')?.classList.remove('open');
     }
+    function voyageDetailRows(point) {
+      return [
+        ['施設', point.accommodation],
+        ['住所', point.address],
+        ['TEL', point.tel],
+        ['FAX', point.fax],
+        ['開始', point.checkIn],
+        ['終了', point.checkOut],
+        ['車種/部屋', point.carType || point.roomType],
+        ['朝食', point.breakfast],
+        ['料金', point.amountJpy],
+        ['支払', point.paymentStatus],
+        ['予約番号', point.reservationRef],
+        ['代表者', point.holder],
+        ['連絡先', point.contact],
+        ['キャンセル', point.cancelLimit],
+        ['メモ', point.notes],
+        ['宿泊者・部屋割り', point.guests],
+        ['アクセス', point.access],
+        ['詳細', point.scheduleDetail],
+        ['送迎', point.transfer],
+        ['用途・使用予定', point.usagePlan],
+        ['現地情報', point.localInfo],
+        ['チェックイン時の注意', point.checkInNotes]
+      ].filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== '');
+    }
+    function buildVoyageDetailHtml(point) {
+      return voyageDetailRows(point).map(([label, value]) => `<div class="voyage-detail-row"><strong>${escapeHtml(label)}：</strong>${escapeHtml(value)}</div>`).join('');
+    }
     function buildVoyagePopup(point) {
       const voyage = VOYAGES.find(v => v.id === point.voyageId);
-      const base = `<div class="popup-body"><div class="popup-meta"><span class="popup-author">${escapeHtml(voyage?.name || '回航')}</span> · ${escapeHtml(point.date || '')}</div><div class="popup-title">${escapeHtml(point.title)}</div><div class="popup-comment">${escapeHtml(point.content || '')}</div><div class="popup-comment"><strong>施設:</strong> ${escapeHtml(point.accommodation || '')}<br><strong>住所:</strong> ${escapeHtml(point.address || '')}<br><strong>TEL:</strong> ${escapeHtml(point.tel || '')}<br><strong>FAX:</strong> ${escapeHtml(point.fax || '')}<br><strong>開始:</strong> ${escapeHtml(point.checkIn || '')}<br><strong>終了:</strong> ${escapeHtml(point.checkOut || '')}<br><strong>車種/部屋:</strong> ${escapeHtml(point.carType || point.roomType || '')}<br><strong>朝食:</strong> ${escapeHtml(point.breakfast || '')}<br><strong>料金:</strong> ${escapeHtml(point.amountJpy || '')}<br><strong>支払:</strong> ${escapeHtml(point.paymentStatus || '')}<br><strong>予約番号:</strong> ${escapeHtml(point.reservationRef || '')}<br><strong>代表者:</strong> ${escapeHtml(point.holder || '')}<br><strong>連絡先:</strong> ${escapeHtml(point.contact || '')}<br><strong>キャンセル:</strong> ${escapeHtml(point.cancelLimit || '')}<br><strong>メモ:</strong> ${escapeHtml(point.notes || '')}</div>`;
-      const sections = [
-        point.guests ? `<div class="popup-comment"><strong>宿泊者・部屋割り</strong><br>${escapeHtml(point.guests)}</div>` : '',
-        point.access ? `<div class="popup-comment"><strong>アクセス</strong><br>${escapeHtml(point.access)}</div>` : '',
-        point.scheduleDetail ? `<div class="popup-comment"><strong>詳細</strong><br>${escapeHtml(point.scheduleDetail)}</div>` : '',
-        point.transfer ? `<div class="popup-comment"><strong>送迎</strong><br>${escapeHtml(point.transfer)}</div>` : '',
-        point.usagePlan ? `<div class="popup-comment"><strong>用途・使用予定</strong><br>${escapeHtml(point.usagePlan)}</div>` : '',
-        point.localInfo ? `<div class="popup-comment"><strong>現地情報</strong><br>${escapeHtml(point.localInfo)}</div>` : '',
-        point.checkInNotes ? `<div class="popup-comment"><strong>チェックイン時の注意</strong><br>${escapeHtml(point.checkInNotes)}</div>` : ''
-      ].join('');
-      return `${base}${sections}</div>`;
+      const details = buildVoyageDetailHtml(point);
+      return `<div class="popup-body"><div class="popup-meta"><span class="popup-author">${escapeHtml(voyage?.name || '回航')}</span> · ${escapeHtml(point.date || '')}</div><div class="popup-title">${escapeHtml(point.title)}</div><div class="popup-comment">${escapeHtml(point.content || '')}</div>${details ? `<div class="popup-comment">${details}</div>` : ''}</div>`;
     }
     function renderVoyageMarkers() {
       if (!map) return;
@@ -1674,8 +1713,17 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       updateMenuCounts();
       list.innerHTML = VOYAGES.map(v => {
         const points = VOYAGE_POINTS.filter(p => p.voyageId === v.id && p.visible !== false).sort((a, b) => (a.seq || 0) - (b.seq || 0));
-        return `<div class="voyage-card"><div class="voyage-head"><div><div class="voyage-name">${escapeHtml(v.name)}</div><div class="voyage-ship">${escapeHtml(v.ship)}</div></div><span class="voyage-badge">${points.length}件</span></div><div class="voyage-period">${escapeHtml(v.startDate)} 〜 ${escapeHtml(v.endDate)}</div>${points.map(p => `<div class="voyage-point" data-voyage-point="${p.id}"><div class="voyage-point-main"><div><div class="voyage-point-title">${escapeHtml(p.date)} ${escapeHtml(p.title)}</div><div class="voyage-point-meta">${escapeHtml(p.kind)} · ${escapeHtml(p.checkIn || p.arriveDate || '')}〜${escapeHtml(p.checkOut || p.departDate || '')}</div></div><span class="voyage-status">${escapeHtml(p.status || '')}</span></div><div class="voyage-point-note">${escapeHtml(p.content || '')}</div>${p.scheduleDetail ? `<div class="voyage-point-meta voyage-point-detail">${escapeHtml(p.scheduleDetail)}</div>` : `<div class="voyage-point-meta">施設：${escapeHtml(p.accommodation || '')}<br>住所：${escapeHtml(p.address || '')}<br>TEL：${escapeHtml(p.tel || '')}${p.fax ? ` / FAX：${escapeHtml(p.fax)}` : ''}<br>車種/部屋：${escapeHtml(p.carType || p.roomType || '')}<br>料金：${escapeHtml(p.amountJpy || '')}<br>支払：${escapeHtml(p.paymentStatus || '')}<br>予約：${escapeHtml(p.reservationRef || '')} / ${escapeHtml(p.holder || '')}<br>キャンセル：${escapeHtml(p.cancelLimit || '')}</div>`}<div class="voyage-actions">${p.showMarker === false ? '' : `<button class="voyage-action-btn" onclick="focusVoyagePoint('${p.id}')">地図で見る</button>`}</div></div>`).join('')}</div>`;
+        return `<div class="voyage-card"><div class="voyage-head"><div><div class="voyage-name">${escapeHtml(v.name)}</div><div class="voyage-ship">${escapeHtml(v.ship)}</div></div><span class="voyage-badge">${points.length}件</span></div><div class="voyage-period">${escapeHtml(v.startDate)} 〜 ${escapeHtml(v.endDate)}</div>${points.map(p => {
+          const details = buildVoyageDetailHtml(p);
+          return `<div class="voyage-point" data-voyage-point="${p.id}" onclick="toggleVoyagePoint('${p.id}')"><div class="voyage-point-main"><div><div class="voyage-point-title">${escapeHtml(p.date)} ${escapeHtml(p.title)}</div><div class="voyage-point-meta">${escapeHtml(p.kind)} · ${escapeHtml(p.checkIn || p.arriveDate || '')}〜${escapeHtml(p.checkOut || p.departDate || '')}</div></div><span class="voyage-status">${escapeHtml(p.status || '')}</span></div><div class="voyage-point-note">${escapeHtml(p.content || '')}</div>${details ? `<div class="voyage-point-detail is-collapsed">${details}</div><div class="voyage-expand-hint">続きを見る</div>` : ''}<div class="voyage-actions">${p.showMarker === false ? '' : `<button class="voyage-action-btn" onclick="event.stopPropagation(); focusVoyagePoint('${p.id}')">地図で見る</button>`}</div></div>`;
+        }).join('')}</div>`;
       }).join('');
+    }
+    function toggleVoyagePoint(id) {
+      const pointEl = document.querySelector(`.voyage-point[data-voyage-point="${CSS.escape(id)}"]`);
+      if (!pointEl) return;
+      pointEl.classList.toggle('expanded');
+      pointEl.querySelector('.voyage-point-detail')?.classList.toggle('is-collapsed', !pointEl.classList.contains('expanded'));
     }
     function focusVoyagePoint(id) {
       const point = VOYAGE_POINTS.find(p => p.id === id);
