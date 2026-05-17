@@ -37,8 +37,6 @@
     .brand-mark { width: 46px; height: 46px; display: block; object-fit: contain; border-radius: 50%; filter: drop-shadow(0 8px 18px rgba(15, 111, 148, 0.24)); flex-shrink: 0; }
     .header-title h1 { font-family: 'Zen Maru Gothic', sans-serif; font-size: 20px; line-height: 1.1; color: var(--navy); }
     .header-title p { margin-top: 3px; font-size: 11px; color: var(--muted); }
-    .header-notice { flex: 1; min-width: 180px; max-width: 520px; padding: 7px 10px; background: #f6fafc; border: 1px solid #d7e4ee; border-radius: 7px; color: #41556c; font-size: 11px; line-height: 1.45; }
-    .header-notice-short { display: none; }
     .menu-button { width: 44px; height: 44px; display: grid; place-items: center; background: #f6fafc; border: 1px solid #d7e4ee; border-radius: 8px; color: var(--navy); font-size: 24px; font-weight: 700; line-height: 1; }
     .menu-button:hover { background: #eef6f8; color: var(--blue); }
     .app-menu { position: absolute; top: 58px; right: 12px; z-index: 2000; width: min(280px, calc(100vw - 24px)); display: none; padding: 8px; background: rgba(255,255,255,0.98); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); }
@@ -72,6 +70,8 @@
     .post-comment { color: var(--muted); font-size: 11px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     .post-comment-count { margin-top: 5px; color: #7890a8; font-size: 11px; font-weight: 700; }
     .port-list-badge { color: var(--blue); font-size: 11px; font-weight: 700; }
+    .boat-list-photo { width: 76px; height: 54px; border-radius: 6px; object-fit: cover; border: 1px solid #e1ebf3; background: #e2e8f0; flex-shrink: 0; cursor: zoom-in; }
+    .map-notice { padding: 5px 8px; margin: 0 0 20px 0; background: rgba(255,255,255,0.94); border: 1px solid #d7e4ee; border-radius: 6px; color: #334155; font-size: 10px; line-height: 1.35; box-shadow: 0 2px 8px rgba(13,45,68,0.12); }
     .post-actions { display: flex; gap: 4px; margin-top: 7px; padding-top: 7px; border-top: 1px solid #e7edf4; }
     .post-action-btn, .popup-action-btn { background: #f4f8fb; border: 1px solid #e1ebf3; color: var(--blue); padding: 5px 9px; border-radius: 6px; font-size: 11px; font-weight: 700; }
     .post-action-btn:hover, .popup-action-btn:hover { background: #e8f5f7; color: var(--navy); }
@@ -226,14 +226,11 @@
       .header-top { min-height: 58px; padding: 10px 12px; }
       .brand-mark { width: 40px; height: 40px; }
       .header-title h1 { font-size: 18px; }
-      .header-notice { width: 34px; min-width: 34px; max-width: 34px; height: 34px; display: grid; place-items: center; padding: 0; border-radius: 999px; font-size: 11px; line-height: 1; position: relative; }
-      .header-notice-full { display: none; }
-      .header-notice-short { display: inline; }
-      .header-notice:focus::after, .header-notice:hover::after { content: attr(data-full); position: absolute; top: calc(100% + 8px); right: -48px; z-index: 2100; width: min(260px, calc(100vw - 24px)); padding: 8px 10px; background: #fff; border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); color: #334155; font-size: 11px; line-height: 1.5; text-align: left; }
       .menu-button { width: 40px; height: 40px; font-size: 22px; }
       .app-menu { top: 54px; right: 10px; }
       .main { height: calc(100vh - 59px); height: calc(100dvh - 59px); }
       .timeline-toggle { right: 12px; bottom: calc(28px + env(safe-area-inset-bottom)); padding: 12px 18px; }
+      .map-notice { max-width: 210px; margin-bottom: 18px; font-size: 9px; }
       .leaflet-popup-content-wrapper { max-height: calc(100dvh - 142px); overflow-y: auto; }
       .leaflet-popup-content { width: min(82vw, 300px) !important; }
       .popup-photo { height: 150px; }
@@ -258,7 +255,6 @@
           <p>日本海洋研究所</p>
         </div>
       </div>
-      <div class="header-notice" tabindex="0" data-full="海図は参考表示です。航海判断は公式情報で確認。"><span class="header-notice-full">海図は参考表示です。航海判断は公式情報で確認。</span><span class="header-notice-short">注</span></div>
       <button class="menu-button" type="button" onclick="toggleAppMenu()" aria-label="メニュー">☰</button>
       <div class="app-menu" id="appMenu">
         <button class="menu-item" type="button" onclick="switchView('map')"><span>マップ</span></button>
@@ -266,6 +262,7 @@
         <button class="menu-item" type="button" onclick="switchView('post')"><span>投稿する</span></button>
         <button class="menu-item" type="button" onclick="openPostList()"><span>投稿一覧</span><span class="menu-count" id="postMenuCount">0件</span></button>
         <button class="menu-item" type="button" onclick="openPortList()"><span>港情報</span><span class="menu-count" id="portMenuCount">0件</span></button>
+        <button class="menu-item" type="button" onclick="openBoatList()"><span>艇情報</span><span class="menu-count" id="boatMenuCount">0件</span></button>
       </div>
     </div>
   </header>
@@ -281,6 +278,10 @@
       <div class="timeline-panel" id="portListPanel">
         <div class="timeline-header"><div class="timeline-title">港情報一覧</div><button class="timeline-close" onclick="togglePortList()">×</button></div>
         <div class="timeline-list" id="portList"></div>
+      </div>
+      <div class="timeline-panel" id="boatListPanel">
+        <div class="timeline-header"><div class="timeline-title">艇情報</div><button class="timeline-close" onclick="toggleBoatList()">×</button></div>
+        <div class="timeline-list" id="boatList"></div>
       </div>
     </div>
 
@@ -1040,6 +1041,15 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
         visible: true
       }
     ];
+    const BOATS = [
+      { id: 'boat_okkoshi', portId: 'port_ginowan_marina', name: 'オッコシ', icon: '⛵', model: 'Bertram 33SF', length: '32ft', launched: '1991年進水', photoUrl: 'assets/boat_okkoshi.jpg', visible: true },
+      { id: 'boat_transide2', portId: 'port_ginowan_marina', name: 'トランサイドⅡ', icon: '⛵', model: 'Beneteau First 310', length: '28ft', launched: '1992年進水', photoUrl: 'assets/boat_transide2.jpg', visible: true },
+      { id: 'boat_transide6', portId: 'port_niihama_marina', name: 'トランサイドⅥ', icon: '⛵', model: 'Nauticat 42', length: '36ft', launched: '1995年進水', photoUrl: 'assets/boat_transide6.jpg', visible: true },
+      { id: 'boat_transide', portId: 'port_otaru_marina', name: 'トランサイド', icon: '⛵', model: 'Westerly Oceanranger 38', length: '33ft', launched: '1991年進水', photoUrl: 'assets/boat_transide.jpg', visible: true },
+      { id: 'boat_transide3', portId: 'port_odo_yacht_harbor', name: 'トランサイドⅢ', icon: '⛵', model: 'Jeanneau Sun Odyssey 36F', length: '34ft', launched: '1996年進水', photoUrl: 'assets/boat_transide3.jpg', visible: true },
+      { id: 'boat_transide4', portId: 'port_ito_sunrise_marina', name: 'トランサイドⅣ', icon: '⛵', model: 'リョーエー工業 BW-30', length: '27ft', launched: '1978年進水', photoUrl: 'assets/boat_transide4.jpg', visible: true },
+      { id: 'boat_transide5', portId: 'port_shinminato_marina', name: 'トランサイドⅤ', icon: '⛵', model: 'Jeanneau Voyage 11.20', length: '32ft', launched: '1991年進水', photoUrl: 'assets/boat_transide5.jpg', visible: true }
+    ];
     let miniMap = null, miniMapMarker = null, selectedAuthor = '', posts = [], portPoints = DEFAULT_PORT_POINTS.map(p => ({ ...p })), commentCounts = {}, commentCache = {}, markers = {}, portMarkers = {}, voyageMarkers = {}, postClusterLayer = null, map, editingPost = null, editingAuthor = '', editingType = 'post';
 
     function toggleAppMenu() {
@@ -1052,6 +1062,7 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       closeAppMenu();
       document.getElementById('timelinePanel')?.classList.remove('open');
       document.getElementById('portListPanel')?.classList.remove('open');
+      document.getElementById('boatListPanel')?.classList.remove('open');
       document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
       document.getElementById(view + 'View').classList.add('active');
       if (view === 'map') { setTimeout(() => map?.invalidateSize(), 100); loadPorts(); loadPosts(); }
@@ -1061,6 +1072,7 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       switchView('map');
       setTimeout(() => {
         document.getElementById('portListPanel')?.classList.remove('open');
+        document.getElementById('boatListPanel')?.classList.remove('open');
         document.getElementById('timelinePanel')?.classList.add('open');
         map?.invalidateSize();
       }, 140);
@@ -1070,6 +1082,7 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       setTimeout(() => {
         renderPortList();
         document.getElementById('timelinePanel')?.classList.remove('open');
+        document.getElementById('boatListPanel')?.classList.remove('open');
         document.getElementById('portListPanel')?.classList.add('open');
         map?.invalidateSize();
       }, 140);
@@ -1077,13 +1090,28 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
     function togglePortList() {
       document.getElementById('portListPanel')?.classList.toggle('open');
     }
+    function openBoatList() {
+      switchView('map');
+      setTimeout(() => {
+        renderBoatList();
+        document.getElementById('timelinePanel')?.classList.remove('open');
+        document.getElementById('portListPanel')?.classList.remove('open');
+        document.getElementById('boatListPanel')?.classList.add('open');
+        map?.invalidateSize();
+      }, 140);
+    }
+    function toggleBoatList() {
+      document.getElementById('boatListPanel')?.classList.toggle('open');
+    }
     function updateMenuCounts() {
       const postCount = document.getElementById('postMenuCount');
       const portCount = document.getElementById('portMenuCount');
       const voyageCount = document.getElementById('voyageMenuCount');
+      const boatCount = document.getElementById('boatMenuCount');
       if (postCount) postCount.textContent = `${posts.length}件`;
       if (portCount) portCount.textContent = `${loadPortPoints().length}件`;
       if (voyageCount) voyageCount.textContent = `${VOYAGE_POINTS.filter(p => p.visible !== false && VOYAGES.find(v => v.id === p.voyageId && v.visible !== false)).length}件`;
+      if (boatCount) boatCount.textContent = `${BOATS.filter(b => b.visible !== false).length}件`;
     }
 
     function loadAuthors() {
@@ -1497,6 +1525,14 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       map.getPane('portPane').style.zIndex = 650;
       map.createPane('voyagePane');
       map.getPane('voyagePane').style.zIndex = 670;
+      const notice = L.control({ position: 'bottomright' });
+      notice.onAdd = () => {
+        const div = L.DomUtil.create('div', 'map-notice');
+        div.textContent = '海図は参考表示です。航海判断は公式情報で確認。';
+        L.DomEvent.disableClickPropagation(div);
+        return div;
+      };
+      notice.addTo(map);
       postClusterLayer = L.markerClusterGroup({
         showCoverageOnHover: false,
         spiderfyOnMaxZoom: true,
@@ -1547,6 +1583,7 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       renderPortMarkers();
       renderVoyageMarkers();
       renderPortList();
+      renderBoatList();
       updateMenuCounts();
       if (!posts.length) { document.getElementById('timelineList').innerHTML = '<div class="empty-state"><div class="empty-state-emoji">0</div>まだ投稿がありません<br><small>「投稿」タブから投稿してみましょう</small></div>'; return; }
       document.getElementById('timelineList').innerHTML = posts.map(p => `<div class="post-item" data-id="${p.id}"><div class="post-item-content" onclick="focusPost('${p.id}')"><img class="post-thumb" src="${p.photoUrl}" onerror="this.style.background='#e2e8f0'"><div class="post-content"><div class="post-meta"><span class="post-author">${escapeHtml(p.author)}</span><span>${formatDate(p.timestamp)}</span></div><div class="post-title">${escapeHtml(p.title)}</div><div class="post-comment">${escapeHtml(p.comment || '')}</div><div class="post-comment-count" data-comment-count-for="${escapeHtml(p.id)}">${formatCommentCount(p.id)}</div></div></div><div class="post-actions"><button class="post-action-btn" onclick="openEditModal('${p.id}')">編集</button><button class="post-action-btn" onclick="focusPost('${p.id}')">地図で見る</button></div></div>`).join('');
@@ -1587,6 +1624,26 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       }
       map?.flyTo([port.lat, port.lng], 12, { duration: 0.8 });
       setTimeout(() => portMarkers[id]?.openPopup(), 520);
+    }
+    function renderBoatList() {
+      const list = document.getElementById('boatList');
+      if (!list) return;
+      const ports = loadPortPoints();
+      const boats = BOATS.filter(b => b.visible !== false);
+      if (!boats.length) {
+        list.innerHTML = '<div class="empty-state"><div class="empty-state-emoji">0</div>艇情報がありません</div>';
+        return;
+      }
+      list.innerHTML = boats.map(b => {
+        const port = ports.find(p => p.id === b.portId);
+        return `<div class="post-item" data-boat-id="${b.id}"><div class="post-item-content"><img class="boat-list-photo" src="${escapeQuote(b.photoUrl)}" alt="${escapeHtml(b.name)}" onclick="openPhotoViewer('${escapeQuote(b.photoUrl)}')" onerror="this.style.display='none'"><div class="post-content"><div class="post-meta"><span class="post-author">${escapeHtml(port?.title || '母港未設定')}</span><span class="port-list-badge">${escapeHtml(b.length)}</span></div><div class="post-title">${escapeHtml(b.icon || '⛵')} ${escapeHtml(b.name)}</div><div class="post-comment">${escapeHtml(b.model)} / ${escapeHtml(b.launched)}</div></div></div><div class="post-actions">${port ? `<button class="post-action-btn" onclick="focusBoatPort('${b.id}')">母港を見る</button>` : ''}<button class="post-action-btn" onclick="openPhotoViewer('${escapeQuote(b.photoUrl)}')">写真を見る</button></div></div>`;
+      }).join('');
+    }
+    function focusBoatPort(id) {
+      const boat = BOATS.find(b => b.id === id);
+      if (!boat) return;
+      focusPort(boat.portId);
+      document.getElementById('boatListPanel')?.classList.remove('open');
     }
     function buildVoyagePopup(point) {
       const voyage = VOYAGES.find(v => v.id === point.voyageId);
