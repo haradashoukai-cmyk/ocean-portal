@@ -63,6 +63,8 @@
     .post-item:hover, .post-item.active { background: #eef8fb; border-color: #cce8ee; }
     .post-item-content { display: flex; gap: 10px; cursor: pointer; }
     .post-thumb { width: 58px; height: 58px; border-radius: 6px; object-fit: cover; flex-shrink: 0; background: #e2e8f0; }
+    .post-thumb.video, .marker-video-wrap { display: grid; place-items: center; background: linear-gradient(135deg, var(--blue), var(--navy)); color: #fff; font-weight: 900; }
+    .post-thumb.video { font-size: 18px; }
     .post-content { flex: 1; min-width: 0; }
     .post-meta { display: flex; gap: 6px; margin-bottom: 2px; color: #7f8ea3; font-size: 10px; }
     .post-author { color: var(--blue); font-weight: 700; }
@@ -80,6 +82,7 @@
     .empty-state { padding: 40px 20px; text-align: center; color: var(--muted); font-size: 13px; line-height: 1.6; }
     .empty-state-emoji { font-size: 34px; margin-bottom: 8px; }
     .marker-photo-wrap { box-sizing: border-box; width: 42px; height: 42px; display: block; overflow: hidden; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 3px 12px rgba(13, 45, 68, 0.35); background-color: #e2e8f0; background-position: center; background-size: cover; background-repeat: no-repeat; }
+    .marker-video-wrap { box-sizing: border-box; width: 42px; height: 42px; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 3px 12px rgba(13, 45, 68, 0.35); font-size: 15px; }
     .post-cluster { width: 42px; height: 42px; display: grid; place-items: center; background: var(--blue); color: #fff; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 4px 14px rgba(13, 45, 68, 0.32); font-size: 13px; font-weight: 700; }
     .post-cluster.medium { background: var(--navy); }
     .post-cluster.large { background: #0b1f2f; }
@@ -90,6 +93,7 @@
     .leaflet-popup-content-wrapper { border-radius: 8px; padding: 0; overflow: hidden; border: 1px solid var(--line); box-shadow: var(--shadow); }
     .leaflet-popup-content { margin: 0; width: 280px !important; font-family: 'Noto Sans JP', 'Hiragino Sans', sans-serif; }
     .popup-photo { width: 100%; height: 140px; object-fit: cover; display: block; }
+    .popup-video { width: 100%; max-height: 220px; display: block; background: #07121e; }
     .popup-photo.zoomable { cursor: zoom-in; }
     .popup-photo.port { height: 92px; display: grid; place-items: center; background: linear-gradient(135deg, #e7f8f0, #e8f5f7); color: var(--navy); font-family: 'Zen Maru Gothic', sans-serif; font-size: 20px; font-weight: 700; }
     .popup-body { padding: 13px 14px; background: #fff; }
@@ -174,6 +178,8 @@
     .photo-preview-wrap { position: relative; display: none; overflow: hidden; border: 1px solid var(--cyan); border-radius: 8px; }
     .photo-preview-wrap.visible { display: block; }
     .photo-preview { width: 100%; max-height: 280px; object-fit: cover; display: block; }
+    .video-preview { width: 100%; max-height: 280px; display: none; background: #07121e; }
+    .media-help { margin-top: 8px; color: var(--muted); font-size: 11px; line-height: 1.5; }
     .photo-replace-btn, .photo-info { position: absolute; background: rgba(20,50,74,0.86); color: #fff; border-radius: 999px; backdrop-filter: blur(10px); font-size: 11px; }
     .photo-replace-btn { top: 10px; right: 10px; padding: 7px 12px; border: 0; }
     .photo-info { left: 10px; bottom: 10px; padding: 5px 10px; }
@@ -333,15 +339,18 @@
           </div>
 
           <div class="card">
-            <div class="card-title"><span class="card-step">2</span>写真と位置</div>
+            <div class="card-title"><span class="card-step">2</span>写真・動画と位置</div>
             <div class="photo-buttons" id="photoButtons">
-              <button type="button" class="photo-btn" onclick="document.getElementById('cameraInput').click();"><span class="photo-btn-icon">CAM</span><span class="photo-btn-text">カメラで撮影</span><span class="photo-btn-hint">位置情報が残ります</span></button>
-              <button type="button" class="photo-btn" onclick="document.getElementById('photoInput').click();"><span class="photo-btn-icon">IMG</span><span class="photo-btn-text">写真を選ぶ</span><span class="photo-btn-hint">既存の写真から</span></button>
+              <button type="button" class="photo-btn" onclick="document.getElementById('cameraInput').click();"><span class="photo-btn-icon">CAM</span><span class="photo-btn-text">写真を撮影</span><span class="photo-btn-hint">位置情報が残ります</span></button>
+              <button type="button" class="photo-btn" onclick="document.getElementById('videoCameraInput').click();"><span class="photo-btn-icon">VID</span><span class="photo-btn-text">動画を撮影</span><span class="photo-btn-hint">30秒以内推奨</span></button>
+              <button type="button" class="photo-btn" onclick="document.getElementById('photoInput').click();"><span class="photo-btn-icon">FILE</span><span class="photo-btn-text">写真・動画を選ぶ</span><span class="photo-btn-hint">端末内から</span></button>
             </div>
-            <div class="photo-preview-wrap" id="photoPreviewWrap"><img id="photoPreview" class="photo-preview" alt="選択した写真"><button type="button" class="photo-replace-btn" onclick="replacePhoto()">変更</button><div id="photoInfo" class="photo-info"></div></div>
+            <div class="media-help">動画は30秒以内・100MB未満の mp4 / mov に対応しています。</div>
+            <div class="photo-preview-wrap" id="photoPreviewWrap"><img id="photoPreview" class="photo-preview" alt="選択した写真"><video id="videoPreview" class="video-preview" controls playsinline></video><button type="button" class="photo-replace-btn" onclick="replacePhoto()">変更</button><div id="photoInfo" class="photo-info"></div></div>
             <input type="file" id="cameraInput" class="upload-input" accept="image/*" capture="environment">
-            <input type="file" id="photoInput" class="upload-input" accept="image/*">
-            <div id="gpsInfo" class="gps-info empty"><span>PIN</span><div><div class="gps-info-title">写真の位置情報</div><div class="gps-info-detail">写真を選ぶと自動で読み取ります</div></div></div>
+            <input type="file" id="videoCameraInput" class="upload-input" accept="video/mp4,video/quicktime,.mp4,.mov" capture="environment">
+            <input type="file" id="photoInput" class="upload-input" accept="image/*,video/mp4,video/quicktime,.mp4,.mov">
+            <div id="gpsInfo" class="gps-info empty"><span>PIN</span><div><div class="gps-info-title">写真・動画の位置情報</div><div class="gps-info-detail">写真は位置情報を自動で読み取ります。動画は位置を指定してください。</div></div></div>
             <div class="location-tools" id="locationTools">
               <div class="location-tool-row"><button type="button" class="loc-btn" onclick="useCurrentLocation(event)">現在地を使う</button></div>
               <div class="search-row"><input type="text" class="search-input" id="searchInput" placeholder="場所名・住所で検索（例: 釜山港）"><button type="button" class="search-btn" onclick="searchLocation()">検索</button></div>
@@ -1001,11 +1010,11 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
         color: '#0f6f94'
       }
     ];
-    let currentLat = null, currentLng = null, currentPhotoBase64 = null, currentPhotoName = '', currentPhotoTimestamp = '';
+    let currentLat = null, currentLng = null, currentPhotoBase64 = null, currentPhotoName = '', currentPhotoTimestamp = '', currentMediaType = 'image', currentMediaMimeType = 'image/jpeg';
     const VOYAGES = [
       {
         id: 'V2026-01',
-        name: '新居浜→釜山2026年5月',
+        name: '新居浜→統栄2026年5月',
         ship: 'トランサイドⅥ (Nauticat 42)',
         startDate: '2026/05/09',
         endDate: '2026/05/24',
@@ -1254,18 +1263,33 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
         visible: true
       },
       {
+        id: 'voyage_v2026_01_may18_depart_asou_bay',
+        voyageId: 'V2026-01',
+        seq: 6.75,
+        date: '2026/05/18',
+        title: '5/18（月）アソウ湾から出港',
+        kind: '出港',
+        status: '記録',
+        showMarker: false,
+        checkIn: '5/18（月）04:44',
+        checkOut: '',
+        content: '04:44、アソウ湾から出港。韓国方面へ向けて航行開始。',
+        scheduleDetail: '【ヨット組（4名）】\n04:44：アソウ湾から出港。\n韓国方面へ向けて航行開始。',
+        visible: true
+      },
+      {
         id: 'voyage_v2026_01_may18_busan_arrival',
         voyageId: 'V2026-01',
         seq: 6.8,
         date: '2026/05/18',
-        title: '5/18（月）釜山東港到着・レンタカー返却予定',
+        title: '5/18（月）釜山東港→統栄・レンタカー返却予定',
         kind: '予定',
         status: '要確認',
         showMarker: false,
         checkIn: '5/18（月）00:00',
         checkOut: '5/18（月）夜',
-        content: '早朝にアソウ湾から韓国へ向けて出航し、昼頃に釜山東港（トンハン / 現地発音：トンコン）周辺へ到着予定。対馬では熊谷さんが待機。厳原レンタカーは12:00返却予定。東横INN釜山中央駅のキャンセル無料期限は本日00:00（現地時間）。',
-        scheduleDetail: '【ヨット組（4名）】\n早朝：アソウ湾から韓国へ向けて出航。\n昼頃：釜山東港（トンハン / 現地発音：トンコン）周辺へ到着予定。\n目安位置：35.1042, 129.0792\n釜山到着後の予定：パクさん対応。\n5/18夜の宿泊：パクさん手配。\n\n【レンタカー】\n12:00：返却予定（厳原）。\n熊谷さんが継続使用する場合は受付時に変更可（途中キャンセルも可）。\n継続使用の可否は現地で決定。\n\n【釜山ホテル関連】\n本日 00:00（現地時間）：東横INN釜山中央駅 キャンセル無料期限。\n以降は全泊分の宿泊料金100%発生。',
+        content: '釜山東港（トンハン / 現地発音：トンコン）周辺を経て、統栄へ向かう航海予定。対馬では熊谷さんが待機。厳原レンタカーは12:00返却予定。東横INN釜山中央駅のキャンセル無料期限は本日00:00（現地時間）。',
+        scheduleDetail: '【ヨット組（4名）】\n釜山東港（トンハン / 現地発音：トンコン）周辺を経て、統栄へ向かう予定。\n釜山東港の目安位置：35.1042, 129.0792\n現地対応：パクさん対応。\n5/18夜の宿泊：パクさん手配。\n\n【レンタカー】\n12:00：返却予定（厳原）。\n熊谷さんが継続使用する場合は受付時に変更可（途中キャンセルも可）。\n継続使用の可否は現地で決定。\n\n【釜山ホテル関連】\n本日 00:00（現地時間）：東横INN釜山中央駅 キャンセル無料期限。\n以降は全泊分の宿泊料金100%発生。',
         visible: true
       },
       {
@@ -1423,7 +1447,9 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
 
     const photoInput = document.getElementById('photoInput');
     const cameraInput = document.getElementById('cameraInput');
+    const videoCameraInput = document.getElementById('videoCameraInput');
     const photoPreview = document.getElementById('photoPreview');
+    const videoPreview = document.getElementById('videoPreview');
     const photoPreviewWrap = document.getElementById('photoPreviewWrap');
     const photoButtons = document.getElementById('photoButtons');
     const photoInfoEl = document.getElementById('photoInfo');
@@ -1433,7 +1459,9 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
     const locationConfirm = document.getElementById('locationConfirm');
     const mapInstruction = document.getElementById('mapInstruction');
 
-    function replacePhoto() { confirm('カメラで撮り直しますか？\nキャンセルすると写真から選び直します。') ? cameraInput.click() : photoInput.click(); }
+    const VIDEO_MAX_BYTES = 100 * 1024 * 1024;
+    const VIDEO_MAX_SECONDS = 30;
+    function replacePhoto() { confirm('撮影し直しますか？\nキャンセルすると端末内の写真・動画から選び直します。') ? cameraInput.click() : photoInput.click(); }
     function formatJstTimestamp(date = new Date()) {
       const parts = new Intl.DateTimeFormat('ja-JP', {
         timeZone: 'Asia/Tokyo',
@@ -1469,10 +1497,67 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
         reader.onerror = reject; reader.readAsDataURL(file);
       });
     }
+    function detectMediaType(file) {
+      const name = (file.name || '').toLowerCase();
+      if ((file.type || '').startsWith('image/')) return 'image';
+      if ((file.type || '').startsWith('video/') || name.endsWith('.mp4') || name.endsWith('.mov')) return 'video';
+      return 'unknown';
+    }
+    function isSupportedVideo(file) {
+      const name = (file.name || '').toLowerCase();
+      return ['video/mp4', 'video/quicktime'].includes(file.type) || name.endsWith('.mp4') || name.endsWith('.mov');
+    }
+    function readFileAsDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = e => resolve(e.target.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+    function getVideoDuration(file) {
+      return new Promise((resolve, reject) => {
+        const video = document.createElement('video');
+        const url = URL.createObjectURL(file);
+        video.preload = 'metadata';
+        video.onloadedmetadata = () => {
+          URL.revokeObjectURL(url);
+          resolve(video.duration);
+        };
+        video.onerror = () => {
+          URL.revokeObjectURL(url);
+          reject(new Error('動画の長さを確認できませんでした'));
+        };
+        video.src = url;
+      });
+    }
+    function clearSelectedMedia() {
+      currentPhotoBase64 = null;
+      currentPhotoName = '';
+      currentPhotoTimestamp = '';
+      currentMediaType = 'image';
+      currentMediaMimeType = 'image/jpeg';
+      photoPreview.removeAttribute('src');
+      photoPreview.style.display = 'block';
+      videoPreview.pause();
+      videoPreview.removeAttribute('src');
+      videoPreview.style.display = 'none';
+      photoPreviewWrap.classList.remove('visible');
+      photoInfoEl.textContent = '';
+    }
     async function handlePhotoFile(file) {
       if (!file) return;
+      clearSelectedMedia();
+      const mediaType = detectMediaType(file);
+      if (mediaType === 'unknown') { showError('対応している形式は画像、または mp4 / mov 動画です'); return; }
+      if (mediaType === 'video') {
+        await handleVideoFile(file);
+        return;
+      }
       currentPhotoName = file.name;
       currentPhotoTimestamp = '';
+      currentMediaType = 'image';
+      currentMediaMimeType = 'image/jpeg';
       const originalSize = Math.round(file.size / 1024);
       try {
         const exif = await exifr.parse(file, { gps: true });
@@ -1495,13 +1580,47 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
         const compressed = await compressImage(file);
         currentPhotoBase64 = compressed.base64;
         photoPreview.src = compressed.dataUrl;
+        photoPreview.style.display = 'block';
+        videoPreview.pause();
+        videoPreview.removeAttribute('src');
+        videoPreview.style.display = 'none';
         photoPreviewWrap.classList.add('visible');
         photoButtons.style.display = 'none';
         photoInfoEl.textContent = `${originalSize}KB → ${compressed.size}KB`;
       } catch (err) { console.error('圧縮エラー:', err); showError('写真の処理に失敗しました'); }
     }
+    async function handleVideoFile(file) {
+      if (!isSupportedVideo(file)) { showError('動画は mp4 / mov のみ対応しています'); return; }
+      if (file.size > VIDEO_MAX_BYTES) { showError('動画は100MB未満にしてください'); return; }
+      let duration = 0;
+      try {
+        duration = await getVideoDuration(file);
+      } catch (err) {
+        showError('動画の長さを確認できませんでした。別の動画を選んでください');
+        return;
+      }
+      if (duration > VIDEO_MAX_SECONDS + 0.5) { showError('動画は30秒以内にしてください'); return; }
+      const dataUrl = await readFileAsDataUrl(file);
+      currentPhotoBase64 = dataUrl.split(',')[1];
+      currentPhotoName = file.name || 'video.mp4';
+      currentPhotoTimestamp = formatJstTimestamp();
+      currentMediaType = 'video';
+      currentMediaMimeType = file.type || ((file.name || '').toLowerCase().endsWith('.mov') ? 'video/quicktime' : 'video/mp4');
+      photoPreview.removeAttribute('src');
+      photoPreview.style.display = 'none';
+      videoPreview.src = URL.createObjectURL(file);
+      videoPreview.style.display = 'block';
+      photoPreviewWrap.classList.add('visible');
+      photoButtons.style.display = 'none';
+      photoInfoEl.textContent = `${Math.round(file.size / 1024 / 1024 * 10) / 10}MB / ${Math.round(duration)}秒`;
+      gpsInfo.className = 'gps-info warning';
+      gpsInfo.innerHTML = '<span>INFO</span><div><div class="gps-info-title">動画の位置を指定してください</div><div class="gps-info-detail">動画は位置情報を自動取得しないため、現在地または地図で指定してください</div></div>';
+      locationTools.classList.add('visible'); mapInstruction.style.display = 'flex'; showMiniMap(35.0951, 129.0756, false);
+      currentLat = null; currentLng = null; updateLocationConfirm();
+    }
     photoInput.addEventListener('change', e => handlePhotoFile(e.target.files[0]));
     cameraInput.addEventListener('change', e => handlePhotoFile(e.target.files[0]));
+    videoCameraInput.addEventListener('change', e => handlePhotoFile(e.target.files[0]));
 
     function showMiniMap(lat, lng, hasMarker = true) {
       miniMapEl.classList.add('visible');
@@ -1649,13 +1768,13 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       const title = document.getElementById('titleInput').value.trim();
       const comment = document.getElementById('commentInput').value.trim();
       if (!selectedAuthor) { showError('お名前を選んでください'); return; }
-      if (!currentPhotoBase64) { showError('写真を選んでください'); return; }
+      if (!currentPhotoBase64) { showError('写真または動画を選んでください'); return; }
       if (!currentLat || !currentLng) { showError('位置を指定してください'); return; }
       if (!title) { showError('タイトルを入力してください'); return; }
       const btn = document.getElementById('submitBtn');
       btn.disabled = true; btn.innerHTML = '<span class="loading-spinner"></span>送信中...';
       try {
-        await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'create', author: selectedAuthor, title, comment, lat: currentLat, lng: currentLng, photoBase64: currentPhotoBase64, photoName: currentPhotoName, timestamp: currentPhotoTimestamp || formatJstTimestamp() }) });
+        await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'create', author: selectedAuthor, title, comment, lat: currentLat, lng: currentLng, mediaType: currentMediaType, mediaBase64: currentPhotoBase64, mediaName: currentPhotoName, mimeType: currentMediaMimeType, photoBase64: currentMediaType === 'image' ? currentPhotoBase64 : undefined, photoName: currentPhotoName, timestamp: currentPhotoTimestamp || formatJstTimestamp() }) });
         document.getElementById('successOverlay').classList.add('visible');
         if (!await verifyPostReflected(selectedAuthor, title)) showError('送信は完了しましたが、一覧への反映確認ができませんでした。通信状況をご確認のうえ再読み込みしてください。');
       } catch (err) { console.error('送信エラー:', err); showError('投稿に失敗しました: ' + err.message); btn.disabled = false; btn.innerHTML = '投稿する'; }
@@ -1663,9 +1782,10 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
     function closeSuccessAndReset() {
       document.getElementById('successOverlay').classList.remove('visible');
       document.getElementById('titleInput').value = ''; document.getElementById('commentInput').value = '';
-      photoPreviewWrap.classList.remove('visible'); photoButtons.style.display = 'grid'; photoInput.value = ''; cameraInput.value = '';
-      currentPhotoBase64 = null; currentPhotoName = ''; currentPhotoTimestamp = ''; currentLat = null; currentLng = null;
-      gpsInfo.className = 'gps-info empty'; gpsInfo.innerHTML = '<span>PIN</span><div><div class="gps-info-title">写真の位置情報</div><div class="gps-info-detail">写真を選ぶと自動で読み取ります</div></div>';
+      photoPreviewWrap.classList.remove('visible'); photoButtons.style.display = 'grid'; photoInput.value = ''; cameraInput.value = ''; videoCameraInput.value = '';
+      photoPreview.style.display = 'block'; photoPreview.removeAttribute('src'); videoPreview.pause(); videoPreview.removeAttribute('src'); videoPreview.style.display = 'none';
+      currentPhotoBase64 = null; currentPhotoName = ''; currentPhotoTimestamp = ''; currentMediaType = 'image'; currentMediaMimeType = 'image/jpeg'; currentLat = null; currentLng = null;
+      gpsInfo.className = 'gps-info empty'; gpsInfo.innerHTML = '<span>PIN</span><div><div class="gps-info-title">写真・動画の位置情報</div><div class="gps-info-detail">写真は位置情報を自動で読み取ります。動画は位置を指定してください。</div></div>';
       locationTools.classList.remove('visible'); locationConfirm.classList.remove('visible'); mapInstruction.style.display = 'none'; miniMapEl.classList.remove('visible');
       if (miniMap) { miniMap.remove(); miniMap = null; miniMapMarker = null; }
       const btn = document.getElementById('submitBtn'); btn.disabled = false; btn.innerHTML = '投稿する';
@@ -1683,6 +1803,11 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
 
     function loadPortPoints() {
       return portPoints.map(p => ({ ...p }));
+    }
+    function normalizePost(post) {
+      const mediaType = post.mediaType || (post.mediaUrl && !post.photoUrl ? 'video' : 'image');
+      const mediaUrl = post.mediaUrl || post.photoUrl || '';
+      return { ...post, mediaType, mediaUrl, photoUrl: post.photoUrl || mediaUrl };
     }
     async function loadPorts() {
       try {
@@ -1726,10 +1851,22 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
         return escapeHtml(line);
       }).join('\n');
     }
+    function buildListMedia(post) {
+      if (post.mediaType === 'video') return '<div class="post-thumb video">▶</div>';
+      return `<img class="post-thumb" src="${escapeQuote(post.mediaUrl || post.photoUrl)}" onerror="this.style.background='#e2e8f0'">`;
+    }
+    function buildMarkerMedia(post) {
+      if (post.mediaType === 'video') return '<span class="marker-video-wrap">▶</span>';
+      return `<span class="marker-photo-wrap" style="background-image:url('${escapeQuote(post.mediaUrl || post.photoUrl)}')"></span>`;
+    }
+    function buildPopupMedia(item) {
+      if (item.mediaType === 'video') return `<video class="popup-video" src="${escapeQuote(item.mediaUrl || item.photoUrl)}" controls playsinline></video>`;
+      return `<img class="popup-photo zoomable" src="${item.mediaUrl || item.photoUrl}" onclick="openPhotoViewer('${escapeQuote(item.mediaUrl || item.photoUrl)}')">`;
+    }
     function buildPopupContent(item, type = 'post') {
       const media = type === 'port'
         ? ''
-        : `<img class="popup-photo zoomable" src="${item.photoUrl}" onclick="openPhotoViewer('${escapeQuote(item.photoUrl)}')">`;
+        : buildPopupMedia(item);
       const actions = type === 'port' ? '' : `<div class="popup-actions"><button class="popup-action-btn" onclick="openEditModal('${item.id}', '${type}')">編集</button></div>`;
       return `${media}<div class="popup-body"><div class="popup-meta"><span class="popup-author">${escapeHtml(item.author)}</span> · ${formatDate(item.timestamp)}</div><div class="popup-title">${escapeHtml(item.title)}</div><div class="popup-comment">${formatPopupComment(item.comment || '')}</div>${actions}${buildCommentsPanel(item, type)}</div>`;
     }
@@ -1737,7 +1874,7 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       const item = type === 'port' ? loadPortPoints().find(p => p.id === itemId) : posts.find(p => p.id === itemId);
       if (!item) return;
       editingType = type; editingPost = item; editingAuthor = item.author;
-      document.getElementById('editPhoto').src = type === 'port' ? 'assets/japan-ocean-research-logo.png' : item.photoUrl;
+      document.getElementById('editPhoto').src = type === 'port' || item.mediaType === 'video' ? 'assets/japan-ocean-research-logo.png' : (item.mediaUrl || item.photoUrl);
       document.getElementById('editTitleInput').value = item.title || '';
       document.getElementById('editCommentInput').value = item.comment || '';
       renderEditAuthors(); document.getElementById('editModal').classList.add('visible');
@@ -1835,7 +1972,7 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       try {
         const response = await fetch(GAS_URL + '?action=get');
         const data = await response.json();
-        posts = (data.posts || []).filter(p => !String(p.id || '').startsWith('test_') && !(p.photoUrl || '').includes('example.com'));
+        posts = (data.posts || []).map(normalizePost).filter(p => !String(p.id || '').startsWith('test_') && !(p.mediaUrl || p.photoUrl || '').includes('example.com'));
         renderPosts();
         loadCommentCounts();
       } catch (err) {
@@ -1856,9 +1993,9 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       renderBoatList();
       updateMenuCounts();
       if (!posts.length) { document.getElementById('timelineList').innerHTML = '<div class="empty-state"><div class="empty-state-emoji">0</div>まだ投稿がありません<br><small>「投稿」タブから投稿してみましょう</small></div>'; return; }
-      document.getElementById('timelineList').innerHTML = posts.map(p => `<div class="post-item" data-id="${p.id}"><div class="post-item-content" onclick="focusPost('${p.id}')"><img class="post-thumb" src="${p.photoUrl}" onerror="this.style.background='#e2e8f0'"><div class="post-content"><div class="post-meta"><span class="post-author">${escapeHtml(p.author)}</span><span>${formatDate(p.timestamp)}</span></div><div class="post-title">${escapeHtml(p.title)}</div><div class="post-comment">${escapeHtml(p.comment || '')}</div><div class="post-comment-count" data-comment-count-for="${escapeHtml(p.id)}">${formatCommentCount(p.id)}</div></div></div><div class="post-actions"><button class="post-action-btn" onclick="openEditModal('${p.id}')">編集</button><button class="post-action-btn" onclick="focusPost('${p.id}')">地図で見る</button></div></div>`).join('');
+      document.getElementById('timelineList').innerHTML = posts.map(p => `<div class="post-item" data-id="${p.id}"><div class="post-item-content" onclick="focusPost('${p.id}')">${buildListMedia(p)}<div class="post-content"><div class="post-meta"><span class="post-author">${escapeHtml(p.author)}</span><span>${formatDate(p.timestamp)}</span>${p.mediaType === 'video' ? '<span class="port-list-badge">動画</span>' : ''}</div><div class="post-title">${escapeHtml(p.title)}</div><div class="post-comment">${escapeHtml(p.comment || '')}</div><div class="post-comment-count" data-comment-count-for="${escapeHtml(p.id)}">${formatCommentCount(p.id)}</div></div></div><div class="post-actions"><button class="post-action-btn" onclick="openEditModal('${p.id}')">編集</button><button class="post-action-btn" onclick="focusPost('${p.id}')">地図で見る</button></div></div>`).join('');
       posts.forEach(p => {
-        const icon = L.divIcon({ className: '', html: `<span class="marker-photo-wrap" style="background-image:url('${escapeQuote(p.photoUrl)}')"></span>`, iconSize: [42, 42], iconAnchor: [21, 21] });
+        const icon = L.divIcon({ className: '', html: buildMarkerMedia(p), iconSize: [42, 42], iconAnchor: [21, 21] });
         markers[p.id] = L.marker([p.lat, p.lng], { icon }).bindPopup(buildPopupContent(p), { maxWidth: 240 });
         postClusterLayer.addLayer(markers[p.id]);
       });
