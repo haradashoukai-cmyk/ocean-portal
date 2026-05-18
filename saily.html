@@ -1025,6 +1025,7 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       }
     ];
     let currentLat = null, currentLng = null, currentPhotoBase64 = null, currentMediaFile = null, currentPhotoName = '', currentPhotoTimestamp = '', currentMediaType = 'image', currentMediaMimeType = 'image/jpeg';
+    let mobilePopupGuard = null;
     const VOYAGES = [
       {
         id: 'V2026-01',
@@ -2018,6 +2019,11 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       });
       map.on('popupclose', () => {
         document.getElementById('mapView').classList.remove('popup-active');
+        if (mobilePopupGuard && Date.now() < mobilePopupGuard.until) {
+          const marker = markers[mobilePopupGuard.id];
+          setTimeout(() => marker?.openPopup(), 120);
+          mobilePopupGuard = null;
+        }
       });
       renderPortMarkers();
       renderVoyageMarkers();
@@ -2204,21 +2210,25 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       document.querySelectorAll('.post-item').forEach(el => el.classList.remove('active'));
       document.querySelector(`.post-item[data-id="${id}"]`)?.classList.add('active');
       const marker = markers[id];
+      if (!marker) return;
       const openMarker = () => {
         map?.closePopup();
+        mobilePopupGuard = window.matchMedia('(max-width: 768px)').matches
+          ? { id, until: Date.now() + 1800 }
+          : null;
         if (postClusterLayer && marker) {
-          postClusterLayer.zoomToShowLayer(marker, () => setTimeout(() => marker.openPopup(), 220));
+          postClusterLayer.zoomToShowLayer(marker, () => setTimeout(() => marker.openPopup(), 520));
         } else {
           map.flyTo([post.lat, post.lng], 12, { duration: 0.8 });
-          setTimeout(() => marker?.openPopup(), 420);
+          setTimeout(() => marker.openPopup(), 780);
         }
       };
       if (window.matchMedia('(max-width: 768px)').matches) {
         document.getElementById('timelinePanel')?.classList.remove('open');
         setTimeout(() => {
           map?.invalidateSize();
-          setTimeout(openMarker, 120);
-        }, 360);
+          setTimeout(openMarker, 220);
+        }, 620);
         return;
       }
       openMarker();

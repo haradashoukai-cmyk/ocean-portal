@@ -57,23 +57,24 @@ function getCommentsSheet() {
 function createPost(data) {
   const mediaType = data.mediaType === 'video' ? 'video' : 'image';
   const mediaBase64 = data.mediaBase64 || data.photoBase64;
-  if (!mediaBase64) return jsonResponse({ success: false, error: 'メディアデータがありません' });
+  let fileId = '';
+  let photoUrl = '';
+  let mediaUrl = '';
 
-  const folder = DriveApp.getFolderById(PHOTO_FOLDER_ID);
-  const mimeType = mediaType === 'video'
-    ? (data.mimeType || inferVideoMimeType(data.mediaName || data.photoName || 'video.mp4'))
-    : 'image/jpeg';
-  const defaultName = mediaType === 'video' ? 'video.mp4' : 'photo.jpg';
-  const fileName = `${Date.now()}_${data.mediaName || data.photoName || defaultName}`;
-  const blob = Utilities.newBlob(Utilities.base64Decode(mediaBase64), mimeType, fileName);
-  const file = folder.createFile(blob);
-  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-
-  const fileId = file.getId();
-  const photoUrl = mediaType === 'image' ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w800` : '';
-  const mediaUrl = mediaType === 'image'
-    ? photoUrl
-    : `https://drive.google.com/file/d/${fileId}/preview`;
+  if (mediaType === 'video') {
+    mediaUrl = data.mediaUrl || '';
+    if (!mediaUrl) return jsonResponse({ success: false, error: 'video mediaUrl is required' });
+  } else {
+    if (!mediaBase64) return jsonResponse({ success: false, error: 'image mediaBase64 is required' });
+    const folder = DriveApp.getFolderById(PHOTO_FOLDER_ID);
+    const fileName = `${Date.now()}_${data.mediaName || data.photoName || 'photo.jpg'}`;
+    const blob = Utilities.newBlob(Utilities.base64Decode(mediaBase64), 'image/jpeg', fileName);
+    const file = folder.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    fileId = file.getId();
+    photoUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w800`;
+    mediaUrl = photoUrl;
+  }
 
   const sheet = getPostsSheet();
   ensurePostHeaders(sheet);
