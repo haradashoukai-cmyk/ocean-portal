@@ -2054,10 +2054,10 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       renderBoatList();
       updateMenuCounts();
       if (!posts.length) { document.getElementById('timelineList').innerHTML = '<div class="empty-state"><div class="empty-state-emoji">0</div>まだ投稿がありません<br><small>「投稿」タブから投稿してみましょう</small></div>'; return; }
-      document.getElementById('timelineList').innerHTML = posts.map(p => `<div class="post-item" data-id="${p.id}"><div class="post-item-content" onclick="focusPost('${p.id}')">${buildListMedia(p)}<div class="post-content"><div class="post-meta"><span class="post-author">${escapeHtml(p.author)}</span><span>${formatDate(p.timestamp)}</span>${p.mediaType === 'video' ? '<span class="port-list-badge">動画</span>' : ''}</div><div class="post-title">${escapeHtml(p.title)}</div><div class="post-comment">${escapeHtml(p.comment || '')}</div><div class="post-comment-count" data-comment-count-for="${escapeHtml(p.id)}">${formatCommentCount(p.id)}</div></div></div><div class="post-actions"><button class="post-action-btn" onclick="openEditModal('${p.id}')">編集</button><button class="post-action-btn" onclick="focusPost('${p.id}')">地図で見る</button></div></div>`).join('');
+      document.getElementById('timelineList').innerHTML = posts.map(p => `<div class="post-item" data-id="${p.id}"><div class="post-item-content" onclick="focusPost('${p.id}', event)">${buildListMedia(p)}<div class="post-content"><div class="post-meta"><span class="post-author">${escapeHtml(p.author)}</span><span>${formatDate(p.timestamp)}</span>${p.mediaType === 'video' ? '<span class="port-list-badge">動画</span>' : ''}</div><div class="post-title">${escapeHtml(p.title)}</div><div class="post-comment">${escapeHtml(p.comment || '')}</div><div class="post-comment-count" data-comment-count-for="${escapeHtml(p.id)}">${formatCommentCount(p.id)}</div></div></div><div class="post-actions"><button class="post-action-btn" onclick="event.stopPropagation(); openEditModal('${p.id}')">編集</button><button class="post-action-btn" onclick="focusPost('${p.id}', event)">地図で見る</button></div></div>`).join('');
       posts.forEach(p => {
         const icon = L.divIcon({ className: '', html: buildMarkerMedia(p), iconSize: [42, 42], iconAnchor: [21, 21] });
-        markers[p.id] = L.marker([p.lat, p.lng], { icon }).bindPopup(buildPopupContent(p), { maxWidth: 240 });
+        markers[p.id] = L.marker([p.lat, p.lng], { icon }).bindPopup(buildPopupContent(p), { maxWidth: 240, closeOnClick: false, autoClose: true });
         postClusterLayer.addLayer(markers[p.id]);
       });
       const bounds = L.latLngBounds(posts.map(p => [p.lat, p.lng])); loadPortPoints().forEach(p => bounds.extend([p.lat, p.lng])); activeVoyagePoints().forEach(p => bounds.extend([p.lat, p.lng])); map.fitBounds(bounds, { padding: [40, 40] });
@@ -2204,7 +2204,9 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
         setTimeout(() => voyageMarkers[id]?.openPopup(), 500);
       }, 120);
     }
-    function focusPost(id) {
+    function focusPost(id, event) {
+      event?.preventDefault?.();
+      event?.stopPropagation?.();
       const post = posts.find(p => p.id === id);
       if (!post) return;
       document.querySelectorAll('.post-item').forEach(el => el.classList.remove('active'));
