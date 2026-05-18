@@ -95,6 +95,8 @@
     .popup-photo { width: 100%; height: 140px; object-fit: cover; display: block; }
     .popup-video { width: 100%; max-height: 220px; display: block; background: #07121e; }
     .popup-video-frame { width: 100%; height: 220px; display: block; border: 0; background: #07121e; }
+    .popup-video-box { background: #07121e; }
+    .popup-video-open { width: 100%; padding: 10px 12px; border: 0; border-top: 1px solid rgba(255,255,255,0.18); background: var(--navy); color: #fff; font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
     .popup-photo.zoomable { cursor: zoom-in; }
     .popup-photo.port { height: 92px; display: grid; place-items: center; background: linear-gradient(135deg, #e7f8f0, #e8f5f7); color: var(--navy); font-family: 'Zen Maru Gothic', sans-serif; font-size: 20px; font-weight: 700; }
     .popup-body { padding: 13px 14px; background: #fff; }
@@ -1866,7 +1868,10 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       return `<span class="marker-photo-wrap" style="background-image:url('${escapeQuote(post.mediaUrl || post.photoUrl)}')"></span>`;
     }
     function buildPopupMedia(item) {
-      if (item.mediaType === 'video') return `<iframe class="popup-video-frame" src="${escapeQuote(item.mediaUrl || item.photoUrl)}" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+      if (item.mediaType === 'video') {
+        const url = escapeQuote(item.mediaUrl || item.photoUrl);
+        return `<div class="popup-video-box"><iframe class="popup-video-frame" src="${url}" allow="autoplay; encrypted-media" allowfullscreen></iframe><button class="popup-video-open" onclick="event.stopPropagation(); window.open('${url}', '_blank', 'noopener')">動画を開く</button></div>`;
+      }
       return `<img class="popup-photo zoomable" src="${item.mediaUrl || item.photoUrl}" onclick="openPhotoViewer('${escapeQuote(item.mediaUrl || item.photoUrl)}')">`;
     }
     function buildPopupContent(item, type = 'post') {
@@ -2154,18 +2159,25 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       if (!post) return;
       document.querySelectorAll('.post-item').forEach(el => el.classList.remove('active'));
       document.querySelector(`.post-item[data-id="${id}"]`)?.classList.add('active');
-      if (window.matchMedia('(max-width: 768px)').matches) {
-        document.getElementById('timelinePanel').classList.remove('open');
-        setTimeout(() => map?.invalidateSize(), 320);
-      }
       const marker = markers[id];
-      const openMarker = () => marker?.openPopup();
-      if (postClusterLayer && marker) {
-        postClusterLayer.zoomToShowLayer(marker, () => setTimeout(openMarker, 340));
-      } else {
-        map.flyTo([post.lat, post.lng], 12, { duration: 1 });
-        setTimeout(openMarker, 340);
+      const openMarker = () => {
+        map?.closePopup();
+        if (postClusterLayer && marker) {
+          postClusterLayer.zoomToShowLayer(marker, () => setTimeout(() => marker.openPopup(), 220));
+        } else {
+          map.flyTo([post.lat, post.lng], 12, { duration: 0.8 });
+          setTimeout(() => marker?.openPopup(), 420);
+        }
+      };
+      if (window.matchMedia('(max-width: 768px)').matches) {
+        document.getElementById('timelinePanel')?.classList.remove('open');
+        setTimeout(() => {
+          map?.invalidateSize();
+          setTimeout(openMarker, 120);
+        }, 360);
+        return;
       }
+      openMarker();
     }
     function toggleTimeline() { document.getElementById('timelinePanel').classList.toggle('open'); }
     function formatDate(timestamp) { const d = new Date(String(timestamp).replace(' ', 'T')); return `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
