@@ -12,6 +12,8 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/exifr/dist/full.umd.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
   <style>
     :root {
       --navy: #14324a;
@@ -348,7 +350,7 @@
               <button type="button" class="photo-btn" onclick="document.getElementById('videoCameraInput').click();"><span class="photo-btn-icon">VID</span><span class="photo-btn-text">動画を撮影</span><span class="photo-btn-hint">30秒以内推奨</span></button>
               <button type="button" class="photo-btn" onclick="document.getElementById('photoInput').click();"><span class="photo-btn-icon">FILE</span><span class="photo-btn-text">写真・動画を選ぶ</span><span class="photo-btn-hint">端末内から</span></button>
             </div>
-            <div class="media-help">動画は30秒以内・20MB未満の mp4 / mov に対応しています。</div>
+            <div class="media-help">動画は30秒以内・100MB未満の mp4 / mov に対応しています。</div>
             <div class="photo-preview-wrap" id="photoPreviewWrap"><img id="photoPreview" class="photo-preview" alt="選択した写真"><video id="videoPreview" class="video-preview" controls playsinline></video><button type="button" class="photo-replace-btn" onclick="replacePhoto()">変更</button><div id="photoInfo" class="photo-info"></div></div>
             <input type="file" id="cameraInput" class="upload-input" accept="image/*" capture="environment">
             <input type="file" id="videoCameraInput" class="upload-input" accept="video/mp4,video/quicktime,.mp4,.mov" capture="environment">
@@ -401,6 +403,15 @@
   <script>
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbxBc_DVbAVhUM4Kh_SV31ah_wl_7YweeNSkpvU2BJ8Rsl-4LtugiVVxF8badfpGa3BE5Q/exec';
     const PORTS_GAS_URL = 'https://script.google.com/macros/s/AKfycbw98Os098I07B7iqhyyNqJzvSaDGJbmlmKIM7yiztEl84GxMDLixoaDWuxeQkCSfCrP/exec';
+    const FIREBASE_CONFIG = {
+      apiKey: 'AIzaSyAVXLdzvDH0F4ja5r95kI_7BmP9nKSEbTY',
+      authDomain: 'saily-movie.firebaseapp.com',
+      projectId: 'saily-movie',
+      storageBucket: 'saily-movie.firebasestorage.app',
+      messagingSenderId: '191054178653',
+      appId: '1:191054178653:web:e2a690922de57ef6a320b4',
+      measurementId: 'G-62GCXZWFWW'
+    };
     const DEFAULT_PORT_POINTS = [
       { id: 'port_tokyo_bay', author: '港情報', title: '東京湾', comment: '航海の出発地点', lat: 35.5, lng: 139.8, timestamp: '2026-05-04 00:00:00', color: '#0f6f94' },
       {
@@ -1013,7 +1024,7 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
         color: '#0f6f94'
       }
     ];
-    let currentLat = null, currentLng = null, currentPhotoBase64 = null, currentPhotoName = '', currentPhotoTimestamp = '', currentMediaType = 'image', currentMediaMimeType = 'image/jpeg';
+    let currentLat = null, currentLng = null, currentPhotoBase64 = null, currentMediaFile = null, currentPhotoName = '', currentPhotoTimestamp = '', currentMediaType = 'image', currentMediaMimeType = 'image/jpeg';
     const VOYAGES = [
       {
         id: 'V2026-01',
@@ -1462,7 +1473,7 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
     const locationConfirm = document.getElementById('locationConfirm');
     const mapInstruction = document.getElementById('mapInstruction');
 
-    const VIDEO_MAX_BYTES = 20 * 1024 * 1024;
+    const VIDEO_MAX_BYTES = 100 * 1024 * 1024;
     const VIDEO_MAX_SECONDS = 30;
     function replacePhoto() { confirm('撮影し直しますか？\nキャンセルすると端末内の写真・動画から選び直します。') ? cameraInput.click() : photoInput.click(); }
     function formatJstTimestamp(date = new Date()) {
@@ -1536,6 +1547,7 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
     }
     function clearSelectedMedia() {
       currentPhotoBase64 = null;
+      currentMediaFile = null;
       currentPhotoName = '';
       currentPhotoTimestamp = '';
       currentMediaType = 'image';
@@ -1594,7 +1606,7 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
     }
     async function handleVideoFile(file) {
       if (!isSupportedVideo(file)) { showError('動画は mp4 / mov のみ対応しています'); return; }
-      if (file.size > VIDEO_MAX_BYTES) { showError('動画は20MB未満にしてください。GAS経由のため、短い動画のみ対応しています'); return; }
+      if (file.size > VIDEO_MAX_BYTES) { showError('動画は100MB未満にしてください'); return; }
       let duration = 0;
       try {
         duration = await getVideoDuration(file);
@@ -1603,8 +1615,8 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
         return;
       }
       if (duration > VIDEO_MAX_SECONDS + 0.5) { showError('動画は30秒以内にしてください'); return; }
-      const dataUrl = await readFileAsDataUrl(file);
-      currentPhotoBase64 = dataUrl.split(',')[1];
+      currentPhotoBase64 = null;
+      currentMediaFile = file;
       currentPhotoName = file.name || 'video.mp4';
       currentPhotoTimestamp = formatJstTimestamp();
       currentMediaType = 'video';
@@ -1767,20 +1779,52 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       }
       return false;
     }
+    function isFirebaseVideoUploadEnabled() {
+      return !!(window.firebase && FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.storageBucket && FIREBASE_CONFIG.projectId);
+    }
+    function getFirebaseStorage() {
+      if (!isFirebaseVideoUploadEnabled()) {
+        throw new Error('動画アップロード用のFirebase設定が未設定です');
+      }
+      if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+      return firebase.storage();
+    }
+    function safeFileName(name) {
+      return String(name || 'video.mp4').replace(/[^\w.\-]+/g, '_').slice(-80);
+    }
+    async function uploadVideoToStorage(file) {
+      const storage = getFirebaseStorage();
+      const path = `saily/videos/${new Date().toISOString().slice(0, 10)}/${Date.now()}_${safeFileName(file.name)}`;
+      const ref = storage.ref().child(path);
+      const snapshot = await ref.put(file, {
+        contentType: currentMediaMimeType || file.type || 'video/mp4',
+        customMetadata: { app: 'saily', originalName: file.name || '' }
+      });
+      return snapshot.ref.getDownloadURL();
+    }
     async function submitPost() {
       const title = document.getElementById('titleInput').value.trim();
       const comment = document.getElementById('commentInput').value.trim();
       if (!selectedAuthor) { showError('お名前を選んでください'); return; }
-      if (!currentPhotoBase64) { showError('写真または動画を選んでください'); return; }
+      if (currentMediaType === 'video') {
+        if (!currentMediaFile) { showError('動画を選んでください'); return; }
+        if (!isFirebaseVideoUploadEnabled()) { showError('動画アップロードの設定が未完了です。Firebase設定を入れてください'); return; }
+      } else if (!currentPhotoBase64) { showError('写真または動画を選んでください'); return; }
       if (!currentLat || !currentLng) { showError('位置を指定してください'); return; }
       if (!title) { showError('タイトルを入力してください'); return; }
       const btn = document.getElementById('submitBtn');
       btn.disabled = true; btn.innerHTML = '<span class="loading-spinner"></span>送信中...';
       try {
-        await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'create', author: selectedAuthor, title, comment, lat: currentLat, lng: currentLng, mediaType: currentMediaType, mediaBase64: currentPhotoBase64, mediaName: currentPhotoName, mimeType: currentMediaMimeType, photoBase64: currentMediaType === 'image' ? currentPhotoBase64 : undefined, photoName: currentPhotoName, timestamp: currentPhotoTimestamp || formatJstTimestamp() }) });
+        let mediaUrl = '';
+        if (currentMediaType === 'video') {
+          btn.innerHTML = '<span class="loading-spinner"></span>動画アップロード中...';
+          mediaUrl = await uploadVideoToStorage(currentMediaFile);
+          btn.innerHTML = '<span class="loading-spinner"></span>投稿保存中...';
+        }
+        await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'create', author: selectedAuthor, title, comment, lat: currentLat, lng: currentLng, mediaType: currentMediaType, mediaUrl, mediaName: currentPhotoName, mimeType: currentMediaMimeType, mediaBase64: currentMediaType === 'image' ? currentPhotoBase64 : undefined, photoBase64: currentMediaType === 'image' ? currentPhotoBase64 : undefined, photoName: currentPhotoName, timestamp: currentPhotoTimestamp || formatJstTimestamp() }) });
         const reflected = await verifyPostReflected(selectedAuthor, title, currentMediaType === 'video' ? 45000 : 12000);
         if (!reflected) {
-          showError('投稿を保存できませんでした。動画が大きすぎる可能性があります。20MB未満の短い動画で再試行してください。');
+          showError('投稿を保存できませんでした。通信状況を確認して再試行してください。');
           btn.disabled = false; btn.innerHTML = '投稿する';
           return;
         }
@@ -1792,7 +1836,7 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       document.getElementById('titleInput').value = ''; document.getElementById('commentInput').value = '';
       photoPreviewWrap.classList.remove('visible'); photoButtons.style.display = 'grid'; photoInput.value = ''; cameraInput.value = ''; videoCameraInput.value = '';
       photoPreview.style.display = 'block'; photoPreview.removeAttribute('src'); videoPreview.pause(); videoPreview.removeAttribute('src'); videoPreview.style.display = 'none';
-      currentPhotoBase64 = null; currentPhotoName = ''; currentPhotoTimestamp = ''; currentMediaType = 'image'; currentMediaMimeType = 'image/jpeg'; currentLat = null; currentLng = null;
+      currentPhotoBase64 = null; currentMediaFile = null; currentPhotoName = ''; currentPhotoTimestamp = ''; currentMediaType = 'image'; currentMediaMimeType = 'image/jpeg'; currentLat = null; currentLng = null;
       gpsInfo.className = 'gps-info empty'; gpsInfo.innerHTML = '<span>PIN</span><div><div class="gps-info-title">写真・動画の位置情報</div><div class="gps-info-detail">写真は位置情報を自動で読み取ります。動画は位置を指定してください。</div></div>';
       locationTools.classList.remove('visible'); locationConfirm.classList.remove('visible'); mapInstruction.style.display = 'none'; miniMapEl.classList.remove('visible');
       if (miniMap) { miniMap.remove(); miniMap = null; miniMapMarker = null; }
@@ -1870,7 +1914,7 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
     function buildPopupMedia(item) {
       if (item.mediaType === 'video') {
         const url = escapeQuote(item.mediaUrl || item.photoUrl);
-        return `<div class="popup-video-box"><iframe class="popup-video-frame" src="${url}" allow="autoplay; encrypted-media" allowfullscreen></iframe><button class="popup-video-open" onclick="event.stopPropagation(); window.open('${url}', '_blank', 'noopener')">動画を開く</button></div>`;
+        return `<div class="popup-video-box"><video class="popup-video" src="${url}" controls playsinline preload="metadata"></video><button class="popup-video-open" onclick="event.stopPropagation(); window.open('${url}', '_blank', 'noopener')">動画を開く</button></div>`;
       }
       return `<img class="popup-photo zoomable" src="${item.mediaUrl || item.photoUrl}" onclick="openPhotoViewer('${escapeQuote(item.mediaUrl || item.photoUrl)}')">`;
     }
