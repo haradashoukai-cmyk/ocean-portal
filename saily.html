@@ -1029,7 +1029,7 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
         color: '#0f6f94'
       }
     ];
-    let currentLat = null, currentLng = null, currentPhotoBase64 = null, currentMediaFile = null, currentMediaItems = [], currentPhotoName = '', currentPhotoTimestamp = '', currentMediaType = 'image', currentMediaMimeType = 'image/jpeg';
+    let currentLat = null, currentLng = null, currentPhotoBase64 = null, currentMediaFile = null, currentMediaItems = [], currentMediaPreviewUrls = [], currentPhotoName = '', currentPhotoTimestamp = '', currentMediaType = 'image', currentMediaMimeType = 'image/jpeg';
     let mobilePopupGuard = null;
     const VOYAGES = [
       {
@@ -1513,7 +1513,13 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
 
     const VIDEO_MAX_BYTES = 100 * 1024 * 1024;
     const VIDEO_MAX_SECONDS = 30;
-    function replacePhoto() { confirm('撮影し直しますか？\nキャンセルすると端末内の写真・動画から選び直します。') ? cameraInput.click() : photoInput.click(); }
+    function replacePhoto() {
+      if (currentMediaType === 'image' && currentMediaItems.length > 0 && currentMediaItems.length < 3) {
+        confirm('写真を追加撮影しますか？\nキャンセルすると端末内の写真・動画から選び直します。') ? cameraInput.click() : photoInput.click();
+        return;
+      }
+      confirm('撮影し直しますか？\nキャンセルすると端末内の写真・動画から選び直します。') ? cameraInput.click() : photoInput.click();
+    }
     function formatJstTimestamp(date = new Date()) {
       const parts = new Intl.DateTimeFormat('ja-JP', {
         timeZone: 'Asia/Tokyo',
@@ -1587,6 +1593,7 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       currentPhotoBase64 = null;
       currentMediaFile = null;
       currentMediaItems = [];
+      currentMediaPreviewUrls = [];
       currentPhotoName = '';
       currentPhotoTimestamp = '';
       currentMediaType = 'image';
@@ -1601,26 +1608,29 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       photoPreviewWrap.classList.remove('visible');
       photoInfoEl.textContent = '';
     }
-    async function handlePhotoFiles(files) {
+    async function handlePhotoFiles(files, append = false) {
       files = Array.from(files || []).filter(Boolean);
       if (!files.length) return;
-      clearSelectedMedia();
+      if (!append || currentMediaType !== 'image') clearSelectedMedia();
       const mediaTypes = files.map(detectMediaType);
       if (mediaTypes.includes('unknown')) { showError('対応している形式は画像、または mp4 / mov 動画です'); return; }
       if (mediaTypes.includes('video')) {
+        if (append && currentMediaItems.length) { showError('写真を追加中は動画を選べません。変更から選び直してください'); return; }
         if (files.length > 1 || mediaTypes.some(type => type !== 'video')) { showError('動画は1本だけ選んでください。写真と動画は同時に投稿できません'); return; }
         await handleVideoFile(files[0]);
         return;
       }
-      if (files.length > 3) showError('写真は3枚までです。先頭の3枚だけ使います');
-      const imageFiles = files.slice(0, 3);
+      const slots = Math.max(0, 3 - currentMediaItems.length);
+      if (!slots) { showError('写真は3枚までです'); return; }
+      if (files.length > slots) showError(`写真は3枚までです。先頭の${slots}枚だけ追加します`);
+      const imageFiles = files.slice(0, slots);
       const firstFile = imageFiles[0];
-      currentPhotoName = imageFiles.map(file => file.name).join(', ');
-      currentPhotoTimestamp = '';
+      currentPhotoName = [...currentMediaItems.map(item => item.name), ...imageFiles.map(file => file.name)].join(', ');
+      if (!append || !currentPhotoTimestamp) currentPhotoTimestamp = '';
       currentMediaType = 'image';
       currentMediaMimeType = 'image/jpeg';
       const originalSize = Math.round(imageFiles.reduce((sum, file) => sum + file.size, 0) / 1024);
-      try {
+      if (!currentMediaItems.length) try {
         const exif = await exifr.parse(firstFile, { gps: true });
         const takenAt = exif?.DateTimeOriginal || exif?.CreateDate || exif?.ModifyDate;
         if (takenAt instanceof Date && !Number.isNaN(takenAt.getTime())) currentPhotoTimestamp = formatJstTimestamp(takenAt);
@@ -1643,17 +1653,18 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
           const compressed = await compressImage(file);
           compressedItems.push({ base64: compressed.base64, name: file.name || 'photo.jpg', mimeType: 'image/jpeg', dataUrl: compressed.dataUrl, size: compressed.size });
         }
-        currentMediaItems = compressedItems.map(({ base64, name, mimeType }) => ({ base64, name, mimeType }));
+        currentMediaItems = [...currentMediaItems, ...compressedItems.map(({ base64, name, mimeType }) => ({ base64, name, mimeType }))];
+        currentMediaPreviewUrls = [...currentMediaPreviewUrls, ...compressedItems.map(item => item.dataUrl)];
         currentPhotoBase64 = currentMediaItems[0]?.base64 || null;
-        if (compressedItems.length === 1) {
-          photoPreview.src = compressedItems[0].dataUrl;
+        if (currentMediaPreviewUrls.length === 1) {
+          photoPreview.src = currentMediaPreviewUrls[0];
           photoPreview.style.display = 'block';
           photoPreviewGrid.classList.remove('visible');
           photoPreviewGrid.innerHTML = '';
         } else {
           photoPreview.removeAttribute('src');
           photoPreview.style.display = 'none';
-          photoPreviewGrid.innerHTML = compressedItems.map(item => `<img src="${item.dataUrl}" alt="選択した写真">`).join('');
+          photoPreviewGrid.innerHTML = currentMediaPreviewUrls.map(url => `<img src="${url}" alt="選択した写真">`).join('');
           photoPreviewGrid.classList.add('visible');
         }
         videoPreview.pause();
@@ -1661,7 +1672,7 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
         videoPreview.style.display = 'none';
         photoPreviewWrap.classList.add('visible');
         photoButtons.style.display = 'none';
-        photoInfoEl.textContent = `${compressedItems.length}枚 / ${originalSize}KB → ${compressedItems.reduce((sum, item) => sum + item.size, 0)}KB`;
+        photoInfoEl.textContent = `${currentMediaItems.length}枚 / 追加${originalSize}KB → 合計${currentMediaItems.reduce((sum, item) => sum + Math.round(item.base64.length * 0.75 / 1024), 0)}KB`;
       } catch (err) { console.error('圧縮エラー:', err); showError('写真の処理に失敗しました'); }
     }
     async function handleVideoFile(file) {
@@ -1678,6 +1689,7 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       currentPhotoBase64 = null;
       currentMediaFile = file;
       currentMediaItems = [];
+      currentMediaPreviewUrls = [];
       currentPhotoName = file.name || 'video.mp4';
       currentPhotoTimestamp = formatJstTimestamp();
       currentMediaType = 'video';
@@ -1697,7 +1709,7 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       currentLat = null; currentLng = null; updateLocationConfirm();
     }
     photoInput.addEventListener('change', e => handlePhotoFiles(e.target.files));
-    cameraInput.addEventListener('change', e => handlePhotoFiles(e.target.files));
+    cameraInput.addEventListener('change', e => handlePhotoFiles(e.target.files, true));
     videoCameraInput.addEventListener('change', e => handlePhotoFiles(e.target.files));
 
     function showMiniMap(lat, lng, hasMarker = true) {
@@ -1834,10 +1846,10 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
         button.disabled = false; button.textContent = '送信';
       }
     }
-    async function verifyPostReflected(author, title, timeoutMs = 12000) {
+    async function verifyPostReflected(postId, author, title, timeoutMs = 12000) {
       const startedAt = Date.now();
       while (Date.now() - startedAt < timeoutMs) {
-        try { const response = await fetch(GAS_URL + '?action=get&_=' + Date.now()); const data = await response.json(); if ((data.posts || []).some(p => p.author === author && p.title === title)) return true; } catch (_) {}
+        try { const response = await fetch(GAS_URL + '?action=get&_=' + Date.now()); const data = await response.json(); if ((data.posts || []).some(p => p.id === postId || (p.author === author && p.title === title))) return true; } catch (_) {}
         await new Promise(resolve => setTimeout(resolve, 1500));
       }
       return false;
@@ -1878,14 +1890,15 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       const btn = document.getElementById('submitBtn');
       btn.disabled = true; btn.innerHTML = '<span class="loading-spinner"></span>送信中...';
       try {
+        const postId = 'p' + Date.now();
         let mediaUrl = '';
         if (currentMediaType === 'video') {
           btn.innerHTML = '<span class="loading-spinner"></span>動画アップロード中...';
           mediaUrl = await uploadVideoToStorage(currentMediaFile);
           btn.innerHTML = '<span class="loading-spinner"></span>投稿保存中...';
         }
-        await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'create', author: selectedAuthor, title, comment, lat: currentLat, lng: currentLng, mediaType: currentMediaType, mediaUrl, mediaName: currentPhotoName, mimeType: currentMediaMimeType, mediaItems: currentMediaType === 'image' ? currentMediaItems : undefined, mediaBase64: currentMediaType === 'image' ? currentPhotoBase64 : undefined, photoBase64: currentMediaType === 'image' ? currentPhotoBase64 : undefined, photoName: currentPhotoName, timestamp: currentPhotoTimestamp || formatJstTimestamp() }) });
-        const reflected = await verifyPostReflected(selectedAuthor, title, currentMediaType === 'video' ? 45000 : 12000);
+        await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'create', id: postId, author: selectedAuthor, title, comment, lat: currentLat, lng: currentLng, mediaType: currentMediaType, mediaUrl, mediaName: currentPhotoName, mimeType: currentMediaMimeType, mediaItems: currentMediaType === 'image' ? currentMediaItems : undefined, mediaBase64: currentMediaType === 'image' ? currentPhotoBase64 : undefined, photoBase64: currentMediaType === 'image' ? currentPhotoBase64 : undefined, photoName: currentPhotoName, timestamp: currentPhotoTimestamp || formatJstTimestamp() }) });
+        const reflected = await verifyPostReflected(postId, selectedAuthor, title, currentMediaType === 'video' ? 45000 : 12000);
         if (!reflected) {
           showError('投稿を保存できませんでした。通信状況を確認して再試行してください。');
           btn.disabled = false; btn.innerHTML = '投稿する';
@@ -1899,7 +1912,7 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       document.getElementById('titleInput').value = ''; document.getElementById('commentInput').value = '';
       photoPreviewWrap.classList.remove('visible'); photoButtons.style.display = 'grid'; photoInput.value = ''; cameraInput.value = ''; videoCameraInput.value = '';
       photoPreview.style.display = 'block'; photoPreview.removeAttribute('src'); photoPreviewGrid.innerHTML = ''; photoPreviewGrid.classList.remove('visible'); videoPreview.pause(); videoPreview.removeAttribute('src'); videoPreview.style.display = 'none';
-      currentPhotoBase64 = null; currentMediaFile = null; currentMediaItems = []; currentPhotoName = ''; currentPhotoTimestamp = ''; currentMediaType = 'image'; currentMediaMimeType = 'image/jpeg'; currentLat = null; currentLng = null;
+      currentPhotoBase64 = null; currentMediaFile = null; currentMediaItems = []; currentMediaPreviewUrls = []; currentPhotoName = ''; currentPhotoTimestamp = ''; currentMediaType = 'image'; currentMediaMimeType = 'image/jpeg'; currentLat = null; currentLng = null;
       gpsInfo.className = 'gps-info empty'; gpsInfo.innerHTML = '<span>PIN</span><div><div class="gps-info-title">写真・動画の位置情報</div><div class="gps-info-detail">写真は位置情報を自動で読み取ります。動画は位置を指定してください。</div></div>';
       locationTools.classList.remove('visible'); locationConfirm.classList.remove('visible'); mapInstruction.style.display = 'none'; miniMapEl.classList.remove('visible');
       if (miniMap) { miniMap.remove(); miniMap = null; miniMapMarker = null; }

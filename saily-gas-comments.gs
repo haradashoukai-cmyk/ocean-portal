@@ -41,7 +41,23 @@ function getSpreadsheet() {
 
 function getPostsSheet() {
   const ss = getSpreadsheet();
-  return ss.getSheetByName('posts') || ss.getSheets()[0];
+  const named = ss.getSheetByName('posts') || ss.getSheetByName('saily_投稿データ') || ss.getSheetByName('投稿データ');
+  if (named && sheetLooksLikePosts(named)) return named;
+
+  const sheets = ss.getSheets();
+  for (let i = 0; i < sheets.length; i++) {
+    if (sheetLooksLikePosts(sheets[i])) return sheets[i];
+  }
+  return named || sheets[0];
+}
+
+function sheetLooksLikePosts(sheet) {
+  if (!sheet || sheet.getLastRow() < 1 || sheet.getLastColumn() < 9) return false;
+  const headers = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 9)).getValues()[0].map(String);
+  return headers[0] === 'ID'
+    && headers[5].indexOf('緯度') !== -1
+    && headers[6].indexOf('経度') !== -1
+    && (headers[7].indexOf('写真') !== -1 || headers[10] === 'mediaUrl');
 }
 
 function getCommentsSheet() {
@@ -60,25 +76,36 @@ function createPost(data) {
   let fileId = '';
   let photoUrl = '';
   let mediaUrl = '';
+  let fileIds = [];
+  let mediaUrls = [];
 
   if (mediaType === 'video') {
     mediaUrl = data.mediaUrl || '';
     if (!mediaUrl) return jsonResponse({ success: false, error: 'video mediaUrl is required' });
+    mediaUrls = [mediaUrl];
   } else {
-    if (!mediaBase64) return jsonResponse({ success: false, error: 'image mediaBase64 is required' });
+    const mediaItems = Array.isArray(data.mediaItems) && data.mediaItems.length
+      ? data.mediaItems.slice(0, 3)
+      : [{ base64: mediaBase64, name: data.mediaName || data.photoName || 'photo.jpg' }];
+    if (!mediaItems[0] || !mediaItems[0].base64) return jsonResponse({ success: false, error: 'image mediaBase64 is required' });
     const folder = DriveApp.getFolderById(PHOTO_FOLDER_ID);
-    const fileName = `${Date.now()}_${data.mediaName || data.photoName || 'photo.jpg'}`;
-    const blob = Utilities.newBlob(Utilities.base64Decode(mediaBase64), 'image/jpeg', fileName);
-    const file = folder.createFile(blob);
-    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-    fileId = file.getId();
-    photoUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w800`;
+    mediaItems.forEach((item, index) => {
+      const fileName = `${Date.now()}_${index + 1}_${item.name || data.mediaName || data.photoName || 'photo.jpg'}`;
+      const blob = Utilities.newBlob(Utilities.base64Decode(item.base64), item.mimeType || 'image/jpeg', fileName);
+      const file = folder.createFile(blob);
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      const createdFileId = file.getId();
+      fileIds.push(createdFileId);
+      mediaUrls.push(`https://drive.google.com/thumbnail?id=${createdFileId}&sz=w800`);
+    });
+    fileId = fileIds[0] || '';
+    photoUrl = mediaUrls[0] || '';
     mediaUrl = photoUrl;
   }
 
   const sheet = getPostsSheet();
   ensurePostHeaders(sheet);
-  const id = 'p' + Date.now();
+  const id = /^p\d{8,}$/.test(String(data.id || '')) ? String(data.id) : 'p' + Date.now();
   sheet.appendRow([
     id,
     data.timestamp,
@@ -90,10 +117,12 @@ function createPost(data) {
     photoUrl,
     fileId,
     mediaType,
-    mediaUrl
+    mediaUrl,
+    JSON.stringify(mediaUrls),
+    JSON.stringify(fileIds)
   ]);
 
-  return jsonResponse({ success: true, id: id, photoUrl: photoUrl, mediaType: mediaType, mediaUrl: mediaUrl });
+  return jsonResponse({ success: true, id: id, photoUrl: photoUrl, mediaType: mediaType, mediaUrl: mediaUrl, mediaUrls: mediaUrls });
 }
 
 function inferVideoMimeType(name) {
@@ -103,9 +132,11 @@ function inferVideoMimeType(name) {
 }
 
 function ensurePostHeaders(sheet) {
-  const headers = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 11)).getValues()[0];
+  const headers = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 13)).getValues()[0];
   if (!headers[9]) sheet.getRange(1, 10).setValue('mediaType');
   if (!headers[10]) sheet.getRange(1, 11).setValue('mediaUrl');
+  if (!headers[11]) sheet.getRange(1, 12).setValue('mediaUrls');
+  if (!headers[12]) sheet.getRange(1, 13).setValue('fileIds');
 }
 
 function editPost(data) {
@@ -132,22 +163,35 @@ function deletePost(data) {
   for (let i = 1; i < allData.length; i++) {
     if (allData[i][0] === data.id) {
       const fileId = allData[i][8];
+      const fileIds = parseJsonArray(allData[i][12]);
+      const idsToDelete = fileIds.length ? fileIds : [fileId].filter(Boolean);
 
-      if (fileId) {
+      idsToDelete.forEach(id => {
         try {
-          DriveApp.getFileById(fileId).setTrashed(true);
+          DriveApp.getFileById(id).setTrashed(true);
         } catch (e) {
-          Logger.log('メディア削除スキップ: ' + e.toString());
+          Logger.log('media delete skipped: ' + e.toString());
         }
-      }
+      });
 
       sheet.deleteRow(i + 1);
       deleteCommentsForPost(data.id);
-      return jsonResponse({ success: true, id: data.id, message: '削除しました' });
+      return jsonResponse({ success: true, id: data.id, message: 'deleted' });
     }
   }
 
-  return jsonResponse({ success: false, error: '投稿が見つかりません' });
+  return jsonResponse({ success: false, error: 'post not found' });
+}
+
+function parseJsonArray(value) {
+  if (!value) return [];
+  if (Array.isArray(value)) return value.filter(Boolean);
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
+  } catch (e) {
+    return [];
+  }
 }
 
 function getPosts() {
@@ -161,6 +205,8 @@ function getPosts() {
     if (!row[0]) continue;
     const mediaType = row[9] || 'image';
     const mediaUrl = row[10] || row[7] || '';
+    const mediaUrls = parseJsonArray(row[11]);
+    const fileIds = parseJsonArray(row[12]);
     posts.push({
       id: row[0],
       timestamp: row[1],
@@ -172,7 +218,9 @@ function getPosts() {
       photoUrl: row[7],
       fileId: row[8],
       mediaType: mediaType,
-      mediaUrl: mediaUrl
+      mediaUrl: mediaUrl,
+      mediaUrls: mediaUrls.length ? mediaUrls : (mediaUrl ? [mediaUrl] : []),
+      fileIds: fileIds
     });
   }
 
@@ -257,9 +305,9 @@ function setupSpreadsheet() {
   sheet.clear();
   sheet.appendRow([
     'ID', 'タイムスタンプ', '投稿者', 'タイトル', 'コメント',
-    '緯度', '経度', '写真URL', 'ファイルID', 'mediaType', 'mediaUrl'
+    '緯度', '経度', '写真URL', 'ファイルID', 'mediaType', 'mediaUrl', 'mediaUrls', 'fileIds'
   ]);
-  sheet.getRange(1, 1, 1, 11).setFontWeight('bold').setBackground('#0e7490').setFontColor('#ffffff');
+  sheet.getRange(1, 1, 1, 13).setFontWeight('bold').setBackground('#0e7490').setFontColor('#ffffff');
   Logger.log('posts セットアップ完了しました');
 }
 
