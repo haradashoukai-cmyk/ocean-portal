@@ -79,15 +79,17 @@
     .post-actions { display: flex; gap: 4px; margin-top: 7px; padding-top: 7px; border-top: 1px solid #e7edf4; }
     .post-action-btn, .popup-action-btn { background: #f4f8fb; border: 1px solid #e1ebf3; color: var(--blue); padding: 5px 9px; border-radius: 6px; font-size: 11px; font-weight: 700; }
     .post-action-btn:hover, .popup-action-btn:hover { background: #e8f5f7; color: var(--navy); }
-    .port-dot { width: 14px; height: 14px; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 3px 10px rgba(13, 45, 68, 0.32); }
+    .port-dot { width: 12px; height: 12px; border: 3px solid rgba(255,255,255,0.95); border-radius: 50%; }
+    .port-dot.red { background: #E45B4F; box-shadow: 0 4px 12px rgba(228,91,79,0.28); }
+    .port-dot.blue { background: #2C8EB8; box-shadow: 0 4px 12px rgba(44,142,184,0.28); }
     .voyage-dot { width: 20px; height: 20px; display: grid; place-items: center; background: #f59e0b; color: #fff; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 4px 13px rgba(13, 45, 68, 0.34); font-size: 10px; font-weight: 900; }
     .empty-state { padding: 40px 20px; text-align: center; color: var(--muted); font-size: 13px; line-height: 1.6; }
     .empty-state-emoji { font-size: 34px; margin-bottom: 8px; }
     .marker-photo-wrap { box-sizing: border-box; width: 42px; height: 42px; display: block; overflow: hidden; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 3px 12px rgba(13, 45, 68, 0.35); background-color: #e2e8f0; background-position: center; background-size: cover; background-repeat: no-repeat; }
     .marker-video-wrap { box-sizing: border-box; width: 42px; height: 42px; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 3px 12px rgba(13, 45, 68, 0.35); font-size: 15px; }
-    .post-cluster { width: 42px; height: 42px; display: grid; place-items: center; background: var(--blue); color: #fff; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 4px 14px rgba(13, 45, 68, 0.32); font-size: 13px; font-weight: 700; }
-    .post-cluster.medium { background: var(--navy); }
-    .post-cluster.large { background: #0b1f2f; }
+    .post-cluster { width: 42px; height: 42px; display: grid; place-items: center; background: #12324A; color: #fff; border: 4px solid rgba(255,255,255,0.92); border-radius: 50%; box-shadow: 0 8px 22px rgba(18,50,74,0.28); font-size: 13px; font-weight: 700; }
+    .post-cluster.medium, .post-cluster.large { background: #12324A; }
+    .leaflet-marker-icon:hover .post-cluster { background: #1F8FA3; border-color: rgba(255,255,255,0.95); box-shadow: 0 10px 26px rgba(31,143,163,0.35); }
     #mapView.popup-active .timeline-toggle { opacity: 0.18; pointer-events: none; }
     #mapView.popup-active .leaflet-control-container { z-index: 100; }
     .leaflet-popup-pane { z-index: 1200; }
@@ -2152,8 +2154,8 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       if (!map) return;
       Object.values(portMarkers).forEach(m => map.removeLayer(m)); portMarkers = {};
       loadPortPoints().forEach(p => {
-        const color = p.is_home_port ? '#d92626' : (p.color || '#0f6f94');
-        const icon = L.divIcon({ className: '', html: `<div class="port-dot" style="background:${color}"></div>`, iconSize: [14, 14], iconAnchor: [7, 7] });
+        const tone = p.is_home_port ? 'red' : 'blue';
+        const icon = L.divIcon({ className: '', html: `<div class="port-dot ${tone}"></div>`, iconSize: [14, 14], iconAnchor: [7, 7] });
         portMarkers[p.id] = L.marker([p.lat, p.lng], { icon, pane: 'portPane' }).addTo(map).bindPopup(buildPopupContent(p, 'port'), { maxWidth: 240 });
       });
     }
