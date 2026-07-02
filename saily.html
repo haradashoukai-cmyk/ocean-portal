@@ -83,6 +83,14 @@
     .port-dot.red { background: #E45B4F; box-shadow: 0 4px 12px rgba(228,91,79,0.28); }
     .port-dot.blue { background: #2C8EB8; box-shadow: 0 4px 12px rgba(44,142,184,0.28); }
     .voyage-dot { width: 20px; height: 20px; display: grid; place-items: center; background: #f59e0b; color: #fff; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 4px 13px rgba(13, 45, 68, 0.34); font-size: 10px; font-weight: 900; }
+    .route-seq { width: 20px; height: 20px; display: grid; place-items: center; color: #fff; border: 2px solid #fff; border-radius: 50%; font-size: 11px; font-weight: 900; box-shadow: 0 2px 8px rgba(13, 45, 68, 0.35); cursor: pointer; }
+    .voyage-layer-control { min-width: 150px; max-width: 220px; padding: 7px 10px; background: rgba(255,255,255,0.94); border: 1px solid #d7e4ee; border-radius: 8px; box-shadow: 0 2px 8px rgba(13,45,68,0.12); font-size: 11px; color: #334155; }
+    .vlc-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-weight: 700; cursor: pointer; user-select: none; }
+    .voyage-layer-control.collapsed .vlc-body { display: none; }
+    .vlc-row { display: flex; align-items: center; gap: 6px; padding: 4px 0; cursor: pointer; }
+    .vlc-row input { margin: 0; }
+    .vlc-swatch { width: 14px; height: 4px; border-radius: 2px; flex-shrink: 0; }
+    .vlc-count { margin-left: auto; color: #7890a8; font-size: 10px; }
     .empty-state { padding: 40px 20px; text-align: center; color: var(--muted); font-size: 13px; line-height: 1.6; }
     .empty-state-emoji { font-size: 34px; margin-bottom: 8px; }
     .marker-photo-wrap { box-sizing: border-box; width: 42px; height: 42px; display: block; overflow: hidden; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 3px 12px rgba(13, 45, 68, 0.35); background-color: #e2e8f0; background-position: center; background-size: cover; background-repeat: no-repeat; }
@@ -90,7 +98,7 @@
     .post-cluster { width: 42px; height: 42px; display: grid; place-items: center; background: #12324A; color: #fff; border: 4px solid rgba(255,255,255,0.92); border-radius: 50%; box-shadow: 0 8px 22px rgba(18,50,74,0.28); font-size: 13px; font-weight: 700; }
     .post-cluster.medium, .post-cluster.large { background: #12324A; }
     .leaflet-marker-icon:hover .post-cluster { background: #1F8FA3; border-color: rgba(255,255,255,0.95); box-shadow: 0 10px 26px rgba(31,143,163,0.35); }
-    #mapView.popup-active .timeline-toggle { opacity: 0.18; pointer-events: none; }
+    #mapView.popup-active .timeline-toggle, #mapView.popup-active .voyage-layer-control { opacity: 0.18; pointer-events: none; }
     #mapView.popup-active .leaflet-control-container { z-index: 100; }
     .leaflet-popup-pane { z-index: 1200; }
     .leaflet-control-zoom { display: none; }
@@ -1040,6 +1048,7 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
         ship: 'トランサイドⅥ (Nauticat 42)',
         startDate: '2026/05/09',
         endDate: '2026/05/24',
+        color: '#e11d48',
         visible: true
       }
     ];
@@ -1390,6 +1399,8 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       { id: 'boat_transide5', portId: 'port_shinminato_marina', name: 'トランサイドⅤ', icon: '⛵', model: 'Jeanneau Voyage 11.20', length: '32ft', launched: '1991年進水', photoUrl: 'assets/boat_transide5.jpg', visible: true }
     ];
     let miniMap = null, miniMapMarker = null, selectedAuthor = '', posts = [], portPoints = DEFAULT_PORT_POINTS.map(p => ({ ...p })), commentCounts = {}, commentCache = {}, markers = {}, portMarkers = {}, voyageMarkers = {}, postClusterLayer = null, map, editingPost = null, editingAuthor = '', editingType = 'post';
+    let voyageRouteLayers = {}, voyageRouteCounts = {}, voyageRouteVisibility = {};
+    const ROUTE_COLORS = ['#e11d48', '#f97316', '#7c3aed', '#0d9488', '#ca8a04'];
 
     function toggleAppMenu() {
       document.getElementById('appMenu')?.classList.toggle('open');
@@ -2074,6 +2085,8 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       seamap.addTo(map);
       map.createPane('portPane');
       map.getPane('portPane').style.zIndex = 650;
+      map.createPane('routePane');
+      map.getPane('routePane').style.zIndex = 660;
       map.createPane('voyagePane');
       map.getPane('voyagePane').style.zIndex = 670;
       const notice = L.control({ position: 'bottomright' });
@@ -2084,6 +2097,17 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
         return div;
       };
       notice.addTo(map);
+      const routeControl = L.control({ position: 'topright' });
+      routeControl.onAdd = () => {
+        const div = L.DomUtil.create('div', 'voyage-layer-control');
+        div.id = 'voyageLayerControl';
+        if (window.matchMedia('(max-width: 768px)').matches) div.classList.add('collapsed');
+        L.DomEvent.disableClickPropagation(div);
+        L.DomEvent.disableScrollPropagation(div);
+        return div;
+      };
+      routeControl.addTo(map);
+      updateVoyageLayerControl();
       postClusterLayer = L.markerClusterGroup({
         showCoverageOnHover: false,
         spiderfyOnMaxZoom: true,
@@ -2141,6 +2165,7 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       renderPortList();
       renderBoatList();
       updateMenuCounts();
+      renderVoyageRoutes();
       if (!posts.length) { document.getElementById('timelineList').innerHTML = '<div class="empty-state"><div class="empty-state-emoji">0</div>まだ投稿がありません<br><small>「投稿」タブから投稿してみましょう</small></div>'; return; }
       document.getElementById('timelineList').innerHTML = posts.map(p => `<div class="post-item" data-id="${p.id}"><div class="post-item-content" onclick="focusPost('${p.id}', event)">${buildListMedia(p)}<div class="post-content"><div class="post-meta"><span class="post-author">${escapeHtml(p.author)}</span><span>${formatDate(p.timestamp)}</span>${p.mediaType === 'video' ? '<span class="port-list-badge">動画</span>' : ''}</div><div class="post-title">${escapeHtml(p.title)}</div><div class="post-comment">${escapeHtml(p.comment || '')}</div><div class="post-comment-count" data-comment-count-for="${escapeHtml(p.id)}">${formatCommentCount(p.id)}</div></div></div><div class="post-actions"><button class="post-action-btn" onclick="event.stopPropagation(); openEditModal('${p.id}')">編集</button><button class="post-action-btn" onclick="focusPost('${p.id}', event)">地図で見る</button></div></div>`).join('');
       posts.forEach(p => {
@@ -2247,6 +2272,52 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
         const icon = L.divIcon({ className: '', html: '<div class="voyage-dot">航</div>', iconSize: [20, 20], iconAnchor: [10, 10] });
         voyageMarkers[p.id] = L.marker([p.lat, p.lng], { icon, pane: 'voyagePane' }).addTo(map).bindPopup(buildVoyagePopup(p), { maxWidth: 260 });
       });
+    }
+    function postTime(p) { const t = new Date(String(p.timestamp || '').replace(' ', 'T')).getTime(); return Number.isFinite(t) ? t : NaN; }
+    function voyageDateMs(s, endOfDay) { const [y, m, d] = String(s).split('/').map(Number); return new Date(y, m - 1, d, endOfDay ? 23 : 0, endOfDay ? 59 : 0, endOfDay ? 59 : 0).getTime(); }
+    function voyageColor(voyage) { const index = VOYAGES.indexOf(voyage); return voyage.color || ROUTE_COLORS[(index < 0 ? 0 : index) % ROUTE_COLORS.length]; }
+    function voyageForPost(p) {
+      const t = postTime(p);
+      if (!Number.isFinite(t) || !Number.isFinite(Number(p.lat)) || !Number.isFinite(Number(p.lng))) return null;
+      return VOYAGES.find(v => v.visible !== false && t >= voyageDateMs(v.startDate) && t <= voyageDateMs(v.endDate, true)) || null;
+    }
+    function renderVoyageRoutes() {
+      if (!map) return;
+      Object.values(voyageRouteLayers).forEach(g => map.removeLayer(g));
+      voyageRouteLayers = {}; voyageRouteCounts = {};
+      const byVoyage = {};
+      posts.forEach(p => { const v = voyageForPost(p); if (v) (byVoyage[v.id] = byVoyage[v.id] || []).push(p); });
+      VOYAGES.filter(v => v.visible !== false).forEach(v => {
+        const routePosts = (byVoyage[v.id] || []).slice().sort((a, b) => postTime(a) - postTime(b));
+        voyageRouteCounts[v.id] = routePosts.length;
+        if (voyageRouteVisibility[v.id] === undefined) voyageRouteVisibility[v.id] = true;
+        if (!routePosts.length) return;
+        const color = voyageColor(v);
+        const group = L.layerGroup();
+        if (routePosts.length >= 2) group.addLayer(L.polyline(routePosts.map(p => [p.lat, p.lng]), { pane: 'routePane', color, weight: 3, opacity: 0.8, dashArray: '6 6' }));
+        routePosts.forEach((p, idx) => {
+          const icon = L.divIcon({ className: '', html: `<div class="route-seq" style="background:${color}">${idx + 1}</div>`, iconSize: [20, 20], iconAnchor: [31, 31] });
+          group.addLayer(L.marker([p.lat, p.lng], { pane: 'routePane', icon, keyboard: false }).on('click', () => focusPost(p.id)));
+        });
+        voyageRouteLayers[v.id] = group;
+        if (voyageRouteVisibility[v.id]) group.addTo(map);
+      });
+      updateVoyageLayerControl();
+    }
+    function updateVoyageLayerControl() {
+      const el = document.getElementById('voyageLayerControl');
+      if (!el) return;
+      const rows = VOYAGES.filter(v => v.visible !== false).map(v => {
+        const count = voyageRouteCounts[v.id] || 0;
+        return `<label class="vlc-row"><input type="checkbox" ${voyageRouteVisibility[v.id] !== false ? 'checked' : ''} ${count ? '' : 'disabled'} onchange="toggleVoyageRoute('${escapeQuote(v.id)}', this.checked)"><span class="vlc-swatch" style="background:${voyageColor(v)}"></span><span>${escapeHtml(v.name)}</span><span class="vlc-count">${count}件</span></label>`;
+      }).join('');
+      el.innerHTML = `<div class="vlc-head" onclick="this.parentElement.classList.toggle('collapsed')"><span>回航ルート</span><span>▾</span></div><div class="vlc-body">${rows || '<div class="vlc-row">回航がありません</div>'}</div>`;
+    }
+    function toggleVoyageRoute(voyageId, checked) {
+      voyageRouteVisibility[voyageId] = checked;
+      const group = voyageRouteLayers[voyageId];
+      if (!group || !map) return;
+      if (checked) group.addTo(map); else map.removeLayer(group);
     }
     function renderVoyages() {
       const list = document.getElementById('voyageList');
