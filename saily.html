@@ -84,6 +84,10 @@
     .port-dot.blue { background: #2C8EB8; box-shadow: 0 4px 12px rgba(44,142,184,0.28); }
     .voyage-dot { width: 20px; height: 20px; display: grid; place-items: center; background: #f59e0b; color: #fff; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 4px 13px rgba(13, 45, 68, 0.34); font-size: 10px; font-weight: 900; }
     .route-seq { width: 20px; height: 20px; display: grid; place-items: center; color: #fff; border: 2px solid #fff; border-radius: 50%; font-size: 11px; font-weight: 900; box-shadow: 0 2px 8px rgba(13, 45, 68, 0.35); cursor: pointer; }
+    .route-seq.in-port { width: max-content; min-width: 20px; padding: 0 5px; border-radius: 10px; }
+    .vlc-legend { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 0 4px 20px; color: #64748b; font-size: 10px; }
+    .vlc-legend span { display: inline-flex; align-items: center; gap: 4px; }
+    .vlc-note { margin-top: 4px; padding-top: 4px; border-top: 1px solid #e2ecf4; color: #7890a8; font-size: 10px; }
     .voyage-layer-control { min-width: 150px; max-width: 220px; padding: 7px 10px; background: rgba(255,255,255,0.94); border: 1px solid #d7e4ee; border-radius: 8px; box-shadow: 0 2px 8px rgba(13,45,68,0.12); font-size: 11px; color: #334155; }
     .vlc-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-weight: 700; cursor: pointer; user-select: none; }
     .voyage-layer-control.collapsed .vlc-body { display: none; }
@@ -1980,6 +1984,7 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       }
       renderPortMarkers();
       renderPortList();
+      renderVoyageRoutes();
       updateMenuCounts();
     }
     function savePortPoints(points) { portPoints = points.map(p => ({ ...p })); }
@@ -2281,6 +2286,27 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       if (!Number.isFinite(t) || !Number.isFinite(Number(p.lat)) || !Number.isFinite(Number(p.lng))) return null;
       return VOYAGES.find(v => v.visible !== false && t >= voyageDateMs(v.startDate) && t <= voyageDateMs(v.endDate, true)) || null;
     }
+    function voyageLegs(v) {
+      if (!Array.isArray(v.legs) || !v.legs.length) return [{ name: '', color: voyageColor(v), startMs: voyageDateMs(v.startDate) }];
+      return v.legs.map((leg, i) => ({
+        name: leg.name || `区間${i + 1}`,
+        color: leg.color || ROUTE_COLORS[i % ROUTE_COLORS.length],
+        startMs: i === 0 || !leg.startDate ? voyageDateMs(v.startDate) : voyageDateMs(leg.startDate)
+      }));
+    }
+    function postLegIndex(legs, p) {
+      const t = postTime(p);
+      let idx = 0;
+      legs.forEach((leg, i) => { if (t >= leg.startMs) idx = i; });
+      return idx;
+    }
+    function isNearPort(p) {
+      return loadPortPoints().some(port => {
+        const dy = (Number(p.lat) - port.lat) * 110.57;
+        const dx = (Number(p.lng) - port.lng) * 111.32 * Math.cos(((Number(p.lat) + port.lat) / 2) * Math.PI / 180);
+        return Math.sqrt(dx * dx + dy * dy) <= 2;
+      });
+    }
     function renderVoyageRoutes() {
       if (!map) return;
       Object.values(voyageRouteLayers).forEach(g => map.removeLayer(g));
@@ -2292,11 +2318,23 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
         voyageRouteCounts[v.id] = routePosts.length;
         if (voyageRouteVisibility[v.id] === undefined) voyageRouteVisibility[v.id] = true;
         if (!routePosts.length) return;
-        const color = voyageColor(v);
+        const legs = voyageLegs(v);
         const group = L.layerGroup();
-        if (routePosts.length >= 2) group.addLayer(L.polyline(routePosts.map(p => [p.lat, p.lng]), { pane: 'routePane', color, weight: 3, opacity: 0.8, dashArray: '6 6' }));
+        let run = [], runLeg = -1;
+        const flushRun = () => {
+          if (run.length >= 2) group.addLayer(L.polyline(run.map(p => [p.lat, p.lng]), { pane: 'routePane', color: legs[runLeg].color, weight: 3, opacity: 0.8, dashArray: '6 6' }));
+        };
+        routePosts.forEach(p => {
+          const legIndex = postLegIndex(legs, p);
+          if (legIndex !== runLeg && run.length) { flushRun(); run = [run[run.length - 1]]; }
+          runLeg = legIndex;
+          run.push(p);
+        });
+        flushRun();
         routePosts.forEach((p, idx) => {
-          const icon = L.divIcon({ className: '', html: `<div class="route-seq" style="background:${color}">${idx + 1}</div>`, iconSize: [20, 20], iconAnchor: [31, 31] });
+          const legColor = legs[postLegIndex(legs, p)].color;
+          const inPort = isNearPort(p);
+          const icon = L.divIcon({ className: '', html: `<div class="route-seq${inPort ? ' in-port' : ''}" style="background:${legColor}">${inPort ? '⚓' : ''}${idx + 1}</div>`, iconSize: inPort ? null : [20, 20], iconAnchor: [31, 31] });
           group.addLayer(L.marker([p.lat, p.lng], { pane: 'routePane', icon, keyboard: false }).on('click', () => focusPost(p.id)));
         });
         voyageRouteLayers[v.id] = group;
@@ -2309,9 +2347,11 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       if (!el) return;
       const rows = VOYAGES.filter(v => v.visible !== false).map(v => {
         const count = voyageRouteCounts[v.id] || 0;
-        return `<label class="vlc-row"><input type="checkbox" ${voyageRouteVisibility[v.id] !== false ? 'checked' : ''} ${count ? '' : 'disabled'} onchange="toggleVoyageRoute('${escapeQuote(v.id)}', this.checked)"><span class="vlc-swatch" style="background:${voyageColor(v)}"></span><span>${escapeHtml(v.name)}</span><span class="vlc-count">${count}件</span></label>`;
+        const legend = Array.isArray(v.legs) && v.legs.length ? `<div class="vlc-legend">${voyageLegs(v).map(l => `<span><span class="vlc-swatch" style="background:${l.color}"></span>${escapeHtml(l.name)}</span>`).join('')}</div>` : '';
+        return `<label class="vlc-row"><input type="checkbox" ${voyageRouteVisibility[v.id] !== false ? 'checked' : ''} ${count ? '' : 'disabled'} onchange="toggleVoyageRoute('${escapeQuote(v.id)}', this.checked)"><span class="vlc-swatch" style="background:${voyageColor(v)}"></span><span>${escapeHtml(v.name)}</span><span class="vlc-count">${count}件</span></label>${legend}`;
       }).join('');
-      el.innerHTML = `<div class="vlc-head" onclick="this.parentElement.classList.toggle('collapsed')"><span>回航ルート</span><span>▾</span></div><div class="vlc-body">${rows || '<div class="vlc-row">回航がありません</div>'}</div>`;
+      const note = Object.values(voyageRouteCounts).some(c => c > 0) ? '<div class="vlc-note">⚓ = 港に滞在中</div>' : '';
+      el.innerHTML = `<div class="vlc-head" onclick="this.parentElement.classList.toggle('collapsed')"><span>回航ルート</span><span>▾</span></div><div class="vlc-body">${rows || '<div class="vlc-row">回航がありません</div>'}${note}</div>`;
     }
     function toggleVoyageRoute(voyageId, checked) {
       voyageRouteVisibility[voyageId] = checked;
