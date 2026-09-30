@@ -5,6 +5,52 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
   <meta name="googlebot" content="noindex, nofollow">
+  <!-- アプリ内ブラウザ対策 ここから -->
+  <script>
+    (function () {
+      var ua = navigator.userAgent || '';
+      // LINE内ブラウザ: openExternalBrowser=1 を付けて外部ブラウザで開き直す（付与済みなら何もしない）
+      if (ua.indexOf(' Line/') !== -1) {
+        try {
+          var url = new URL(location.href);
+          if (!url.searchParams.has('openExternalBrowser')) {
+            url.searchParams.set('openExternalBrowser', '1');
+            location.replace(url.toString());
+          }
+        } catch (e) {}
+        return;
+      }
+      // Instagram / Facebook内ブラウザ: 上部に案内帯を表示（閉じると要素ごと削除）
+      if (!/Instagram|FBAN|FBAV/.test(ua)) return;
+      function showBanner() {
+        if (document.getElementById('inapp-browser-banner')) return;
+        var bar = document.createElement('div');
+        bar.id = 'inapp-browser-banner';
+        bar.setAttribute('role', 'alert');
+        bar.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:2147483647;display:flex;align-items:center;gap:10px;padding:10px 12px;padding-top:calc(10px + env(safe-area-inset-top));background:#0f2a42;color:#fff;font-size:13px;line-height:1.5;box-shadow:0 2px 10px rgba(0,0,0,0.25);';
+        var msg = document.createElement('div');
+        msg.style.cssText = 'flex:1;';
+        msg.textContent = 'カメラ・GPSを使うには、右上のメニューからブラウザ（Chrome／Safari）で開いてください';
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.setAttribute('aria-label', '閉じる');
+        btn.textContent = '×';
+        btn.style.cssText = 'flex:none;width:32px;height:32px;padding:0;border:1px solid rgba(255,255,255,0.5);border-radius:50%;background:transparent;color:#fff;font-size:18px;line-height:1;cursor:pointer;';
+        btn.addEventListener('click', function () {
+          if (bar.parentNode) bar.parentNode.removeChild(bar);
+        });
+        bar.appendChild(msg);
+        bar.appendChild(btn);
+        document.body.appendChild(bar);
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', showBanner);
+      } else {
+        showBanner();
+      }
+    })();
+  </script>
+  <!-- アプリ内ブラウザ対策 ここまで -->
   <title>Rotta Blue | 日本海洋研究所</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
