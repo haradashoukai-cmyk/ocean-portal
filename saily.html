@@ -101,7 +101,7 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     .timeline-toggle { position: absolute; right: 18px; bottom: calc(18px + env(safe-area-inset-bottom)); z-index: 500; display: flex; align-items: center; gap: 6px; padding: 11px 18px; background: var(--navy); color: #fff; border: 1px solid rgba(255,255,255,0.35); border-radius: 999px; box-shadow: var(--shadow); font-size: 13px; font-weight: 700; }
     .timeline-toggle:hover { background: #0f2638; }
-    .timeline-panel { position: absolute; top: 14px; right: 14px; bottom: 14px; z-index: 600; width: 360px; display: flex; flex-direction: column; background: rgba(255,255,255,0.96); backdrop-filter: blur(10px); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); overflow: hidden; transform: translateX(calc(100% + 28px)); transition: transform 0.3s; }
+    .timeline-panel { position: absolute; top: 14px; right: 14px; bottom: 14px; z-index: 1100; width: 360px; display: flex; flex-direction: column; background: rgba(255,255,255,0.96); backdrop-filter: blur(10px); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); overflow: hidden; transform: translateX(calc(100% + 28px)); transition: transform 0.3s; }
     .timeline-panel.open { transform: translateX(0); }
     .timeline-header { padding: 15px 16px; display: flex; align-items: center; justify-content: space-between; background: #fbfdff; border-bottom: 1px solid var(--line); }
     .timeline-title { color: var(--navy); font-size: 14px; font-weight: 700; }
@@ -129,18 +129,28 @@
     .port-dot.red { background: #E45B4F; box-shadow: 0 4px 12px rgba(228,91,79,0.28); }
     .port-dot.blue { background: #2C8EB8; box-shadow: 0 4px 12px rgba(44,142,184,0.28); }
     .voyage-dot { width: 20px; height: 20px; display: grid; place-items: center; background: #f59e0b; color: #fff; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 4px 13px rgba(13, 45, 68, 0.34); font-size: 10px; font-weight: 900; }
-    .route-seq { width: 20px; height: 20px; display: grid; place-items: center; color: #fff; border: 2px solid #fff; border-radius: 50%; font-size: 11px; font-weight: 900; box-shadow: 0 2px 8px rgba(13, 45, 68, 0.35); cursor: pointer; }
-    .route-seq.in-port { width: max-content; min-width: 20px; padding: 0 5px; border-radius: 10px; }
-    .vlc-legend { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 0 4px 20px; color: #64748b; font-size: 10px; }
-    .vlc-legend span { display: inline-flex; align-items: center; gap: 4px; }
-    .vlc-note { margin-top: 4px; padding-top: 4px; border-top: 1px solid #e2ecf4; color: #7890a8; font-size: 10px; }
-    .voyage-layer-control { min-width: 150px; max-width: 220px; padding: 7px 10px; background: rgba(255,255,255,0.94); border: 1px solid #d7e4ee; border-radius: 8px; box-shadow: 0 2px 8px rgba(13,45,68,0.12); font-size: 11px; color: #334155; }
-    .vlc-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-weight: 700; cursor: pointer; user-select: none; }
-    .voyage-layer-control.collapsed .vlc-body { display: none; }
-    .vlc-row { display: flex; align-items: center; gap: 6px; padding: 4px 0; cursor: pointer; }
-    .vlc-row input { margin: 0; }
-    .vlc-swatch { width: 14px; height: 4px; border-radius: 2px; flex-shrink: 0; }
-    .vlc-count { margin-left: auto; color: #7890a8; font-size: 10px; }
+    .route-stop { width: 22px; height: 22px; display: grid; place-items: center; color: #fff; border: 2px solid #fff; border-radius: 50%; font-size: 11px; font-weight: 900; box-shadow: 0 2px 8px rgba(13, 45, 68, 0.35); cursor: pointer; }
+    .stop-popup { padding: 12px 14px; }
+    .stop-popup-date { color: var(--muted); font-size: 11px; }
+    .stop-popup-name { margin: 2px 0 8px; color: var(--navy); font-size: 14px; font-weight: 700; }
+    .stop-popup-post { width: 100%; display: block; padding: 6px 0; background: transparent; border: 0; border-top: 1px solid #e7edf4; color: var(--blue); font-size: 12px; font-weight: 700; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .stop-popup-more { padding-top: 6px; border-top: 1px solid #e7edf4; color: var(--muted); font-size: 11px; }
+    .voyage-picker { position: absolute; top: 12px; left: 12px; z-index: 550; width: min(330px, calc(100% - 24px)); color: var(--ink); }
+    .vp-current { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 2px 8px; padding: 9px 12px; background: rgba(255,255,255,0.97); border: 1px solid #d7e4ee; border-radius: 8px; box-shadow: 0 2px 10px rgba(13,45,68,0.16); text-align: left; }
+    .vp-label { grid-column: 1 / -1; color: var(--muted); font-size: 10px; font-weight: 700; }
+    .vp-name { color: var(--navy); font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .vp-caret { color: var(--muted); font-size: 12px; }
+    .vp-meta { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; color: var(--muted); font-size: 11px; }
+    .vp-swatch { display: inline-block; width: 14px; height: 4px; margin-right: 4px; border-radius: 2px; vertical-align: middle; }
+    .vp-list { display: none; max-height: min(60vh, 440px); margin-top: 6px; padding: 6px; overflow-y: auto; background: #fff; border: 1px solid #d7e4ee; border-radius: 8px; box-shadow: var(--shadow); }
+    .voyage-picker.open .vp-list { display: block; }
+    .voyage-picker.open .vp-caret { transform: rotate(180deg); }
+    .vp-row { width: 100%; display: block; padding: 9px 10px; background: transparent; border: 0; border-radius: 6px; text-align: left; }
+    .vp-row:hover, .vp-row.active { background: #eef8fb; }
+    .vp-row-name { color: var(--ink); font-size: 13px; font-weight: 700; }
+    .vp-row-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; margin-top: 2px; color: var(--muted); font-size: 11px; }
+    .vp-tag { padding: 1px 7px; border-radius: 999px; background: #edf7f9; color: var(--blue); font-size: 10px; font-weight: 700; }
+    .vp-divider { height: 1px; margin: 6px 4px; background: #e7edf4; }
     .empty-state { padding: 40px 20px; text-align: center; color: var(--muted); font-size: 13px; line-height: 1.6; }
     .empty-state-emoji { font-size: 34px; margin-bottom: 8px; }
     .marker-photo-wrap { box-sizing: border-box; width: 42px; height: 42px; display: block; overflow: hidden; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 3px 12px rgba(13, 45, 68, 0.35); background-color: #e2e8f0; background-position: center; background-size: cover; background-repeat: no-repeat; }
@@ -148,7 +158,7 @@
     .post-cluster { width: 42px; height: 42px; display: grid; place-items: center; background: #12324A; color: #fff; border: 4px solid rgba(255,255,255,0.92); border-radius: 50%; box-shadow: 0 8px 22px rgba(18,50,74,0.28); font-size: 13px; font-weight: 700; }
     .post-cluster.medium, .post-cluster.large { background: #12324A; }
     .leaflet-marker-icon:hover .post-cluster { background: #1F8FA3; border-color: rgba(255,255,255,0.95); box-shadow: 0 10px 26px rgba(31,143,163,0.35); }
-    #mapView.popup-active .timeline-toggle, #mapView.popup-active .voyage-layer-control { opacity: 0.18; pointer-events: none; }
+    #mapView.popup-active .timeline-toggle, #mapView.popup-active .voyage-picker { opacity: 0.18; pointer-events: none; }
     #mapView.popup-active .leaflet-control-container { z-index: 100; }
     .leaflet-popup-pane { z-index: 1200; }
     .leaflet-control-zoom { display: none; }
@@ -369,6 +379,7 @@
   <div class="main">
     <div class="view active" id="mapView">
       <div id="map"></div>
+      <div class="voyage-picker" id="voyagePicker"></div>
       <div class="loading-overlay" id="loadingOverlay" style="display:none;"><div class="loader"></div><span>読み込み中...</span></div>
       <div class="timeline-panel" id="timelinePanel">
         <div class="timeline-header"><div class="timeline-title">投稿一覧</div><button class="timeline-close" onclick="toggleTimeline()">×</button></div>
@@ -1091,20 +1102,37 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
     ];
     let currentLat = null, currentLng = null, currentPhotoBase64 = null, currentMediaFile = null, currentMediaItems = [], currentMediaPreviewUrls = [], currentPhotoName = '', currentPhotoTimestamp = '', currentMediaType = 'image', currentMediaMimeType = 'image/jpeg';
     let mobilePopupGuard = null;
+    // ===== 航海の一覧 =====
+    // 航海を足すときは、この一覧に1つ足すだけです。期間内（日本時間）の投稿が自動でその航海に入り、
+    // 線は投稿の位置から自動で引かれます。
+    //   kind  … 一覧に出す種類の札（'回航' 'クルーズ' '港調査' など）
+    //   line  … false にすると線を引きません（陸路の調査など）
+    //   shore … 上陸して陸路で動いた期間。この間の投稿は地図には出ますが、線には入れません
+    //   legs  … 往路・復路などで線の色を分けたいとき
     const VOYAGES = [
       {
         id: 'V2026-01',
-        name: '新居浜→統栄2026年5月',
+        name: '新居浜→統営 2026年5月',
+        kind: '回航',
         ship: 'トランサイドⅥ (Nauticat 42)',
         startDate: '2026/05/09',
-        endDate: '2026/05/24',
+        endDate: '2026/05/30',
         color: '#e11d48',
         legs: [
           { name: '往路', color: '#e11d48' },
           { name: '復路', startDate: '2026/05/23', color: '#7c3aed' }
         ],
+        shore: [{ from: '2026/05/19', to: '2026/05/21' }],
         visible: true
-      }
+      },
+      { id: 'V2026-02', name: '沖縄 マリーナ調査 2026年6月', kind: '港調査', startDate: '2026/06/24', endDate: '2026/06/24', line: false, visible: true },
+      { id: 'V2026-03', name: '新居浜→弓削島 2026年7月', kind: 'クルーズ', startDate: '2026/07/20', endDate: '2026/07/21', color: '#0d9488', visible: true },
+      { id: 'V2026-04', name: '北海道 港調査 2026年7月', kind: '港調査', startDate: '2026/07/24', endDate: '2026/07/30', line: false, visible: true },
+      { id: 'V2026-05', name: '佐渡島クルーズ 2026年8月', kind: 'クルーズ', startDate: '2026/08/21', endDate: '2026/08/23', color: '#f97316', visible: true },
+      { id: 'V2026-06', name: 'セブ 造船所 2026年9月', kind: '整備', startDate: '2026/09/08', endDate: '2026/09/09', line: false, visible: true },
+      { id: 'V2026-07', name: 'バートラム33回航 大阪→沖縄 2026年9月', kind: '回航', ship: 'Bertram 33', startDate: '2026/09/25', endDate: '2026/10/02', color: '#e11d48', visible: true },
+      { id: 'V2026-08', name: '北海道 室蘭・苫小牧 2026年10月', kind: '港調査', startDate: '2026/10/19', endDate: '2026/10/20', line: false, visible: true },
+      { id: 'V2026-09', name: '海から巡る四国お遍路の旅 2026年11月', kind: 'クルーズ', startDate: '2026/11/07', endDate: '2026/11/09', color: '#7c3aed', shore: [{ from: '2026/11/07', to: '2026/11/07' }], visible: true }
     ];
     const VOYAGE_POINTS = [
       {
@@ -1453,7 +1481,8 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       { id: 'boat_transide5', portId: 'port_shinminato_marina', name: 'トランサイドⅤ', icon: '⛵', model: 'Jeanneau Voyage 11.20', length: '32ft', launched: '1991年進水', photoUrl: 'assets/boat_transide5.jpg', visible: true }
     ];
     let miniMap = null, miniMapMarker = null, selectedAuthor = '', posts = [], portPoints = DEFAULT_PORT_POINTS.map(p => ({ ...p })), commentCounts = {}, commentCache = {}, markers = {}, portMarkers = {}, voyageMarkers = {}, postClusterLayer = null, map, editingPost = null, editingAuthor = '', editingType = 'post';
-    let voyageRouteLayers = {}, voyageRouteCounts = {}, voyageRouteVisibility = {};
+    let selectedVoyageId = null, voyageRouteLayer = null, voyageStopMarkers = [], voyageInitialFitDone = false;
+    const ROUTE_MERGE_KM = 2.5, ROUTE_STAY_MS = 2 * 60 * 60 * 1000;
     const ROUTE_COLORS = ['#e11d48', '#f97316', '#7c3aed', '#0d9488', '#ca8a04'];
 
     function toggleAppMenu() {
@@ -2034,7 +2063,7 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       }
       renderPortMarkers();
       renderPortList();
-      renderVoyageRoutes();
+      renderVoyageRoute();
       updateMenuCounts();
     }
     function savePortPoints(points) { portPoints = points.map(p => ({ ...p })); }
@@ -2140,6 +2169,9 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       seamap.addTo(map);
       map.createPane('portPane');
       map.getPane('portPane').style.zIndex = 650;
+      map.createPane('routeLinePane');
+      map.getPane('routeLinePane').style.zIndex = 450;
+      map.getPane('routeLinePane').style.pointerEvents = 'none';
       map.createPane('routePane');
       map.getPane('routePane').style.zIndex = 660;
       map.createPane('voyagePane');
@@ -2152,17 +2184,9 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
         return div;
       };
       notice.addTo(map);
-      const routeControl = L.control({ position: 'topright' });
-      routeControl.onAdd = () => {
-        const div = L.DomUtil.create('div', 'voyage-layer-control');
-        div.id = 'voyageLayerControl';
-        if (window.matchMedia('(max-width: 768px)').matches) div.classList.add('collapsed');
-        L.DomEvent.disableClickPropagation(div);
-        L.DomEvent.disableScrollPropagation(div);
-        return div;
-      };
-      routeControl.addTo(map);
-      updateVoyageLayerControl();
+      map.on('click', closeVoyagePicker);
+      map.on('zoomend', declutterStops);
+      renderVoyagePicker();
       postClusterLayer = L.markerClusterGroup({
         showCoverageOnHover: false,
         spiderfyOnMaxZoom: true,
@@ -2211,24 +2235,23 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
     }
     function escapeHtml(s) { if (!s) return ''; return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
     function escapeQuote(s) { return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
-    function activeVoyagePoints() { return VOYAGE_POINTS.filter(p => p.visible !== false && p.showMarker !== false && Number.isFinite(Number(p.lat)) && Number.isFinite(Number(p.lng)) && VOYAGES.find(v => v.id === p.voyageId && v.visible !== false)); }
+    function activeVoyagePoints() { return VOYAGE_POINTS.filter(p => p.visible !== false && p.showMarker !== false && p.voyageId === selectedVoyageId && Number.isFinite(Number(p.lat)) && Number.isFinite(Number(p.lng)) && VOYAGES.find(v => v.id === p.voyageId && v.visible !== false)); }
     function renderPosts() {
       if (postClusterLayer) postClusterLayer.clearLayers();
       markers = {};
       renderPortMarkers();
-      renderVoyageMarkers();
       renderPortList();
       renderBoatList();
       updateMenuCounts();
-      renderVoyageRoutes();
-      if (!posts.length) { document.getElementById('timelineList').innerHTML = '<div class="empty-state"><div class="empty-state-emoji">0</div>まだ投稿がありません<br><small>「投稿」タブから投稿してみましょう</small></div>'; return; }
+      if (!posts.length) { applyVoyageSelection(false);document.getElementById('timelineList').innerHTML = '<div class="empty-state"><div class="empty-state-emoji">0</div>まだ投稿がありません<br><small>「投稿」タブから投稿してみましょう</small></div>'; return; }
       document.getElementById('timelineList').innerHTML = posts.map(p => `<div class="post-item" data-id="${p.id}"><div class="post-item-content" onclick="focusPost('${p.id}', event)">${buildListMedia(p)}<div class="post-content"><div class="post-meta"><span class="post-author">${escapeHtml(p.author)}</span><span>${formatDate(p.timestamp)}</span>${p.mediaType === 'video' ? '<span class="port-list-badge">動画</span>' : ''}</div><div class="post-title">${escapeHtml(p.title)}</div><div class="post-comment">${escapeHtml(p.comment || '')}</div><div class="post-comment-count" data-comment-count-for="${escapeHtml(p.id)}">${formatCommentCount(p.id)}</div></div></div><div class="post-actions"><button class="post-action-btn" onclick="event.stopPropagation(); openEditModal('${p.id}')">編集</button><button class="post-action-btn" onclick="focusPost('${p.id}', event)">地図で見る</button></div></div>`).join('');
       posts.forEach(p => {
         const icon = L.divIcon({ className: '', html: buildMarkerMedia(p), iconSize: [42, 42], iconAnchor: [21, 21] });
         markers[p.id] = L.marker([p.lat, p.lng], { icon }).bindPopup(buildPopupContent(p), { maxWidth: 240, closeOnClick: false, autoClose: true });
-        postClusterLayer.addLayer(markers[p.id]);
       });
-      const bounds = L.latLngBounds(posts.map(p => [p.lat, p.lng])); loadPortPoints().forEach(p => bounds.extend([p.lat, p.lng])); activeVoyagePoints().forEach(p => bounds.extend([p.lat, p.lng])); map.fitBounds(bounds, { padding: [40, 40] });
+      if (selectedVoyageId === null) selectedVoyageId = initialVoyageId();
+      applyVoyageSelection(!voyageInitialFitDone);
+      voyageInitialFitDone = true;
     }
     function renderPortMarkers() {
       if (!map) return;
@@ -2350,70 +2373,200 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       legs.forEach((leg, i) => { if (t >= leg.startMs) idx = i; });
       return idx;
     }
-    function isNearPort(p) {
-      return loadPortPoints().some(port => {
-        const dy = (Number(p.lat) - port.lat) * 110.57;
-        const dx = (Number(p.lng) - port.lng) * 111.32 * Math.cos(((Number(p.lat) + port.lat) / 2) * Math.PI / 180);
-        return Math.sqrt(dx * dx + dy * dy) <= 2;
-      });
+    function distKm(a, b) {
+      const rad = Math.PI / 180, dLat = (b.lat - a.lat) * rad, dLng = (b.lng - a.lng) * rad;
+      const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dLng / 2) ** 2;
+      return 12742 * Math.asin(Math.sqrt(h));
     }
-    function renderVoyageRoutes() {
+    function nearestPort(p, maxKm = 2) {
+      let best = null, bestKm = maxKm;
+      loadPortPoints().forEach(port => { const km = distKm(p, port); if (km <= bestKm) { best = port; bestKm = km; } });
+      return best;
+    }
+    function visibleVoyages() { return VOYAGES.filter(v => v.visible !== false); }
+    function currentVoyage() { return visibleVoyages().find(v => v.id === selectedVoyageId) || null; }
+    function postsOfVoyage(v) { return posts.filter(p => voyageForPost(p) === v); }
+    function shownPosts() { const v = currentVoyage(); return v ? postsOfVoyage(v) : posts; }
+    function inShorePeriod(v, t) { return (v.shore || []).some(r => t >= voyageDateMs(r.from) && t <= voyageDateMs(r.to, true)); }
+    function voyagePeriodLabel(v) {
+      const [sy, sm, sd] = String(v.startDate).split('/').map(Number), [ey, em, ed] = String(v.endDate).split('/').map(Number);
+      if (sy === ey && sm === em && sd === ed) return `${sy}/${sm}/${sd}`;
+      return `${sy}/${sm}/${sd}〜${sy === ey ? '' : ey + '/'}${em}/${ed}`;
+    }
+    // 最初に出す航海：URL の #v=航海ID があればそれ、なければ投稿のあるいちばん新しい航海
+    function initialVoyageId() {
+      const fromHash = (location.hash.match(/[#&]v=([^&]+)/) || [])[1] || '';
+      if (fromHash === 'all' || visibleVoyages().some(v => v.id === fromHash)) return fromHash;
+      const latest = visibleVoyages().filter(v => postsOfVoyage(v).length).sort((a, b) => voyageDateMs(b.startDate) - voyageDateMs(a.startDate))[0];
+      return latest ? latest.id : 'all';
+    }
+    // 投稿の時刻は「投稿した時刻」で、あとからまとめて上げた写真は順番が前後する。
+    // 先頭（出港地）は固定したまま、行きつ戻りつが減るように並べ替えて線を素直にする。
+    function shortenRoute(path) {
+      const d = distKm;
+      let improved = true, guard = 0;
+      while (improved && guard++ < 60) {
+        improved = false;
+        for (let i = 1; i < path.length - 1; i++) {
+          for (let j = i + 1; j < path.length; j++) {
+            const a = path[i - 1], b = path[i], c = path[j], e = path[j + 1];
+            const before = d(a, b) + (e ? d(c, e) : 0), after = d(a, c) + (e ? d(b, e) : 0);
+            if (after < before - 0.5) {
+              path.splice(i, j - i + 1, ...path.slice(i, j + 1).reverse());
+              improved = true;
+            }
+          }
+        }
+        for (let i = 1; i < path.length; i++) {
+          const n = path[i], prev = path[i - 1], next = path[i + 1];
+          const gain = d(prev, n) + (next ? d(n, next) - d(prev, next) : 0);
+          let best = 0.5, bestK = -1;
+          for (let k = 0; k < path.length; k++) {
+            if (k === i || k === i - 1) continue;
+            const p = path[k], q = path[k + 1];
+            const cost = q ? d(p, n) + d(n, q) - d(p, q) : d(p, n);
+            if (gain - cost > best) { best = gain - cost; bestK = k; }
+          }
+          if (bestK >= 0) {
+            path.splice(i, 1);
+            path.splice(bestK > i ? bestK : bestK + 1, 0, n);
+            improved = true;
+          }
+        }
+      }
+      return path;
+    }
+    // 航海の線を作る。近い投稿（2.5km以内）は1地点にまとめ、港の近く・2時間以上いた地点・出発地と到着地を「寄港地」として番号を付ける。
+    function buildVoyageRoute(v) {
+      const legs = voyageLegs(v);
+      const routePosts = postsOfVoyage(v).filter(p => !inShorePeriod(v, postTime(p))).sort((a, b) => postTime(a) - postTime(b));
+      const byLeg = legs.map(() => []);
+      routePosts.forEach(p => {
+        const t = postTime(p), leg = postLegIndex(legs, p);
+        let node = byLeg[leg].find(n => distKm(n, p) <= ROUTE_MERGE_KM);
+        if (!node) { node = { leg, lat: Number(p.lat), lng: Number(p.lng), t0: t, t1: t, posts: [] }; byLeg[leg].push(node); }
+        node.posts.push(p);
+        node.t1 = Math.max(node.t1, t);
+      });
+      const path = [];
+      byLeg.forEach(legNodes => {
+        if (!legNodes.length) return;
+        const prev = path[path.length - 1];
+        const legPath = shortenRoute(prev ? [prev, ...legNodes] : legNodes.slice());
+        path.push(...(prev ? legPath.slice(1) : legPath));
+      });
+      // 15km以上離れた所へ行って、ほぼ同じ場所に戻るだけの1地点（陸路の寄り道や、位置のずれた投稿）は線から外す
+      for (let i = 1; i < path.length - 1; i++) {
+        const a = path[i - 1], x = path[i], b = path[i + 1];
+        if (distKm(a, x) > 15 && distKm(a, x) + distKm(x, b) > 4 * Math.max(distKm(a, b), 5)) { path.splice(i, 1); i = 0; }
+      }
+      const segments = [];
+      path.forEach((n, i) => {
+        let seg = segments[segments.length - 1];
+        if (!seg || seg.leg !== n.leg) { seg = { leg: n.leg, color: legs[n.leg].color, latlngs: i ? [[path[i - 1].lat, path[i - 1].lng]] : [] }; segments.push(seg); }
+        seg.latlngs.push([n.lat, n.lng]);
+      });
+      path.forEach((n, i) => {
+        n.port = nearestPort(n);
+        n.isStop = i === 0 || i === path.length - 1 || !!n.port || n.t1 - n.t0 >= ROUTE_STAY_MS;
+      });
+      // 日付をまたいだ所は一泊した場所。前日の夕方（15時以降）の最後の地点か、翌朝（10時前）の最初の地点を寄港地にする
+      const hourOf = t => { const d = new Date(t); return d.getHours() + d.getMinutes() / 60; };
+      const dayOf = t => { const d = new Date(t); return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate(); };
+      for (let i = 1; i < path.length; i++) {
+        const a = path[i - 1], b = path[i];
+        if (dayOf(b.t0) <= dayOf(a.t1)) continue;
+        const evening = hourOf(a.t1) >= 15, morning = hourOf(b.t0) < 10;
+        if (evening && morning) (24 - hourOf(a.t1) <= hourOf(b.t0) ? a : b).isStop = true;
+        else if (morning) b.isStop = true;
+        else if (evening) a.isStop = true;
+      }
+      let stopNo = 0;
+      path.forEach(n => { if (n.isStop) n.stopNo = ++stopNo; });
+      return { path, segments, legs };
+    }
+    function buildStopPopup(n) {
+      const sorted = n.posts.slice().sort((a, b) => postTime(a) - postTime(b));
+      const day = t => { const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()}`; };
+      const from = day(n.t0), to = day(n.t1);
+      const rows = sorted.slice(0, 6).map(p => `<button class="stop-popup-post" type="button" onclick="focusPost('${escapeQuote(p.id)}', event)">${escapeHtml(p.title)}</button>`).join('');
+      const more = sorted.length > 6 ? `<div class="stop-popup-more">ほか ${sorted.length - 6}件</div>` : '';
+      return `<div class="stop-popup"><div class="stop-popup-date">${n.stopNo}番目 ・ ${from === to ? from : from + '〜' + to}</div><div class="stop-popup-name">${escapeHtml(n.port ? n.port.title : sorted[0].title)}</div>${rows}${more}</div>`;
+    }
+    function renderVoyageRoute() {
       if (!map) return;
-      Object.values(voyageRouteLayers).forEach(g => map.removeLayer(g));
-      voyageRouteLayers = {}; voyageRouteCounts = {};
-      const byVoyage = {};
-      posts.forEach(p => { const v = voyageForPost(p); if (v) (byVoyage[v.id] = byVoyage[v.id] || []).push(p); });
-      VOYAGES.filter(v => v.visible !== false).forEach(v => {
-        const routePosts = (byVoyage[v.id] || []).slice().sort((a, b) => postTime(a) - postTime(b));
-        voyageRouteCounts[v.id] = routePosts.length;
-        if (voyageRouteVisibility[v.id] === undefined) voyageRouteVisibility[v.id] = true;
-        if (!routePosts.length) return;
-        const legs = voyageLegs(v);
-        const group = L.layerGroup();
-        let run = [], runLeg = -1;
-        const flushRun = () => {
-          if (run.length >= 2) group.addLayer(L.polyline(run.map(p => [p.lat, p.lng]), { pane: 'routePane', color: legs[runLeg].color, weight: 3, opacity: 0.8, dashArray: '6 6' }));
-        };
-        routePosts.forEach(p => {
-          const legIndex = postLegIndex(legs, p);
-          if (legIndex !== runLeg && run.length) { flushRun(); run = [run[run.length - 1]]; }
-          runLeg = legIndex;
-          run.push(p);
-        });
-        flushRun();
-        routePosts.forEach((p, idx) => {
-          const legColor = legs[postLegIndex(legs, p)].color;
-          const inPort = isNearPort(p);
-          const icon = L.divIcon({ className: '', html: `<div class="route-seq${inPort ? ' in-port' : ''}" style="background:${legColor}">${inPort ? '⚓' : ''}${idx + 1}</div>`, iconSize: inPort ? null : [20, 20], iconAnchor: [31, 31] });
-          group.addLayer(L.marker([p.lat, p.lng], { pane: 'routePane', icon, keyboard: false }).on('click', () => focusPost(p.id)));
-        });
-        voyageRouteLayers[v.id] = group;
-        if (voyageRouteVisibility[v.id]) group.addTo(map);
+      if (voyageRouteLayer) { map.removeLayer(voyageRouteLayer); voyageRouteLayer = null; }
+      const v = currentVoyage();
+      if (!v || v.line === false) return;
+      const route = buildVoyageRoute(v);
+      if (route.path.length < 2) return;
+      const group = L.layerGroup();
+      const lines = route.segments.filter(s => s.latlngs.length >= 2);
+      lines.forEach(s => group.addLayer(L.polyline(s.latlngs, { pane: 'routeLinePane', color: '#fff', weight: 7, opacity: 0.8, interactive: false })));
+      lines.forEach(s => group.addLayer(L.polyline(s.latlngs, { pane: 'routeLinePane', color: s.color, weight: 3, opacity: 0.95, interactive: false })));
+      const stops = route.path.filter(n => n.isStop);
+      const stopMarkers = stops.map(n => {
+        const icon = L.divIcon({ className: '', html: `<div class="route-stop" style="background:${route.legs[n.leg].color}">${n.stopNo}</div>`, iconSize: [22, 22], iconAnchor: [30, 30] });
+        return L.marker([n.lat, n.lng], { pane: 'routePane', icon, keyboard: false }).bindPopup(buildStopPopup(n), { maxWidth: 240 });
       });
-      updateVoyageLayerControl();
+      // 重なったときに残す順：出発地、到着地、あとは寄港順
+      voyageStopMarkers = stopMarkers.length > 1 ? [stopMarkers[0], stopMarkers[stopMarkers.length - 1], ...stopMarkers.slice(1, -1)] : stopMarkers;
+      voyageRouteLayer = group.addTo(map);
+      declutterStops();
     }
-    function updateVoyageLayerControl() {
-      const el = document.getElementById('voyageLayerControl');
+    // 引いた地図で番号どうしが重なる所は、優先度の低い番号を隠す（寄ると出てくる）
+    function declutterStops() {
+      if (!map || !voyageRouteLayer) return;
+      const kept = [];
+      voyageStopMarkers.forEach(m => {
+        const pt = map.latLngToLayerPoint(m.getLatLng());
+        const clash = kept.some(k => Math.abs(k.x - pt.x) < 26 && Math.abs(k.y - pt.y) < 26);
+        if (clash) { if (voyageRouteLayer.hasLayer(m)) voyageRouteLayer.removeLayer(m); return; }
+        kept.push(pt);
+        if (!voyageRouteLayer.hasLayer(m)) voyageRouteLayer.addLayer(m);
+      });
+    }
+    function renderVoyagePicker() {
+      const el = document.getElementById('voyagePicker');
       if (!el) return;
-      const rows = VOYAGES.filter(v => v.visible !== false).map(v => {
-        const count = voyageRouteCounts[v.id] || 0;
-        const legend = Array.isArray(v.legs) && v.legs.length ? `<div class="vlc-legend">${voyageLegs(v).map(l => `<span><span class="vlc-swatch" style="background:${l.color}"></span>${escapeHtml(l.name)}</span>`).join('')}</div>` : '';
-        return `<label class="vlc-row"><input type="checkbox" ${voyageRouteVisibility[v.id] !== false ? 'checked' : ''} ${count ? '' : 'disabled'} onchange="toggleVoyageRoute('${escapeQuote(v.id)}', this.checked)"><span class="vlc-swatch" style="background:${voyageColor(v)}"></span><span>${escapeHtml(v.name)}</span><span class="vlc-count">${count}件</span></label>${legend}`;
-      }).join('');
-      const note = Object.values(voyageRouteCounts).some(c => c > 0) ? '<div class="vlc-note">⚓ = 港に滞在中</div>' : '';
-      el.innerHTML = `<div class="vlc-head" onclick="this.parentElement.classList.toggle('collapsed')"><span>回航ルート</span><span>▾</span></div><div class="vlc-body">${rows || '<div class="vlc-row">回航がありません</div>'}${note}</div>`;
+      const v = currentVoyage();
+      const list = visibleVoyages().map(x => ({ v: x, count: postsOfVoyage(x).length })).sort((a, b) => voyageDateMs(b.v.startDate) - voyageDateMs(a.v.startDate));
+      const legend = v && v.line !== false && Array.isArray(v.legs) && v.legs.length ? voyageLegs(v).map(l => `<span><span class="vp-swatch" style="background:${l.color}"></span>${escapeHtml(l.name)}</span>`).join('') : '';
+      const name = v ? v.name : (selectedVoyageId === null ? '読み込み中…' : 'すべての投稿');
+      const meta = v ? `<span>${voyagePeriodLabel(v)}</span>${v.ship ? `<span>${escapeHtml(v.ship)}</span>` : ''}<span>${postsOfVoyage(v).length}件</span>${legend}` : (selectedVoyageId === null ? '' : `<span>${posts.length}件</span>`);
+      const rows = list.map(({ v: x, count }) => `<button class="vp-row${x.id === selectedVoyageId ? ' active' : ''}" type="button" onclick="selectVoyage('${escapeQuote(x.id)}')"><div class="vp-row-name">${escapeHtml(x.name)}</div><div class="vp-row-meta">${x.kind ? `<span class="vp-tag">${escapeHtml(x.kind)}</span>` : ''}<span>${voyagePeriodLabel(x)}</span><span>${count}件</span></div></button>`).join('');
+      const allRow = `<button class="vp-row${selectedVoyageId === 'all' ? ' active' : ''}" type="button" onclick="selectVoyage('all')"><div class="vp-row-name">すべての投稿</div><div class="vp-row-meta"><span>${posts.length}件</span><span>線は出しません</span></div></button>`;
+      el.innerHTML = `<button class="vp-current" type="button" onclick="toggleVoyagePicker()"><span class="vp-label">航海を選ぶ</span><span class="vp-name">${escapeHtml(name)}</span><span class="vp-caret">▾</span><span class="vp-meta">${meta}</span></button><div class="vp-list">${rows}<div class="vp-divider"></div>${allRow}</div>`;
     }
-    function toggleVoyageRoute(voyageId, checked) {
-      voyageRouteVisibility[voyageId] = checked;
-      const group = voyageRouteLayers[voyageId];
-      if (!group || !map) return;
-      if (checked) group.addTo(map); else map.removeLayer(group);
+    function toggleVoyagePicker() { document.getElementById('voyagePicker')?.classList.toggle('open'); }
+    function closeVoyagePicker() { document.getElementById('voyagePicker')?.classList.remove('open'); }
+    function selectVoyage(id, fit = true) {
+      selectedVoyageId = visibleVoyages().some(v => v.id === id) ? id : 'all';
+      try { history.replaceState(null, '', '#v=' + selectedVoyageId); } catch (_) {}
+      closeVoyagePicker();
+      map?.closePopup();
+      applyVoyageSelection(fit);
+    }
+    // 選んだ航海の投稿・線・印だけを地図に出す
+    function applyVoyageSelection(fit) {
+      if (!map || !postClusterLayer) return;
+      const shown = shownPosts();
+      postClusterLayer.clearLayers();
+      postClusterLayer.addLayers(shown.map(p => markers[p.id]).filter(Boolean));
+      renderVoyageMarkers();
+      renderVoyageRoute();
+      renderVoyagePicker();
+      if (!fit) return;
+      const pts = shown.map(p => [p.lat, p.lng]);
+      activeVoyagePoints().forEach(p => pts.push([p.lat, p.lng]));
+      if (!currentVoyage()) loadPortPoints().forEach(p => pts.push([p.lat, p.lng]));
+      if (pts.length) map.fitBounds(L.latLngBounds(pts), { paddingTopLeft: [44, 132], paddingBottomRight: [36, 56], maxZoom: 13 });
     }
     function renderVoyages() {
       const list = document.getElementById('voyageList');
       if (!list) return;
       updateMenuCounts();
-      list.innerHTML = VOYAGES.map(v => {
+      list.innerHTML = VOYAGES.filter(v => VOYAGE_POINTS.some(p => p.voyageId === v.id && p.visible !== false)).map(v => {
         const points = VOYAGE_POINTS.filter(p => p.voyageId === v.id && p.visible !== false).sort((a, b) => (a.seq || 0) - (b.seq || 0));
         const grouped = points.reduce((days, point) => {
           const date = point.date || '日付未設定';
@@ -2447,6 +2600,7 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
     function focusVoyagePoint(id) {
       const point = VOYAGE_POINTS.find(p => p.id === id);
       if (!point) return;
+      if (selectedVoyageId !== point.voyageId) selectVoyage(point.voyageId, false);
       switchView('map');
       setTimeout(() => {
         map?.flyTo([point.lat, point.lng], 14, { duration: 0.8 });
@@ -2462,6 +2616,12 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       document.querySelector(`.post-item[data-id="${id}"]`)?.classList.add('active');
       const marker = markers[id];
       if (!marker) return;
+      if (postClusterLayer && !postClusterLayer.hasLayer(marker)) {
+        // 表示中の航海に入っていない投稿は、その投稿の航海に切り替えてから近くまで移動する
+        const pv = voyageForPost(post);
+        selectVoyage(pv ? pv.id : 'all', false);
+        map.setView([post.lat, post.lng], 12, { animate: false });
+      }
       const openMarker = () => {
         map?.closePopup();
         mobilePopupGuard = window.matchMedia('(max-width: 768px)').matches
