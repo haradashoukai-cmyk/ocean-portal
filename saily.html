@@ -137,7 +137,6 @@
     .port-dot { width: 12px; height: 12px; border: 3px solid rgba(255,255,255,0.95); border-radius: 50%; }
     .port-dot.red { background: #E45B4F; box-shadow: 0 4px 12px rgba(228,91,79,0.28); }
     .port-dot.blue { background: #2C8EB8; box-shadow: 0 4px 12px rgba(44,142,184,0.28); }
-    .voyage-dot { width: 20px; height: 20px; display: grid; place-items: center; background: #f59e0b; color: #fff; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 4px 13px rgba(13, 45, 68, 0.34); font-size: 10px; font-weight: 900; }
     .route-stop { width: 22px; height: 22px; display: grid; place-items: center; color: #fff; border: 2px solid #fff; border-radius: 50%; font-size: 11px; font-weight: 900; box-shadow: 0 2px 8px rgba(13, 45, 68, 0.35); cursor: pointer; }
     .stop-popup { padding: 12px 14px; }
     .stop-popup-date { color: var(--muted); font-size: 11px; }
@@ -201,46 +200,6 @@
     .comment-submit { padding: 7px 9px; background: var(--blue); color: #fff; border: 0; border-radius: 6px; font-size: 11px; font-weight: 700; }
     .post-view { height: 100%; overflow-y: auto; padding: 16px 10px calc(132px + env(safe-area-inset-bottom)) 10px; background: linear-gradient(180deg, #eef4f8 0%, #f8fbfd 100%); -webkit-overflow-scrolling: touch; }
     .post-container { width: 100%; max-width: 960px; margin: 0 auto; }
-    .voyage-view { height: 100%; overflow-y: auto; padding: 14px 10px calc(96px + env(safe-area-inset-bottom)); background: linear-gradient(180deg, #eef4f8 0%, #f8fbfd 100%); -webkit-overflow-scrolling: touch; }
-    .voyage-container { width: 100%; max-width: 960px; margin: 0 auto; }
-    .voyage-card { margin-bottom: 10px; padding: 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 4px 16px rgba(15,42,66,0.06); }
-    .voyage-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
-    .voyage-name { color: var(--navy); font-size: 15px; font-weight: 700; line-height: 1.35; }
-    .voyage-ship { margin-top: 3px; color: var(--muted); font-size: 12px; }
-    .voyage-badge, .voyage-status { display: inline-flex; align-items: center; min-height: 24px; padding: 3px 8px; border-radius: 999px; border: 1px solid #d7e4ee; background: #f6fafc; color: var(--blue); font-size: 11px; font-weight: 700; white-space: nowrap; }
-    .voyage-period { margin-bottom: 12px; color: var(--muted); font-size: 12px; }
-    .voyage-close { width: 34px; height: 34px; flex-shrink: 0; display: grid; place-items: center; background: #f6fafc; border: 1px solid #d7e4ee; border-radius: 8px; color: var(--muted); font-size: 20px; line-height: 1; }
-    .voyage-close:hover { background: #eef8fb; color: var(--blue); }
-    .voyage-day { margin-top: 14px; padding-top: 2px; border-top: 1px solid #e7edf4; cursor: pointer; }
-    .voyage-day:first-of-type { margin-top: 0; border-top: 0; }
-    .voyage-day-head { position: sticky; top: -14px; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 0 8px; background: #fff; }
-    .voyage-day-title { color: var(--navy); font-size: 13px; font-weight: 700; }
-    .voyage-day-count { min-width: 38px; padding: 3px 8px; border-radius: 999px; background: #edf7f9; color: var(--blue); font-size: 11px; font-weight: 700; text-align: center; }
-    .voyage-day-summary { margin: 0; padding: 0 0 2px 18px; color: #52657d; font-size: 12px; line-height: 1.6; }
-    .voyage-day-summary li { margin: 2px 0; }
-    .voyage-day-time { color: var(--blue); font-weight: 700; }
-    .voyage-day-detail { max-height: 0; overflow: hidden; transition: max-height 0.2s ease; }
-    .voyage-day.expanded .voyage-day-detail { max-height: none; }
-    .voyage-day .voyage-expand-hint { margin-left: 18px; }
-    .voyage-day.expanded > .voyage-expand-hint { display: none; }
-    .voyage-point { padding: 11px 0; border-top: 1px solid #e7edf4; cursor: pointer; }
-    .voyage-point:first-of-type { border-top: 0; }
-    .voyage-point-main { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
-    .voyage-point-title { color: var(--ink); font-size: 14px; font-weight: 700; line-height: 1.35; }
-    .voyage-point-meta { margin-top: 3px; color: var(--muted); font-size: 11px; line-height: 1.5; }
-    .voyage-point-detail { position: relative; max-height: none; margin-top: 8px; overflow: hidden; color: var(--muted); font-size: 11px; line-height: 1.55; white-space: pre-line; transition: max-height 0.2s ease; }
-    .voyage-point-detail.is-collapsed { max-height: 4.8em; }
-    .voyage-point-detail.is-collapsed::after { content: '…'; position: absolute; right: 0; bottom: 0; padding-left: 28px; background: linear-gradient(90deg, rgba(255,255,255,0), #fff 38%); color: var(--muted); font-weight: 700; }
-    .voyage-point.expanded .voyage-point-detail { max-height: none; }
-    .voyage-point.expanded .voyage-point-detail::after { display: none; }
-    .voyage-detail-row { margin-bottom: 2px; }
-    .voyage-detail-row strong { color: #52657d; }
-    .voyage-expand-hint { margin-top: 5px; color: var(--blue); font-size: 11px; font-weight: 700; }
-    .voyage-point.expanded .voyage-expand-hint { display: none; }
-    .voyage-point-note { margin-top: 7px; color: #52657d; font-size: 12px; line-height: 1.55; white-space: pre-line; }
-    .voyage-actions { margin-top: 9px; display: flex; gap: 6px; }
-    .voyage-action-btn { padding: 7px 10px; background: #f4f8fb; border: 1px solid #dce8f1; border-radius: 6px; color: var(--blue); font-size: 12px; font-weight: 700; }
-    .voyage-action-btn:hover { background: #e8f5f7; color: var(--navy); }
     .card { margin-bottom: 12px; padding: 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 4px 16px rgba(15,42,66,0.06); }
     .card-title { display: flex; align-items: center; gap: 9px; margin-bottom: 14px; color: var(--navy); font-size: 14px; font-weight: 700; }
     .card-step { width: 24px; height: 24px; display: grid; place-items: center; background: var(--navy); color: #fff; border-radius: 6px; font-size: 12px; }
@@ -334,7 +293,7 @@
     .edit-modal-title { color: var(--navy); font-family: 'Zen Maru Gothic', sans-serif; font-size: 16px; font-weight: 700; }
     .edit-modal-close { background: transparent; border: 0; color: var(--muted); font-size: 22px; }
     .edit-modal-body { padding: 20px; }
-    /* ログイン必須のとき、メンバー以外には投稿・編集・コメント入力・回航予定を出さない */
+    /* ログイン必須のとき、メンバー以外には投稿・編集・コメント入力を出さない */
     body.login-required:not(.is-member) .staff-only { display: none !important; }
     .auth-text { margin-bottom: 14px; color: var(--ink); font-size: 14px; line-height: 1.7; }
     .auth-note { margin-top: 10px; color: var(--muted); font-size: 12px; line-height: 1.6; }
@@ -389,7 +348,6 @@
       <button class="menu-button" type="button" onclick="toggleAppMenu()" aria-label="メニュー">☰</button>
       <div class="app-menu" id="appMenu">
         <button class="menu-item" type="button" onclick="switchView('map')"><span>マップ</span></button>
-        <button class="menu-item staff-only" type="button" onclick="switchView('voyage')"><span>回航予定</span><span class="menu-count" id="voyageMenuCount">0件</span></button>
         <button class="menu-item staff-only" type="button" onclick="switchView('post')"><span>投稿する</span></button>
         <button class="menu-item" type="button" onclick="openPostList()"><span>投稿一覧</span><span class="menu-count" id="postMenuCount">0件</span></button>
         <button class="menu-item" type="button" onclick="openPortList()"><span>港情報</span><span class="menu-count" id="portMenuCount">0件</span></button>
@@ -416,21 +374,6 @@
       <div class="timeline-panel" id="boatListPanel">
         <div class="timeline-header"><div class="timeline-title">艇情報</div><button class="timeline-close" onclick="toggleBoatList()">×</button></div>
         <div class="timeline-list" id="boatList"></div>
-      </div>
-    </div>
-
-    <div class="view" id="voyageView">
-      <div class="voyage-view">
-        <div class="voyage-container">
-          <div class="voyage-head">
-            <div>
-              <div class="voyage-name">回航予定</div>
-              <div class="voyage-ship">スケジュールと詳細</div>
-            </div>
-            <button class="voyage-close" type="button" onclick="switchView('map')" aria-label="閉じる">×</button>
-          </div>
-          <div id="voyageList"></div>
-        </div>
       </div>
     </div>
 
@@ -1181,343 +1124,6 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       { id: 'V2026-08', name: '北海道 室蘭・苫小牧 2026年10月', kind: '港調査', startDate: '2026/10/19', endDate: '2026/10/20', line: false, visible: true },
       { id: 'V2026-09', name: '海から巡る四国お遍路の旅 2026年11月', kind: 'クルーズ', startDate: '2026/11/07', endDate: '2026/11/09', color: '#7c3aed', shore: [{ from: '2026/11/07', to: '2026/11/07' }], visible: true }
     ];
-    const VOYAGE_POINTS = [
-      {
-        id: 'voyage_v2026_01_may11_depart_niihama',
-        voyageId: 'V2026-01',
-        seq: 1.1,
-        date: '2026/05/11',
-        title: '5/11（日）新居浜マリーナ出港',
-        kind: '出港',
-        status: '記録',
-        showMarker: false,
-        checkIn: '5/11（日）06:20',
-        checkOut: '',
-        content: 'マリーナを出港し、来島海峡に向けて300度で航行。',
-        scheduleDetail: '【投稿者】\n大場\n\n【内容】\nマリーナを出港して、来島海峡に向けて300度で航行。',
-        visible: true
-      },
-      {
-        id: 'voyage_v2026_01_may11_kurahashi_arrival',
-        voyageId: 'V2026-01',
-        seq: 1.2,
-        date: '2026/05/11',
-        title: '5/11（日）倉橋島海の駅に係船',
-        kind: '入港',
-        status: '記録',
-        showMarker: false,
-        checkIn: '5/11（日）13:04',
-        checkOut: '',
-        content: '13:00、倉橋島の海の駅桟橋に係船完了。',
-        scheduleDetail: '【投稿者】\n大場\n\n【内容】\n13時、倉橋島の海の駅桟橋に係船完了。',
-        visible: true
-      },
-      {
-        id: 'voyage_v2026_01_may12_kudamatsu_arrival',
-        voyageId: 'V2026-01',
-        seq: 2.1,
-        date: '2026/05/12',
-        title: '5/12（月）下松港に入港',
-        kind: '入港',
-        status: '記録',
-        showMarker: false,
-        checkIn: '5/12（月）15:06',
-        checkOut: '',
-        content: '周南港湾の桟橋に15:00係留。ポンツーンの桟橋はだいぶ錆びており、少し危険な状態。',
-        scheduleDetail: '【投稿者】\n大場\n\n【内容】\n周南港湾の桟橋に15時係留。\nポンツーンの桟橋がだいぶ錆びて少し危険な状態。',
-        visible: true
-      },
-      {
-        id: 'voyage_v2026_01_may12_kudamatsu_kenko_park',
-        voyageId: 'V2026-01',
-        seq: 2.2,
-        date: '2026/05/12',
-        title: '5/12（月）下松健康パーク',
-        kind: '入浴・食事',
-        status: '記録',
-        showMarker: false,
-        checkIn: '5/12（月）18:45',
-        checkOut: '',
-        content: '温泉と食事でクルージングの疲れを癒す。アカポンツーンからの移動はタクシー。',
-        scheduleDetail: '【投稿者】\n大場\n\n【内容】\n下松健康パーク。\n温泉と食事でクルージングの疲れを癒す。\nアカポンツーンからの移動はタクシー。',
-        visible: true
-      },
-      {
-        id: 'voyage_v2026_01_may13_depart_kudamatsu',
-        voyageId: 'V2026-01',
-        seq: 3.1,
-        date: '2026/05/13',
-        title: '5/13（火）下松港を出港',
-        kind: '出港',
-        status: '記録',
-        showMarker: false,
-        checkIn: '5/13（火）06:39',
-        checkOut: '',
-        content: '6時半過ぎに下松港を出港。天気は曇り、海況は穏やかで少し寒い。宇部のうべ海の駅へ向かう。',
-        scheduleDetail: '【投稿者】\n大場\n\n【内容】\n下松港を出港。\nお天気は曇り。海況は穏やかで、少し寒い。\n6時半過ぎに出港。\n今日は宇部のうべ海の駅まで行く予定。',
-        visible: true
-      },
-      {
-        id: 'voyage_v2026_01_may13_kattanoyu',
-        voyageId: 'V2026-01',
-        seq: 3.2,
-        date: '2026/05/13',
-        title: '5/13（火）カッタの湯',
-        kind: '入浴・食事',
-        status: '記録',
-        showMarker: false,
-        checkIn: '5/13（火）17:55',
-        checkOut: '',
-        content: 'お風呂・食事・コインランドリーあり。マリーナからタクシーで約1,300円。',
-        scheduleDetail: '【投稿者】\n大場\n\n【内容】\nカッタの湯。\nお風呂と食事、コインランドリーもある。\nマリーナからタクシーで¥1300。',
-        visible: true
-      },
-      {
-        id: 'voyage_v2026_01_may14_shimonoseki_arrival',
-        voyageId: 'V2026-01',
-        seq: 4.1,
-        date: '2026/05/14',
-        title: '5/14（水）下関漁港に入港',
-        kind: '入港',
-        status: '記録',
-        showMarker: false,
-        checkIn: '5/14（水）08:52',
-        checkOut: '',
-        content: '下関駅裏側の岸壁の一番端に着岸係船。近くにローソン、マックスバリュ、大丸などがあり便利な泊地。',
-        scheduleDetail: '【投稿者】\n大場\n\n【内容】\n下関駅の裏側の岸壁の一番端に着岸係船。\n係船リングに舫を取る。\nすぐ近くにローソン、マックスバリュ、大丸などがあり、便利な泊地。\n\n【係船許可・問い合わせ】\n山口県下関水産振興局\nTEL 083-266-2141',
-        visible: true
-      },
-      {
-        id: 'voyage_v2026_01_may15_lunch_onboard',
-        voyageId: 'V2026-01',
-        seq: 5.1,
-        date: '2026/05/15',
-        title: '5/15（木）下関で待機・船でランチ',
-        kind: '待機',
-        status: '記録',
-        showMarker: false,
-        checkIn: '5/15（木）12:29',
-        checkOut: '',
-        content: '下関で待機。ランチは船でのんびり楽しむ。',
-        scheduleDetail: '【投稿者】\n大場\n\n【内容】\n今日は下関で待機。\nランチは船でのんびり楽しむ。',
-        visible: true
-      },
-      {
-        id: 'voyage_v2026_01_may15_kirishimayu',
-        voyageId: 'V2026-01',
-        seq: 5.2,
-        date: '2026/05/15',
-        title: '5/15（木）霧島湯',
-        kind: '入浴',
-        status: '記録',
-        showMarker: false,
-        checkIn: '5/15（木）17:18',
-        checkOut: '',
-        content: '下関の商店街にあるレトロな銭湯。米糠油とオリーブ油の黄色いお湯が珍しい。係船場所の近くに銭湯が二軒あり便利。',
-        scheduleDetail: '【投稿者】\n大場\n\n【内容】\n下関の商店街にある銭湯。\nこぢんまりとしたレトロなミニチュアサイズの銭湯。\n米糠油とオリーブ油の黄色いお湯が珍しかった。\n下関には係船場所の近くに銭湯が二軒あり、とても便利。',
-        visible: true
-      },
-      {
-        id: 'voyage_v2026_01_may15_ikasen',
-        voyageId: 'V2026-01',
-        seq: 5.3,
-        date: '2026/05/15',
-        title: '5/15（木）活いか卸直営店 いか鮮 下関',
-        kind: '食事',
-        status: '記録',
-        showMarker: false,
-        checkIn: '5/15（木）18:01',
-        checkOut: '',
-        content: '活いかが新鮮で美味しい。頭とゲソは塩焼きに。',
-        scheduleDetail: '【投稿者】\n大場\n\n【内容】\n活いか卸直営店 いか鮮 下関。\n活いかは新鮮でとてもおいしかった。\n頭とゲソは塩焼きに。',
-        visible: true
-      },
-      {
-        id: 'voyage_v2026_01_may16_depart_shimonoseki',
-        voyageId: 'V2026-01',
-        seq: 5.4,
-        date: '2026/05/16',
-        title: '5/16（土）下関漁港を出港',
-        kind: '出港',
-        status: '記録',
-        showMarker: false,
-        checkIn: '5/16（土）02:58',
-        checkOut: '',
-        content: '午前3時ごろ、下関漁港を出港。',
-        scheduleDetail: '【投稿者】\n大場\n\n【内容】\n午前3時、下関漁港を出港。',
-        visible: true
-      },
-      {
-        id: 'voyage_v2026_01_may16_starlink_mini',
-        voyageId: 'V2026-01',
-        seq: 5.9,
-        date: '2026/05/16',
-        title: '5/16（土）スターリンクミニ通信確認',
-        kind: '通信',
-        status: '記録',
-        showMarker: false,
-        checkIn: '5/16（土）09:42',
-        checkOut: '',
-        content: '大場さんより、携帯の電波は弱くなってきたが、個人所有のスターリンクミニは快適に接続。回航中の通信手段として記録。',
-        scheduleDetail: '【投稿者】\n大場\n\n【内容】\nスターリンクミニ\n携帯の電波は弱くなってきたが、スターリンクミニは快適につながっている。\n\n【補足】\nスターリンクミニは個人所有のもので、トランサイドⅥの常設装備ではない。',
-        visible: true
-      },
-      {
-        id: 'voyage_v2026_01_izuhara_rental_car',
-        voyageId: 'V2026-01',
-        seq: 6,
-        date: '2026/05/16',
-        arriveDate: '2026/05/16',
-        departDate: '2026/05/18',
-        title: 'バジェットレンタカー 厳原港SS店',
-        kind: 'レンタカー',
-        status: '予約済',
-        lat: 34.1986,
-        lng: 129.2919,
-        accommodation: 'バジェットレンタカー 厳原港SS店',
-        address: '〒817-0016 長崎県対馬市厳原東里352-4',
-        tel: '0920-52-1571',
-        access: '対馬の海の玄関口「厳原港」から350m・徒歩5分\nアポロマークのガソリンスタンドが目印',
-        checkIn: '5/16（土）13:00',
-        checkOut: '5/18（月）12:00',
-        holder: '原田 貴好',
-        contact: '090-2236-0047（当日利用者の連絡先として原田さんの携帯番号を登録）',
-        carType: 'トヨタ ノア',
-        amountJpy: '返却時清算 / 保証なしの場合 ¥37,070',
-        paymentStatus: 'クレジットカード または 現金',
-        cancelLimit: '途中キャンセル可（受付時に変更も可）',
-        notes: '返却時間は取り急ぎ12時で予約。受付時に変更可能。',
-        transfer: '店舗まで徒歩5分。送迎希望の場合は厳原タクシー（有）0920-52-0227 に直接連絡し、「バジェットレンタカー厳原港SS店まで」と伝える。料金はバジェットレンタカー負担（厳原港SS ⇔ ターミナル間のみ対象）。',
-        usagePlan: '5/16（土）13:00〜夕方：原田・亀山が対馬観光に使用（ヨット到着待ち）\n5/17（日）以降：熊谷さんが継続使用する可能性あり（現地判断）\n5/18（月）12:00：返却予定（継続使用する場合は受付時に変更）',
-        content: '5/16（土）13:00〜5/18（月）12:00、厳原港近くでトヨタ ノアを予約。原田・亀山の対馬観光と、その後の現地使用を想定。',
-        visible: true
-      },
-      {
-        id: 'voyage_v2026_01_may17_sail_to_busan',
-        voyageId: 'V2026-01',
-        seq: 6.5,
-        date: '2026/05/17',
-        title: '5/17（日）厳原出港・アソウ湾で船泊まり',
-        kind: '予定',
-        status: '要確認',
-        showMarker: false,
-        checkIn: '5/17（日）13:00',
-        checkOut: '5/18（月）昼頃',
-        content: '13:00から税関・イミグレーション・海保の手続きを行い、全て完了。14:40に厳原を出港し、今夜はアソウ湾内で船泊まり。5/18（月）早朝に韓国へ向けて出航予定。',
-        scheduleDetail: '【ヨット組（4名：大場・山田・原田・亀山）】\n13:00：税関・イミグレーション・海保の手続き開始\n手続きは全て完了\n14:40：厳原出港\n夜：アソウ湾内で船泊まり\n5/18（月）早朝：韓国へ向けて出航予定\n\n【対馬残留（熊谷さん）】\nレンタカーは熊谷さんが継続使用する可能性あり（現地で判断）。\n\n【釜山入り後（パクさん対応・事務所未把握）】\n到着後の現地対応はパクさん側で調整予定。',
-        visible: true
-      },
-      {
-        id: 'voyage_v2026_01_may16_kamechan_dinner',
-        voyageId: 'V2026-01',
-        seq: 6.3,
-        date: '2026/05/16',
-        title: '5/16（土）厳原 居酒屋かめちゃんで夕食',
-        kind: '食事',
-        status: '記録',
-        showMarker: false,
-        checkIn: '5/16（土）20:28',
-        checkOut: '',
-        content: '大場さんより、厳原の居酒屋かめちゃんで夕食。新鮮なトビウオの刺身が美味しい。',
-        scheduleDetail: '【投稿者】\n大場\n\n【内容】\nトビウオの刺身\n新鮮なトビウオの刺身が美味しい。\n厳原の居酒屋かめちゃんで、夕食。',
-        visible: true
-      },
-      {
-        id: 'voyage_v2026_01_may18_depart_asou_bay',
-        voyageId: 'V2026-01',
-        seq: 6.75,
-        date: '2026/05/18',
-        title: '5/18（月）アソウ湾から出港',
-        kind: '出港',
-        status: '記録',
-        showMarker: false,
-        checkIn: '5/18（月）04:44',
-        checkOut: '',
-        content: '04:44、アソウ湾から出港。韓国方面へ向けて航行開始。',
-        scheduleDetail: '【ヨット組（4名）】\n04:44：アソウ湾から出港。\n韓国方面へ向けて航行開始。',
-        visible: true
-      },
-      {
-        id: 'voyage_v2026_01_may18_flag_standby',
-        voyageId: 'V2026-01',
-        seq: 6.78,
-        date: '2026/05/18',
-        title: '5/18（月）韓国入港前・旗を掲げて待機',
-        kind: '航海記録',
-        status: '記録',
-        lat: 34.72163333,
-        lng: 128.4427806,
-        checkIn: '5/18（月）12:53',
-        checkOut: '',
-        content: 'あと1時間くらいで韓国スンヨンのマリーナに入港予定。韓国国旗とイエローフラッグを掲げ、この場所で旗を立てて待機した記録。',
-        scheduleDetail: '【位置】\n34.72163333, 128.4427806\n\n【記録】\n12:53：あと1時間くらいで韓国スンヨンのマリーナに入港予定。\n韓国国旗とイエローフラッグを掲げた。\nこの場所で旗を立てて待機したとみられる。',
-        visible: true
-      },
-      {
-        id: 'voyage_v2026_01_may18_arrive_tongyeong',
-        voyageId: 'V2026-01',
-        seq: 6.79,
-        date: '2026/05/18',
-        title: '5/18（月）統栄マリーナに到着',
-        kind: '到着',
-        status: '記録',
-        showMarker: false,
-        checkIn: '5/18（月）13:54',
-        checkOut: '',
-        content: '13:54、統栄マリーナに到着。',
-        scheduleDetail: '【到着記録】\n13:54：統栄マリーナに到着。',
-        visible: true
-      },
-      {
-        id: 'voyage_v2026_01_may18_busan_arrival',
-        voyageId: 'V2026-01',
-        seq: 6.8,
-        date: '2026/05/18',
-        title: '5/18（月）釜山東港→統栄・レンタカー返却予定',
-        kind: '予定',
-        status: '要確認',
-        showMarker: false,
-        checkIn: '5/18（月）00:00',
-        checkOut: '5/18（月）夜',
-        content: '釜山東港（トンハン / 現地発音：トンコン）周辺を経て、統栄へ向かう航海予定。対馬では熊谷さんが待機。厳原レンタカーは12:00返却予定。東横INN釜山中央駅のキャンセル無料期限は本日00:00（現地時間）。',
-        scheduleDetail: '【ヨット組（4名）】\n釜山東港（トンハン / 現地発音：トンコン）周辺を経て、統栄へ向かう予定。\n釜山東港の目安位置：35.1042, 129.0792\n現地対応：パクさん対応。\n5/18夜の宿泊：パクさん手配。\n\n【レンタカー】\n12:00：返却予定（厳原）。\n熊谷さんが継続使用する場合は受付時に変更可（途中キャンセルも可）。\n継続使用の可否は現地で決定。\n\n【釜山ホテル関連】\n本日 00:00（現地時間）：東横INN釜山中央駅 キャンセル無料期限。\n以降は全泊分の宿泊料金100%発生。',
-        visible: true
-      },
-      {
-        id: 'voyage_v2026_01_busan_toyoko',
-        voyageId: 'V2026-01',
-        seq: 7,
-        date: '2026/05/19',
-        arriveDate: '2026/05/19',
-        departDate: '2026/05/21',
-        title: '東横INN釜山中央駅 宿泊予定',
-        kind: '宿泊',
-        status: '予約済',
-        lat: 35.1091,
-        lng: 129.0366,
-        accommodation: '東横INN釜山中央駅（TOYOKO INN BUSAN JUNGANG STATION）',
-        address: '釜山広域市中区中央大路125',
-        tel: '+82-51-442-1045',
-        fax: '+82-51-442-1046',
-        checkIn: '5/19（火）15:00以降',
-        checkOut: '5/21（木）10:00（2泊）',
-        guests: '1号室：HARADA TAKAYOSHI\n2号室：OBA KENTARO\n3号室：YAMADA SEIJI\n4号室：KAMEYAMA HIROAKI',
-        roomType: 'シングル×4部屋・禁煙・朝食付・WiFi無料',
-        breakfast: '7:00〜9:30 / ホテル2階',
-        reservationRef: 'RYa0mtbptw_1〜4',
-        holder: '原田 貴好',
-        paymentStatus: 'オンラインカード決済済み（楽天トラベル・事前払）',
-        amountJpy: '¥6,716 × 4部屋 × 2泊 = ¥53,728（サービス料・税込）',
-        cancelLimit: '2026/5/18 00:00（現地時間）まで無料／以降100%',
-        access: '地下鉄1号線「中央駅」17番出口より徒歩約5分\n金海空港よりタクシー約30分\nKTX釜山駅・釜山国際旅客ターミナルよりタクシー約8分',
-        localInfo: 'フロントスタッフ：日本語対応可\n100Vコンセント使用可（フロントで要確認）\n韓国プラグ形状（Cタイプ/SE型）変換プラグの要否：要確認\n宿泊者全員にメール共有済み',
-        checkInNotes: '日本国籍パスポートの提示が必要（日本国籍限定プラン）\n予約確認書を印刷してフロント提示推奨\nチェックイン予定時間に遅れる場合は要連絡（門限なし）',
-        contact: '',
-        notes: '2泊。シングル4部屋・朝食付。',
-        content: '5/19（火）15:00以降チェックイン、5/21（木）10:00チェックアウト。東横INN釜山中央駅に4名・4部屋で宿泊予定。',
-        visible: true
-      }
-    ];
     const BOATS = [
       { id: 'boat_okkoshi', portId: 'port_ginowan_marina', name: 'オッコシ', icon: '⛵', model: 'Bertram 33SF', length: '32ft', launched: '1991年進水', photoUrl: 'assets/boat_okkoshi.jpg', visible: true },
       { id: 'boat_transide2', portId: 'port_ginowan_marina', name: 'トランサイドⅡ', icon: '⛵', model: 'Beneteau First 310', length: '28ft', launched: '1992年進水', photoUrl: 'assets/boat_transide2.jpg', visible: true },
@@ -1527,7 +1133,7 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       { id: 'boat_transide4', portId: 'port_ito_sunrise_marina', name: 'トランサイドⅣ', icon: '⛵', model: 'リョーエー工業 BW-30', length: '27ft', launched: '1978年進水', photoUrl: 'assets/boat_transide4.jpg', visible: true },
       { id: 'boat_transide5', portId: 'port_shinminato_marina', name: 'トランサイドⅤ', icon: '⛵', model: 'Jeanneau Voyage 11.20', length: '32ft', launched: '1991年進水', photoUrl: 'assets/boat_transide5.jpg', visible: true }
     ];
-    let miniMap = null, miniMapMarker = null, selectedAuthor = '', posts = [], portPoints = DEFAULT_PORT_POINTS.map(p => ({ ...p })), commentCounts = {}, commentCache = {}, markers = {}, portMarkers = {}, voyageMarkers = {}, postClusterLayer = null, map, editingPost = null, editingAuthor = '', editingType = 'post';
+    let miniMap = null, miniMapMarker = null, selectedAuthor = '', posts = [], portPoints = DEFAULT_PORT_POINTS.map(p => ({ ...p })), commentCounts = {}, commentCache = {}, markers = {}, portMarkers = {}, postClusterLayer = null, map, editingPost = null, editingAuthor = '', editingType = 'post';
     let selectedVoyageId = null, voyageRouteLayer = null, voyageStopMarkers = [], voyageInitialFitDone = false;
     const ROUTE_MERGE_KM = 2.5, ROUTE_STAY_MS = 2 * 60 * 60 * 1000;
     const ROUTE_COLORS = ['#e11d48', '#f97316', '#7c3aed', '#0d9488', '#ca8a04'];
@@ -1565,8 +1171,7 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       document.body.classList.toggle('is-member', authMember);
       const label = document.getElementById('authMenuLabel');
       if (label) label.textContent = authMember ? `ログイン中：${authName || authUser?.displayName || authUser?.email || ''}` : (authUser ? '合言葉を入力' : 'スタッフログイン');
-      if (!canWrite() && ['postView', 'voyageView'].some(id => document.getElementById(id)?.classList.contains('active'))) switchView('map');
-      if (map && postClusterLayer) renderVoyageMarkers();
+      if (!canWrite() && document.getElementById('postView')?.classList.contains('active')) switchView('map');
       if (document.getElementById('authModal')?.classList.contains('visible')) renderAuthDialog();
     }
     function rememberAuthor(name) {
@@ -1689,7 +1294,7 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       document.getElementById('appMenu')?.classList.remove('open');
     }
     function switchView(view) {
-      if ((view === 'post' || view === 'voyage') && !canWrite()) { openAuthDialog(view === 'post' ? '投稿するにはログインが必要です。' : 'このページはスタッフ用です。'); return; }
+      if (view === 'post' && !canWrite()) { openAuthDialog('投稿するにはログインが必要です。'); return; }
       closeAppMenu();
       document.getElementById('timelinePanel')?.classList.remove('open');
       document.getElementById('portListPanel')?.classList.remove('open');
@@ -1697,7 +1302,6 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
       document.getElementById(view + 'View').classList.add('active');
       if (view === 'map') { setTimeout(() => map?.invalidateSize(), 100); loadPorts(); loadPosts(); }
-      if (view === 'voyage') renderVoyages();
     }
     function openPostList() {
       switchView('map');
@@ -1737,20 +1341,10 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
     function updateMenuCounts() {
       const postCount = document.getElementById('postMenuCount');
       const portCount = document.getElementById('portMenuCount');
-      const voyageCount = document.getElementById('voyageMenuCount');
       const boatCount = document.getElementById('boatMenuCount');
       if (postCount) postCount.textContent = `${posts.length}件`;
       if (portCount) portCount.textContent = `${loadPortPoints().length}件`;
-      if (voyageCount) voyageCount.textContent = `${countVoyageDays()}件`;
       if (boatCount) boatCount.textContent = `${BOATS.filter(b => b.visible !== false).length}件`;
-    }
-    function countVoyageDays(voyageId = null) {
-      const days = new Set(
-        VOYAGE_POINTS
-          .filter(p => p.visible !== false && (!voyageId || p.voyageId === voyageId) && VOYAGES.find(v => v.id === p.voyageId && v.visible !== false))
-          .map(p => p.date || '日付未設定')
-      );
-      return days.size;
     }
 
     function loadAuthors() {
@@ -2379,8 +1973,6 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       map.getPane('routeLinePane').style.pointerEvents = 'none';
       map.createPane('routePane');
       map.getPane('routePane').style.zIndex = 660;
-      map.createPane('voyagePane');
-      map.getPane('voyagePane').style.zIndex = 670;
       const notice = L.control({ position: 'bottomright' });
       notice.onAdd = () => {
         const div = L.DomUtil.create('div', 'map-notice');
@@ -2422,7 +2014,6 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
         }
       });
       renderPortMarkers();
-      renderVoyageMarkers();
     }
     async function loadPosts() {
       document.getElementById('loadingOverlay').style.display = 'flex';
@@ -2441,7 +2032,6 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
     }
     function escapeHtml(s) { if (!s) return ''; return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
     function escapeQuote(s) { return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
-    function activeVoyagePoints() { return VOYAGE_POINTS.filter(p => p.visible !== false && p.showMarker !== false && p.voyageId === selectedVoyageId && canWrite() && Number.isFinite(Number(p.lat)) && Number.isFinite(Number(p.lng)) && VOYAGES.find(v => v.id === p.voyageId && v.visible !== false)); }
     function renderPosts() {
       if (postClusterLayer) postClusterLayer.clearLayers();
       markers = {};
@@ -2509,53 +2099,6 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       if (!boat) return;
       focusPort(boat.portId);
       document.getElementById('boatListPanel')?.classList.remove('open');
-    }
-    function voyageDetailRows(point) {
-      return [
-        ['施設', point.accommodation],
-        ['住所', point.address],
-        ['TEL', point.tel],
-        ['FAX', point.fax],
-        ['開始', point.checkIn],
-        ['終了', point.checkOut],
-        ['車種/部屋', point.carType || point.roomType],
-        ['朝食', point.breakfast],
-        ['料金', point.amountJpy],
-        ['支払', point.paymentStatus],
-        ['予約番号', point.reservationRef],
-        ['代表者', point.holder],
-        ['連絡先', point.contact],
-        ['キャンセル', point.cancelLimit],
-        ['メモ', point.notes],
-        ['宿泊者・部屋割り', point.guests],
-        ['アクセス', point.access],
-        ['詳細', point.scheduleDetail],
-        ['送迎', point.transfer],
-        ['用途・使用予定', point.usagePlan],
-        ['現地情報', point.localInfo],
-        ['チェックイン時の注意', point.checkInNotes]
-      ].filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== '');
-    }
-    function buildVoyageDetailHtml(point) {
-      return voyageDetailRows(point).map(([label, value]) => `<div class="voyage-detail-row"><strong>${escapeHtml(label)}：</strong>${escapeHtml(value)}</div>`).join('');
-    }
-    function buildVoyagePopup(point) {
-      const voyage = VOYAGES.find(v => v.id === point.voyageId);
-      const details = buildVoyageDetailHtml(point);
-      return `<div class="popup-body"><div class="popup-meta"><span class="popup-author">${escapeHtml(voyage?.name || '回航')}</span> · ${escapeHtml(point.date || '')}</div><div class="popup-title">${escapeHtml(point.title)}</div><div class="popup-comment">${escapeHtml(point.content || '')}</div>${details ? `<div class="popup-comment">${details}</div>` : ''}</div>`;
-    }
-    function voyagePointTime(point) {
-      const value = point.checkIn || point.arriveDate || '';
-      const match = String(value).match(/(\d{1,2}:\d{2})/);
-      return match ? match[1] : '';
-    }
-    function renderVoyageMarkers() {
-      if (!map) return;
-      Object.values(voyageMarkers).forEach(m => map.removeLayer(m)); voyageMarkers = {};
-      activeVoyagePoints().forEach(p => {
-        const icon = L.divIcon({ className: '', html: '<div class="voyage-dot">航</div>', iconSize: [20, 20], iconAnchor: [10, 10] });
-        voyageMarkers[p.id] = L.marker([p.lat, p.lng], { icon, pane: 'voyagePane' }).addTo(map).bindPopup(buildVoyagePopup(p), { maxWidth: 260 });
-      });
     }
     function postTime(p) { const t = new Date(String(p.timestamp || '').replace(' ', 'T')).getTime(); return Number.isFinite(t) ? t : NaN; }
     function voyageDateMs(s, endOfDay) { const [y, m, d] = String(s).split('/').map(Number); return new Date(y, m - 1, d, endOfDay ? 23 : 0, endOfDay ? 59 : 0, endOfDay ? 59 : 0).getTime(); }
@@ -2759,59 +2302,12 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       const shown = shownPosts();
       postClusterLayer.clearLayers();
       postClusterLayer.addLayers(shown.map(p => markers[p.id]).filter(Boolean));
-      renderVoyageMarkers();
       renderVoyageRoute();
       renderVoyagePicker();
       if (!fit) return;
       const pts = shown.map(p => [p.lat, p.lng]);
-      activeVoyagePoints().forEach(p => pts.push([p.lat, p.lng]));
       if (!currentVoyage()) loadPortPoints().forEach(p => pts.push([p.lat, p.lng]));
       if (pts.length) map.fitBounds(L.latLngBounds(pts), { paddingTopLeft: [44, 132], paddingBottomRight: [36, 56], maxZoom: 13 });
-    }
-    function renderVoyages() {
-      const list = document.getElementById('voyageList');
-      if (!list) return;
-      updateMenuCounts();
-      list.innerHTML = VOYAGES.filter(v => VOYAGE_POINTS.some(p => p.voyageId === v.id && p.visible !== false)).map(v => {
-        const points = VOYAGE_POINTS.filter(p => p.voyageId === v.id && p.visible !== false).sort((a, b) => (a.seq || 0) - (b.seq || 0));
-        const grouped = points.reduce((days, point) => {
-          const date = point.date || '日付未設定';
-          if (!days[date]) days[date] = [];
-          days[date].push(point);
-          return days;
-        }, {});
-        const dayHtml = Object.entries(grouped).map(([date, dayPoints], index) => {
-          const dayId = `${v.id}_day_${index}`;
-          const summary = dayPoints.map(p => `<li><span class="voyage-day-time">${escapeHtml(voyagePointTime(p))}</span>${voyagePointTime(p) ? ' ' : ''}${escapeHtml(p.title)}</li>`).join('');
-          const detailsHtml = dayPoints.map(p => {
-            const details = buildVoyageDetailHtml(p);
-            return `<div class="voyage-point" data-voyage-point="${p.id}" onclick="event.stopPropagation(); toggleVoyagePoint('${p.id}')"><div class="voyage-point-main"><div><div class="voyage-point-title">${escapeHtml(p.title)}</div><div class="voyage-point-meta">${escapeHtml(p.kind)} · ${escapeHtml(p.checkIn || p.arriveDate || '')}〜${escapeHtml(p.checkOut || p.departDate || '')}</div></div><span class="voyage-status">${escapeHtml(p.status || '')}</span></div><div class="voyage-point-note">${escapeHtml(p.content || '')}</div>${details ? `<div class="voyage-point-detail is-collapsed">${details}</div><div class="voyage-expand-hint">詳細を見る</div>` : ''}<div class="voyage-actions">${p.showMarker === false ? '' : `<button class="voyage-action-btn" onclick="event.stopPropagation(); focusVoyagePoint('${p.id}')">地図で見る</button>`}</div></div>`;
-          }).join('');
-          return `<section class="voyage-day" data-voyage-day="${dayId}" onclick="toggleVoyageDay('${dayId}')"><div class="voyage-day-head"><div class="voyage-day-title">${escapeHtml(date)}</div><div class="voyage-day-count">${dayPoints.length}件</div></div><ul class="voyage-day-summary">${summary}</ul><div class="voyage-expand-hint">この日の詳細を見る</div><div class="voyage-day-detail">${detailsHtml}</div></section>`;
-        }).join('');
-        return `<div class="voyage-card"><div class="voyage-head"><div><div class="voyage-name">${escapeHtml(v.name)}</div><div class="voyage-ship">${escapeHtml(v.ship)}</div></div><span class="voyage-badge">${Object.keys(grouped).length}日</span></div><div class="voyage-period">${escapeHtml(v.startDate)} 〜 ${escapeHtml(v.endDate)}</div>${dayHtml}</div>`;
-      }).join('');
-    }
-    function toggleVoyageDay(id) {
-      const dayEl = document.querySelector(`.voyage-day[data-voyage-day="${CSS.escape(id)}"]`);
-      if (!dayEl) return;
-      dayEl.classList.toggle('expanded');
-    }
-    function toggleVoyagePoint(id) {
-      const pointEl = document.querySelector(`.voyage-point[data-voyage-point="${CSS.escape(id)}"]`);
-      if (!pointEl) return;
-      pointEl.classList.toggle('expanded');
-      pointEl.querySelector('.voyage-point-detail')?.classList.toggle('is-collapsed', !pointEl.classList.contains('expanded'));
-    }
-    function focusVoyagePoint(id) {
-      const point = VOYAGE_POINTS.find(p => p.id === id);
-      if (!point) return;
-      if (selectedVoyageId !== point.voyageId) selectVoyage(point.voyageId, false);
-      switchView('map');
-      setTimeout(() => {
-        map?.flyTo([point.lat, point.lng], 14, { duration: 0.8 });
-        setTimeout(() => voyageMarkers[id]?.openPopup(), 500);
-      }, 120);
     }
     function focusPost(id, event) {
       event?.preventDefault?.();
