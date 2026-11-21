@@ -52,6 +52,14 @@
   </script>
   <!-- アプリ内ブラウザ対策 ここまで -->
   <title>Rotta Blue | 日本海洋研究所</title>
+  <meta name="description" content="日本海洋研究所の船の航海を、地図でたどる記録です。航海を選ぶと、通った道すじと寄港地の写真・動画が見られます。">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="日本海洋研究所">
+  <meta property="og:title" content="Rotta Blue｜日本海洋研究所の航海記録">
+  <meta property="og:description" content="船の航海を、地図でたどる記録です。航海を選ぶと、通った道すじと寄港地の写真・動画が見られます。">
+  <meta property="og:url" content="https://rottablue.j-ocean.info/saily.html">
+  <meta property="og:image" content="https://rottablue.j-ocean.info/assets/japan-ocean-research-logo.png">
+  <meta name="twitter:card" content="summary">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
@@ -330,6 +338,10 @@
     body.login-required:not(.is-member) .staff-only { display: none !important; }
     .auth-text { margin-bottom: 14px; color: var(--ink); font-size: 14px; line-height: 1.7; }
     .auth-note { margin-top: 10px; color: var(--muted); font-size: 12px; line-height: 1.6; }
+    .about-lead { margin-bottom: 12px; color: var(--navy); font-size: 15px; font-weight: 700; line-height: 1.7; }
+    .about-list { margin: 0 0 16px; padding-left: 1.2em; color: var(--ink); font-size: 14px; line-height: 1.8; }
+    .about-start { width: 100%; padding: 12px; background: var(--navy); color: #fff; border: 0; border-radius: 6px; font-size: 14px; font-weight: 700; }
+    .about-start:hover { opacity: 0.9; }
     .auth-who { margin-bottom: 14px; padding: 10px 12px; background: #f4f8fb; border: 1px solid #e1ebf3; border-radius: 6px; color: var(--navy); font-size: 13px; font-weight: 700; word-break: break-all; }
     .auth-google-btn { width: 100%; padding: 12px; background: #fff; color: var(--ink); border: 1px solid var(--line); border-radius: 6px; font-size: 14px; font-weight: 700; }
     .auth-google-btn:hover { background: #f4f8fb; }
@@ -371,7 +383,7 @@
         <img class="brand-mark" src="assets/japan-ocean-research-logo.png" alt="日本海洋研究所">
         <div>
           <h1>Rotta Blue</h1>
-          <p>日本海洋研究所</p>
+          <p>日本海洋研究所の航海記録</p>
         </div>
       </div>
       <button class="menu-button" type="button" onclick="toggleAppMenu()" aria-label="メニュー">☰</button>
@@ -382,6 +394,7 @@
         <button class="menu-item" type="button" onclick="openPostList()"><span>投稿一覧</span><span class="menu-count" id="postMenuCount">0件</span></button>
         <button class="menu-item" type="button" onclick="openPortList()"><span>港情報</span><span class="menu-count" id="portMenuCount">0件</span></button>
         <button class="menu-item" type="button" onclick="openBoatList()"><span>艇情報</span><span class="menu-count" id="boatMenuCount">0件</span></button>
+        <button class="menu-item" type="button" onclick="openAbout()"><span>このアプリについて</span></button>
         <button class="menu-item" type="button" onclick="openAuthDialog()"><span id="authMenuLabel">スタッフログイン</span></button>
       </div>
     </div>
@@ -470,6 +483,22 @@
   <div class="photo-viewer" id="photoViewer" onclick="closePhotoViewer()">
     <button type="button" class="photo-viewer-close" onclick="event.stopPropagation(); closePhotoViewer()">×</button>
     <img id="photoViewerImg" alt="拡大写真">
+  </div>
+
+  <div class="edit-modal" id="aboutModal" onclick="if (event.target === this) closeAbout()">
+    <div class="edit-modal-card" style="max-width: 420px;">
+      <div class="edit-modal-header"><div class="edit-modal-title">Rotta Blue について</div><button class="edit-modal-close" onclick="closeAbout()" aria-label="閉じる">×</button></div>
+      <div class="edit-modal-body">
+        <p class="about-lead">日本海洋研究所の船の航海を、地図でたどる記録です。</p>
+        <ul class="about-list">
+          <li>左上の「航海を選ぶ」で、見たい航海を切り替えられます。</li>
+          <li>線は、船が通った道すじです。</li>
+          <li>写真や ▶ の印を押すと、その場所の記録が開きます。</li>
+        </ul>
+        <button class="about-start" type="button" onclick="closeAbout()">地図を見る</button>
+        <p class="auth-note">記録の投稿は、乗組員とスタッフが行っています。<br><a href="https://j-ocean.info/" target="_blank" rel="noopener">日本海洋研究所のホームページ</a></p>
+      </div>
+    </div>
   </div>
 
   <div class="edit-modal" id="authModal">
@@ -1633,6 +1662,24 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
     function initAuth() {
       try { getFirebaseAuth().onAuthStateChanged(user => { authUser = user || null; refreshSession(); }); }
       catch (err) { console.warn('ログイン機能を初期化できませんでした', err); }
+    }
+
+    // 初めて来た人向けの案内。一度閉じたら次からは出さない（メニューの「このアプリについて」でいつでも開ける）
+    const INTRO_SEEN_KEY = 'rottablue_intro_seen';
+    function storageGet(key) { try { return localStorage.getItem(key); } catch (err) { return null; } }
+    function openAbout() {
+      closeAppMenu();
+      document.getElementById('aboutModal').classList.add('visible');
+    }
+    function closeAbout() {
+      document.getElementById('aboutModal').classList.remove('visible');
+      try { localStorage.setItem(INTRO_SEEN_KEY, '1'); } catch (err) { /* 保存できなくても動作には影響しない */ }
+    }
+    function showIntroOnFirstVisit() {
+      if (storageGet(INTRO_SEEN_KEY)) return;
+      // これまで投稿してきた人には出さない
+      if (storageGet('saily_last_author') || storageGet('busan_last_author') || storageGet('saily_authors')) return;
+      openAbout();
     }
 
     function toggleAppMenu() {
@@ -2806,7 +2853,7 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
     function toggleTimeline() { document.getElementById('timelinePanel').classList.toggle('open'); }
     function formatDate(timestamp) { const d = new Date(String(timestamp).replace(' ', 'T')); return `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
 
-    initMap(); renderAuthors(); initAuth();
+    initMap(); renderAuthors(); initAuth(); showIntroOnFirstVisit();
     const lastAuthor = localStorage.getItem('saily_last_author') || localStorage.getItem('busan_last_author');
     if (lastAuthor && loadAuthors().includes(lastAuthor)) selectAuthor(lastAuthor);
     loadPorts().finally(loadPosts);
