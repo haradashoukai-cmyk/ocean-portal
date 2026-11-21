@@ -60,6 +60,7 @@
   <script src="https://cdn.jsdelivr.net/npm/exifr/dist/full.umd.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <style>
     :root {
       --navy: #14324a;
@@ -325,6 +326,15 @@
     .edit-modal-title { color: var(--navy); font-family: 'Zen Maru Gothic', sans-serif; font-size: 16px; font-weight: 700; }
     .edit-modal-close { background: transparent; border: 0; color: var(--muted); font-size: 22px; }
     .edit-modal-body { padding: 20px; }
+    /* ログイン必須のとき、メンバー以外には投稿・編集・コメント入力・回航予定を出さない */
+    body.login-required:not(.is-member) .staff-only { display: none !important; }
+    .auth-text { margin-bottom: 14px; color: var(--ink); font-size: 14px; line-height: 1.7; }
+    .auth-note { margin-top: 10px; color: var(--muted); font-size: 12px; line-height: 1.6; }
+    .auth-who { margin-bottom: 14px; padding: 10px 12px; background: #f4f8fb; border: 1px solid #e1ebf3; border-radius: 6px; color: var(--navy); font-size: 13px; font-weight: 700; word-break: break-all; }
+    .auth-google-btn { width: 100%; padding: 12px; background: #fff; color: var(--ink); border: 1px solid var(--line); border-radius: 6px; font-size: 14px; font-weight: 700; }
+    .auth-google-btn:hover { background: #f4f8fb; }
+    .auth-field { margin-bottom: 12px; }
+    .auth-field label { display: block; margin-bottom: 4px; color: var(--muted); font-size: 12px; font-weight: 700; }
     .edit-modal-photo { width: 100%; height: 180px; object-fit: cover; border-radius: 8px; margin-bottom: 16px; background: #e2e8f0; }
     .photo-viewer { position: fixed; inset: 0; z-index: 3000; display: none; align-items: center; justify-content: center; padding: 16px; background: rgba(7, 18, 30, 0.9); }
     .photo-viewer.visible { display: flex; }
@@ -367,11 +377,12 @@
       <button class="menu-button" type="button" onclick="toggleAppMenu()" aria-label="メニュー">☰</button>
       <div class="app-menu" id="appMenu">
         <button class="menu-item" type="button" onclick="switchView('map')"><span>マップ</span></button>
-        <button class="menu-item" type="button" onclick="switchView('voyage')"><span>回航予定</span><span class="menu-count" id="voyageMenuCount">0件</span></button>
-        <button class="menu-item" type="button" onclick="switchView('post')"><span>投稿する</span></button>
+        <button class="menu-item staff-only" type="button" onclick="switchView('voyage')"><span>回航予定</span><span class="menu-count" id="voyageMenuCount">0件</span></button>
+        <button class="menu-item staff-only" type="button" onclick="switchView('post')"><span>投稿する</span></button>
         <button class="menu-item" type="button" onclick="openPostList()"><span>投稿一覧</span><span class="menu-count" id="postMenuCount">0件</span></button>
         <button class="menu-item" type="button" onclick="openPortList()"><span>港情報</span><span class="menu-count" id="portMenuCount">0件</span></button>
         <button class="menu-item" type="button" onclick="openBoatList()"><span>艇情報</span><span class="menu-count" id="boatMenuCount">0件</span></button>
+        <button class="menu-item" type="button" onclick="openAuthDialog()"><span id="authMenuLabel">スタッフログイン</span></button>
       </div>
     </div>
   </header>
@@ -459,6 +470,13 @@
   <div class="photo-viewer" id="photoViewer" onclick="closePhotoViewer()">
     <button type="button" class="photo-viewer-close" onclick="event.stopPropagation(); closePhotoViewer()">×</button>
     <img id="photoViewerImg" alt="拡大写真">
+  </div>
+
+  <div class="edit-modal" id="authModal">
+    <div class="edit-modal-card" style="max-width: 400px;">
+      <div class="edit-modal-header"><div class="edit-modal-title" id="authTitle">スタッフログイン</div><button class="edit-modal-close" onclick="closeAuthDialog()">×</button></div>
+      <div class="edit-modal-body" id="authBody"></div>
+    </div>
   </div>
 
   <div class="edit-modal" id="editModal">
@@ -1485,6 +1503,138 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
     const ROUTE_MERGE_KM = 2.5, ROUTE_STAY_MS = 2 * 60 * 60 * 1000;
     const ROUTE_COLORS = ['#e11d48', '#f97316', '#7c3aed', '#0d9488', '#ca8a04'];
 
+    // ===== ログイン（Google アカウント）とメンバー確認 =====
+    // 見るだけの人はログイン不要。投稿・編集・削除・コメントは、ログインして合言葉で登録した人（メンバー）だけ。
+    // serverRequireLogin は GAS の「設定」シートの「ログイン必須」。「いいえ」の間は、これまでどおり誰でも投稿できる（移行期間）。
+    // ここでボタンを隠すのは見た目だけで、本当の判定は GAS と Firebase のルール側でしている。
+    let authUser = null, authMember = false, authSuspended = false, authName = '', authChecking = false, authBusy = false, authMessage = '', authDraftName = '', serverRequireLogin = false;
+    function canWrite() { return !serverRequireLogin || authMember; }
+    function getFirebaseAuth() {
+      if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+      return firebase.auth();
+    }
+    // GAS への書き込み。ログイン中なら本人確認の札（idToken）を付けて送り、結果を読んで返す
+    async function gasPost(body) {
+      let idToken = '';
+      if (authUser) { try { idToken = await authUser.getIdToken(); } catch (_) {} }
+      const response = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(idToken ? { ...body, idToken } : body) });
+      return response.json();
+    }
+    function writeErrorMessage(code) {
+      if (code === 'login_required') return 'ログインが必要です。メニューの「スタッフログイン」からログインしてください。';
+      if (code === 'not_member') return 'このアカウントはまだ登録されていません。メニューの「スタッフログイン」で合言葉を入力してください。';
+      return '';
+    }
+    function setRequireLogin(value) {
+      const next = value === true;
+      if (next === serverRequireLogin) return;
+      serverRequireLogin = next;
+      applyAuthState();
+    }
+    function applyAuthState() {
+      document.body.classList.toggle('login-required', serverRequireLogin);
+      document.body.classList.toggle('is-member', authMember);
+      const label = document.getElementById('authMenuLabel');
+      if (label) label.textContent = authMember ? `ログイン中：${authName || authUser?.displayName || authUser?.email || ''}` : (authUser ? '合言葉を入力' : 'スタッフログイン');
+      if (!canWrite() && ['postView', 'voyageView'].some(id => document.getElementById(id)?.classList.contains('active'))) switchView('map');
+      if (map && postClusterLayer) renderVoyageMarkers();
+      if (document.getElementById('authModal')?.classList.contains('visible')) renderAuthDialog();
+    }
+    function rememberAuthor(name) {
+      if (!name) return;
+      const authors = loadAuthors();
+      if (!authors.includes(name)) { authors.push(name); saveAuthors(authors); }
+      if (!selectedAuthor) selectAuthor(name); else renderAuthors();
+    }
+    async function refreshSession() {
+      if (!authUser) { authMember = false; authSuspended = false; authName = ''; authChecking = false; applyAuthState(); return; }
+      authChecking = true; applyAuthState();
+      try {
+        const data = await gasPost({ action: 'session' });
+        authMember = data.member === true; authSuspended = data.suspended === true; authName = data.name || '';
+        if (typeof data.requireLogin === 'boolean') serverRequireLogin = data.requireLogin;
+      } catch (_) { authMember = false; }
+      authChecking = false;
+      if (authMember) rememberAuthor(authName);
+      applyAuthState();
+    }
+    function openAuthDialog(message = '') {
+      closeAppMenu();
+      authMessage = message;
+      document.getElementById('authModal').classList.add('visible');
+      renderAuthDialog();
+    }
+    function closeAuthDialog() { document.getElementById('authModal').classList.remove('visible'); authMessage = ''; }
+    function renderAuthDialog() {
+      const body = document.getElementById('authBody'), title = document.getElementById('authTitle');
+      const msg = authMessage ? `<div class="error-msg show" style="margin-bottom:12px;">${escapeHtml(authMessage)}</div>` : '';
+      const logout = label => `<button class="btn-secondary" style="width:100%; margin-top:8px;" type="button" onclick="signOutUser()">${label}</button>`;
+      if (!authUser) {
+        title.textContent = 'スタッフログイン';
+        body.innerHTML = `${msg}<div class="auth-text">投稿・編集・コメントをする方は、Google アカウントでログインしてください。見るだけの方はログイン不要です。</div><button class="auth-google-btn" type="button" onclick="signInWithGoogle()" ${authBusy ? 'disabled' : ''}>${authBusy ? 'ログイン中…' : 'Google でログイン'}</button><div class="auth-note">LINE や Instagram の中で開いていると、ログインできません。Safari や Chrome で開き直してください。</div>`;
+        return;
+      }
+      const who = `<div class="auth-who">${escapeHtml(authUser.email || '')}</div>`;
+      if (authChecking) { title.textContent = 'スタッフログイン'; body.innerHTML = `${who}<div class="auth-text">確認中…</div>`; return; }
+      if (authMember) {
+        title.textContent = 'ログイン中';
+        body.innerHTML = `${msg}${who}<div class="auth-text">投稿・編集・コメントができます。</div>${logout('ログアウト')}`;
+        return;
+      }
+      if (authSuspended) {
+        title.textContent = '利用できません';
+        body.innerHTML = `${who}<div class="auth-text">このアカウントは投稿できない設定になっています。事務局にお問い合わせください。</div>${logout('別のアカウントでログイン')}`;
+        return;
+      }
+      title.textContent = '合言葉を入力';
+      body.innerHTML = `${msg}${who}<div class="auth-text">初めての方は、スタッフから聞いた合言葉を1回だけ入力してください。</div><div class="auth-field"><label for="authNameInput">お名前（投稿に表示されます）</label><input class="form-input" id="authNameInput" maxlength="20" value="${escapeHtml(authDraftName || authUser.displayName || '')}"></div><div class="auth-field"><label for="authPasscodeInput">合言葉</label><input class="form-input" id="authPasscodeInput" autocomplete="off" autocapitalize="off"></div><button class="btn-mini-primary" style="width:100%;" type="button" id="authJoinBtn" onclick="submitPasscode()">登録する</button>${logout('別のアカウントでログイン')}`;
+    }
+    async function signInWithGoogle() {
+      authBusy = true; authMessage = ''; renderAuthDialog();
+      try {
+        await getFirebaseAuth().signInWithPopup(new firebase.auth.GoogleAuthProvider());
+      } catch (err) {
+        const code = (err && err.code) || '';
+        if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') authMessage = '';
+        else if (code === 'auth/operation-not-allowed' || code === 'auth/unauthorized-domain' || code === 'auth/configuration-not-found') authMessage = 'ログインの準備がまだ済んでいません。事務局にお知らせください。';
+        else if (code === 'auth/popup-blocked') authMessage = 'ログイン画面を開けませんでした。ブラウザのポップアップを許可して、もう一度押してください。';
+        else authMessage = 'ログインできませんでした。Safari や Chrome で開き直して、もう一度お試しください。';
+        console.warn('ログインできませんでした:', code);
+      }
+      authBusy = false; renderAuthDialog();
+    }
+    async function signOutUser() {
+      authMessage = ''; authDraftName = '';
+      try { await getFirebaseAuth().signOut(); } catch (_) {}
+    }
+    async function submitPasscode() {
+      const name = document.getElementById('authNameInput').value.trim(), passcode = document.getElementById('authPasscodeInput').value.trim();
+      authDraftName = name;
+      if (!name || !passcode) { authMessage = !name ? 'お名前を入力してください。' : '合言葉を入力してください。'; renderAuthDialog(); return; }
+      const button = document.getElementById('authJoinBtn');
+      button.disabled = true; button.textContent = '確認中…';
+      try {
+        const data = await gasPost({ action: 'join', passcode, name });
+        if (data.success === true && data.member === true) {
+          authMember = true; authSuspended = false; authName = data.name || name; authMessage = '';
+          rememberAuthor(authName);
+        } else {
+          authMessage = ({
+            wrong_passcode: '合言葉が違います。',
+            too_many_tries: '何度もまちがえたため、しばらく受け付けできません。10分ほど待ってからお試しください。',
+            suspended: 'このアカウントは投稿できない設定になっています。',
+            login_required: 'ログインし直してから、もう一度お試しください。'
+          })[data.error] || '登録の受け付けがまだ始まっていません。事務局にお知らせください。';
+        }
+      } catch (_) { authMessage = '通信できませんでした。電波の良い所でもう一度お試しください。'; }
+      applyAuthState();
+      renderAuthDialog();
+    }
+    function initAuth() {
+      try { getFirebaseAuth().onAuthStateChanged(user => { authUser = user || null; refreshSession(); }); }
+      catch (err) { console.warn('ログイン機能を初期化できませんでした', err); }
+    }
+
     function toggleAppMenu() {
       document.getElementById('appMenu')?.classList.toggle('open');
     }
@@ -1492,6 +1642,7 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       document.getElementById('appMenu')?.classList.remove('open');
     }
     function switchView(view) {
+      if ((view === 'post' || view === 'voyage') && !canWrite()) { openAuthDialog(view === 'post' ? '投稿するにはログインが必要です。' : 'このページはスタッフ用です。'); return; }
       closeAppMenu();
       document.getElementById('timelinePanel')?.classList.remove('open');
       document.getElementById('portListPanel')?.classList.remove('open');
@@ -1894,32 +2045,28 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
         if (!commentCache[postId]) list.innerHTML = '<div class="comment-empty">コメントを読み込めませんでした</div>';
       }
     }
+    // コメント件数は1回の問い合わせでまとめて受け取る（投稿ごとに問い合わせると Google 側の上限に当たって地図まで読めなくなる）
+    let commentCountsKnown = false;
     async function loadCommentCounts() {
-      const targets = posts.map(p => p.id);
-      const counts = {};
-      await Promise.all(targets.map(async id => {
-        try {
-          const response = await fetch(`${GAS_URL}?action=getComments&postId=${encodeURIComponent(id)}&_=${Date.now()}`);
-          const data = await response.json();
-          const comments = data.comments || [];
-          commentCache[id] = comments;
-          counts[id] = comments.length;
-        } catch (_) {
-          counts[id] = commentCounts[id] || 0;
-        }
-      }));
-      commentCounts = counts;
-      targets.forEach(updatePostCommentCount);
+      try {
+        const response = await fetch(`${GAS_URL}?action=getCommentCounts&_=${Date.now()}`);
+        const data = await response.json();
+        // GAS が古い版のときは件数をまとめて返せない。そのときは件数を出さずにおく（投稿を開けばその投稿の件数は出る）
+        if (!data || !data.counts || typeof data.counts !== 'object') return;
+        commentCounts = data.counts; commentCountsKnown = true;
+        posts.forEach(p => updatePostCommentCount(p.id));
+      } catch (_) {}
     }
     function formatCommentCount(postId) {
-      const count = commentCounts[postId] || 0;
-      return count ? `コメント ${count}件` : 'コメント 0件';
+      if (!commentCountsKnown && commentCounts[postId] === undefined) return '';
+      return `コメント ${commentCounts[postId] || 0}件`;
     }
     function updatePostCommentCount(postId) {
       const el = document.querySelector(`[data-comment-count-for="${CSS.escape(postId)}"]`);
       if (el) el.textContent = formatCommentCount(postId);
     }
     async function addPostComment(postId) {
+      if (!canWrite()) { openAuthDialog('コメントするにはログインが必要です。'); return; }
       const input = document.getElementById(`commentInput_${postId}`);
       const comment = input?.value.trim();
       if (!comment) return;
@@ -1929,7 +2076,8 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       const button = input.nextElementSibling;
       button.disabled = true; button.textContent = '送信中';
       try {
-        await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'addComment', postId, author: author.trim(), comment, timestamp: formatJstTimestamp() }) });
+        const result = await gasPost({ action: 'addComment', postId, author: author.trim(), comment, timestamp: formatJstTimestamp() });
+        if (result && result.success === false) { alert(writeErrorMessage(result.error) || 'コメント送信に失敗しました'); return; }
         input.value = '';
         commentCounts[postId] = (commentCounts[postId] || 0) + 1;
         commentCache[postId] = [...(commentCache[postId] || []), { author: author.trim(), comment, timestamp: formatJstTimestamp() }];
@@ -1993,8 +2141,15 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
           mediaUrl = await uploadVideoToStorage(currentMediaFile);
           btn.innerHTML = '<span class="loading-spinner"></span>投稿保存中...';
         }
-        await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'create', id: postId, author: selectedAuthor, title, comment, lat: currentLat, lng: currentLng, mediaType: currentMediaType, mediaUrl, mediaName: currentPhotoName, mimeType: currentMediaMimeType, mediaItems: currentMediaType === 'image' ? currentMediaItems : undefined, mediaBase64: currentMediaType === 'image' ? currentPhotoBase64 : undefined, photoBase64: currentMediaType === 'image' ? currentPhotoBase64 : undefined, photoName: currentPhotoName, timestamp: currentPhotoTimestamp || formatJstTimestamp() }) });
-        const reflected = await verifyPostReflected(postId, selectedAuthor, title, currentMediaType === 'video' ? 45000 : 12000);
+        // 結果が読めたらそれに従う。読めなかったとき（通信が途中で切れた等）は、これまでどおり一覧に出たかどうかで確かめる
+        let result = null;
+        try { result = await gasPost({ action: 'create', id: postId, author: selectedAuthor, title, comment, lat: currentLat, lng: currentLng, mediaType: currentMediaType, mediaUrl, mediaName: currentPhotoName, mimeType: currentMediaMimeType, mediaItems: currentMediaType === 'image' ? currentMediaItems : undefined, mediaBase64: currentMediaType === 'image' ? currentPhotoBase64 : undefined, photoBase64: currentMediaType === 'image' ? currentPhotoBase64 : undefined, photoName: currentPhotoName, timestamp: currentPhotoTimestamp || formatJstTimestamp() }); } catch (_) { result = null; }
+        if (result && result.success === false && writeErrorMessage(result.error)) {
+          showError(writeErrorMessage(result.error));
+          btn.disabled = false; btn.innerHTML = '投稿する';
+          return;
+        }
+        const reflected = (result && result.success === true) || await verifyPostReflected(postId, selectedAuthor, title, currentMediaType === 'video' ? 45000 : 12000);
         if (!reflected) {
           showError('投稿を保存できませんでした。通信状況を確認して再試行してください。');
           btn.disabled = false; btn.innerHTML = '投稿する';
@@ -2070,7 +2225,7 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
     function buildCommentsPanel(item, type) {
       if (type === 'port') return '';
       const id = escapeQuote(item.id);
-      return `<div class="comment-panel"><div class="comment-head">コメント</div><div class="comment-list" data-comments-for="${id}"><div class="comment-empty">読み込み中...</div></div><div class="comment-form"><input class="comment-input" id="commentInput_${id}" placeholder="コメントを入力"><button class="comment-submit" onclick="addPostComment('${id}')">送信</button></div></div>`;
+      return `<div class="comment-panel"><div class="comment-head">コメント</div><div class="comment-list" data-comments-for="${id}"><div class="comment-empty">読み込み中...</div></div><div class="comment-form staff-only"><input class="comment-input" id="commentInput_${id}" placeholder="コメントを入力"><button class="comment-submit" onclick="addPostComment('${id}')">送信</button></div></div>`;
     }
     function formatPopupComment(text) {
       return String(text || '').split('\n').map(line => {
@@ -2106,10 +2261,11 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       const media = type === 'port'
         ? ''
         : buildPopupMedia(item);
-      const actions = type === 'port' ? '' : `<div class="popup-actions"><button class="popup-action-btn" onclick="openEditModal('${item.id}', '${type}')">編集</button></div>`;
+      const actions = type === 'port' ? '' : `<div class="popup-actions staff-only"><button class="popup-action-btn" onclick="openEditModal('${item.id}', '${type}')">編集</button></div>`;
       return `${media}<div class="popup-body"><div class="popup-meta"><span class="popup-author">${escapeHtml(item.author)}</span> · ${formatDate(item.timestamp)}</div><div class="popup-title">${escapeHtml(item.title)}</div><div class="popup-comment">${formatPopupComment(item.comment || '')}</div>${actions}${buildCommentsPanel(item, type)}</div>`;
     }
     function openEditModal(itemId, type = 'post') {
+      if (!canWrite()) { openAuthDialog('編集するにはログインが必要です。'); return; }
       const item = type === 'port' ? loadPortPoints().find(p => p.id === itemId) : posts.find(p => p.id === itemId);
       if (!item) return;
       editingType = type; editingPost = item; editingAuthor = item.author;
@@ -2140,7 +2296,8 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
         btn.disabled = false; btn.innerHTML = '保存'; closeEditModal(); return;
       }
       try {
-        await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'edit', id: editingPost.id, author: editingAuthor, title, comment }) });
+        const result = await gasPost({ action: 'edit', id: editingPost.id, author: editingAuthor, title, comment });
+        if (result && result.success === false) { showEditError(writeErrorMessage(result.error) || '保存に失敗しました'); btn.disabled = false; btn.innerHTML = '保存'; return; }
         const idx = posts.findIndex(p => p.id === editingPost.id);
         if (idx !== -1) { posts[idx].author = editingAuthor; posts[idx].title = title; posts[idx].comment = comment; renderPosts(); }
         btn.disabled = false; btn.innerHTML = '保存'; closeEditModal(); setTimeout(loadPosts, 2000);
@@ -2156,7 +2313,8 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       if (!confirm(`「${editingPost.title}」を削除しますか？\n\n※ 写真も一緒に削除されます\n※ この操作は取り消せません`)) return;
       const btn = document.getElementById('saveEditBtn'); btn.disabled = true;
       try {
-        await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'delete', id: editingPost.id }) });
+        const result = await gasPost({ action: 'delete', id: editingPost.id });
+        if (result && result.success === false) { alert(writeErrorMessage(result.error) || '削除に失敗しました'); btn.disabled = false; return; }
         posts = posts.filter(p => p.id !== editingPost.id); renderPosts(); closeEditModal(); setTimeout(loadPosts, 2000);
       } catch (err) { console.error('削除エラー:', err); alert('削除に失敗しました'); btn.disabled = false; }
     }
@@ -2224,6 +2382,7 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       try {
         const response = await fetch(GAS_URL + '?action=get');
         const data = await response.json();
+        setRequireLogin(data.requireLogin);
         posts = (data.posts || []).map(normalizePost).filter(p => !String(p.id || '').startsWith('test_') && ![p.mediaUrl, p.photoUrl, ...(p.mediaUrls || [])].some(url => String(url || '').includes('example.com')));
         renderPosts();
         loadCommentCounts();
@@ -2235,7 +2394,7 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
     }
     function escapeHtml(s) { if (!s) return ''; return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
     function escapeQuote(s) { return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
-    function activeVoyagePoints() { return VOYAGE_POINTS.filter(p => p.visible !== false && p.showMarker !== false && p.voyageId === selectedVoyageId && Number.isFinite(Number(p.lat)) && Number.isFinite(Number(p.lng)) && VOYAGES.find(v => v.id === p.voyageId && v.visible !== false)); }
+    function activeVoyagePoints() { return VOYAGE_POINTS.filter(p => p.visible !== false && p.showMarker !== false && p.voyageId === selectedVoyageId && canWrite() && Number.isFinite(Number(p.lat)) && Number.isFinite(Number(p.lng)) && VOYAGES.find(v => v.id === p.voyageId && v.visible !== false)); }
     function renderPosts() {
       if (postClusterLayer) postClusterLayer.clearLayers();
       markers = {};
@@ -2244,7 +2403,7 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
       renderBoatList();
       updateMenuCounts();
       if (!posts.length) { applyVoyageSelection(false);document.getElementById('timelineList').innerHTML = '<div class="empty-state"><div class="empty-state-emoji">0</div>まだ投稿がありません<br><small>「投稿」タブから投稿してみましょう</small></div>'; return; }
-      document.getElementById('timelineList').innerHTML = posts.map(p => `<div class="post-item" data-id="${p.id}"><div class="post-item-content" onclick="focusPost('${p.id}', event)">${buildListMedia(p)}<div class="post-content"><div class="post-meta"><span class="post-author">${escapeHtml(p.author)}</span><span>${formatDate(p.timestamp)}</span>${p.mediaType === 'video' ? '<span class="port-list-badge">動画</span>' : ''}</div><div class="post-title">${escapeHtml(p.title)}</div><div class="post-comment">${escapeHtml(p.comment || '')}</div><div class="post-comment-count" data-comment-count-for="${escapeHtml(p.id)}">${formatCommentCount(p.id)}</div></div></div><div class="post-actions"><button class="post-action-btn" onclick="event.stopPropagation(); openEditModal('${p.id}')">編集</button><button class="post-action-btn" onclick="focusPost('${p.id}', event)">地図で見る</button></div></div>`).join('');
+      document.getElementById('timelineList').innerHTML = posts.map(p => `<div class="post-item" data-id="${p.id}"><div class="post-item-content" onclick="focusPost('${p.id}', event)">${buildListMedia(p)}<div class="post-content"><div class="post-meta"><span class="post-author">${escapeHtml(p.author)}</span><span>${formatDate(p.timestamp)}</span>${p.mediaType === 'video' ? '<span class="port-list-badge">動画</span>' : ''}</div><div class="post-title">${escapeHtml(p.title)}</div><div class="post-comment">${escapeHtml(p.comment || '')}</div><div class="post-comment-count" data-comment-count-for="${escapeHtml(p.id)}">${formatCommentCount(p.id)}</div></div></div><div class="post-actions"><button class="post-action-btn staff-only" onclick="event.stopPropagation(); openEditModal('${p.id}')">編集</button><button class="post-action-btn" onclick="focusPost('${p.id}', event)">地図で見る</button></div></div>`).join('');
       posts.forEach(p => {
         const icon = L.divIcon({ className: '', html: buildMarkerMedia(p), iconSize: [42, 42], iconAnchor: [21, 21] });
         markers[p.id] = L.marker([p.lat, p.lng], { icon }).bindPopup(buildPopupContent(p), { maxWidth: 240, closeOnClick: false, autoClose: true });
@@ -2647,7 +2806,7 @@ N 33°56'40" E 130°55'10" 付近（33.9444, 130.9194）
     function toggleTimeline() { document.getElementById('timelinePanel').classList.toggle('open'); }
     function formatDate(timestamp) { const d = new Date(String(timestamp).replace(' ', 'T')); return `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
 
-    initMap(); renderAuthors();
+    initMap(); renderAuthors(); initAuth();
     const lastAuthor = localStorage.getItem('saily_last_author') || localStorage.getItem('busan_last_author');
     if (lastAuthor && loadAuthors().includes(lastAuthor)) selectAuthor(lastAuthor);
     loadPorts().finally(loadPosts);
